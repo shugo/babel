@@ -208,10 +208,10 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class DefiningTypeData : TypeData
+    public class UserDefinedTypeData : TypeData
     {
-        public DefiningTypeData(TypeManager typeManager,
-                                TypeBuilder typeBuilder)
+        public UserDefinedTypeData(TypeManager typeManager,
+                                   TypeBuilder typeBuilder)
             : base(typeManager, typeBuilder)
         {
         }
