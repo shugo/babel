@@ -542,7 +542,7 @@ namespace Babel.Sather.Compiler
                 receiverType = iter.TypeSpecifier.NodeType;
             }
             if (receiverType == null) {
-                report.Error(iter.Location, "no match for {0}!", iter.Name);
+                report.Error(iter.Location, "no match for {0}", iter.Name);
                 return;
             }
             iter.Arguments.Accept(this);
@@ -559,7 +559,7 @@ namespace Babel.Sather.Compiler
                     TypedNodeList args = new TypedNodeList(arg);
                     args.Append(iter.Arguments.First);
                     method = LookupMethod(builtinMethodContainer,
-                                          "__iter_" + iter.Name, args,
+                                          iter.Name, args,
                                           iter.HasValue);
                     iter.IsBuiltin = true;
                     SetupIter(iter, method, receiverType);
@@ -570,13 +570,13 @@ namespace Babel.Sather.Compiler
             }
             try {
                 method = LookupMethod(receiverType,
-                                      "__iter_" + iter.Name, iter.Arguments,
+                                      iter.Name, iter.Arguments,
                                       iter.HasValue);
                 SetupIter(iter, method, receiverType);
             }
             catch (LookupMethodException e) {
                 string iterInfo = typeManager.GetTypeName(receiverType) +
-                    "::" + iter.Name + "!";
+                    "::" + iter.Name;
                 if (iter.Arguments.Length > 0) {
                     iterInfo += "(";
                     foreach (ModalExpression arg in iter.Arguments) {
@@ -726,7 +726,10 @@ namespace Babel.Sather.Compiler
                                              TypedNodeList arguments,
                                              bool hasReturnValue)
         {
-            if (method.Name != name)
+            string methodName = typeManager.GetSatherName(method);
+            if (methodName == null)
+                methodName = method.Name;
+            if (methodName != name)
                 return false;
             if (hasReturnValue) {
                 if (method.ReturnType == typeof(void))
@@ -994,10 +997,13 @@ namespace Babel.Sather.Compiler
                                     iter.Receiver.Location);
             newArguments.Append(receiver);
             ParameterInfo[] parameters = typeManager.GetParameters(method);
-            ModalExpression arg = (ModalExpression) iter.Arguments.First;
-            foreach (ParameterInfo param in parameters) {
-                if (arg == null)
-                    break;
+            int i;
+            if (iter.IsBuiltin)
+                i = 1;
+            else
+                i = 0;
+            foreach (ModalExpression arg in iter.Arguments) {
+                ParameterInfo param = parameters[i++];
                 if (arg.NodeType == null) // void expression
                     arg.NodeType = param.ParameterType;
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
@@ -1009,7 +1015,6 @@ namespace Babel.Sather.Compiler
                 else {
                     moveNextArguments.Append((ModalExpression) arg.Clone());
                 }
-                arg = (ModalExpression) arg.Next;
             }
             iter.New = new NewExpression(iterType,
                                          newArguments,
