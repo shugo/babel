@@ -548,52 +548,6 @@ namespace Babel.Compiler {
             typeSpecifier.NodeType = type;
         }
 
-        protected virtual bool
-        ConflictMethod(string name,
-                       TypedNodeList arguments,
-                       TypeData returnType,
-                       MethodInfo method)
-        {
-            if (name != typeManager.GetMethodName(method))
-                return false;
-            ParameterInfo[] parameters = typeManager.GetParameters(method);
-            if (arguments.Length != parameters.Length)
-                return false;
-            if (returnType.IsVoid !=
-                typeManager.GetReturnType(method).IsVoid)
-                return false;
-
-            bool conflict = false;
-            bool abs = false;
-            bool sameArgs = true;
-            int i = 0;
-            foreach (Argument arg in arguments) {
-                ParameterInfo param = parameters[i++];
-                TypeData type1 = arg.NodeType;
-                TypeData type2 = typeManager.GetTypeData(param.ParameterType);
-                
-                if (type1 != type2)
-                    sameArgs = false;
-                if (type1 != type2 &&
-                    !type1.IsAbstract && !type2.IsAbstract) {
-                    return false;
-                }
-                else {
-                    if (type1.IsAbstract && type2.IsAbstract) {
-                        abs = true; 
-                        if (!(type1.IsSubtypeOf(type2) ||
-                              type2.IsSubtypeOf(type1)))
-                            conflict = true;
-                    }
-                    else {
-                        if (type1 != type2)
-                            return false;
-                    }
-                }
-            }
-            return (abs && conflict) || !abs || sameArgs;
-        }
-
         protected virtual void
         CheckMethodConfliction(TypeData type,
                                string name,
