@@ -289,6 +289,7 @@ namespace Babel.Sather.Compiler
         void VisitSourceFile(SourceFile sourceFile);
         void VisitClass(ClassDefinition cls);
         void VisitAbstractRoutine(AbstractRoutineSignature routine);
+        void VisitAbstractIter(AbstractIterSignature iter);
         void VisitConst(ConstDefinition constDef);
         void VisitSharedAttr(SharedAttrDefinition attr);
         void VisitAttr(AttrDefinition attr);
@@ -334,6 +335,7 @@ namespace Babel.Sather.Compiler
         public virtual void VisitSourceFile(SourceFile sourceFile) {}
         public virtual void VisitClass(ClassDefinition cls) {}
         public virtual void VisitAbstractRoutine(AbstractRoutineSignature routine) {}
+        public virtual void VisitAbstractIter(AbstractIterSignature iter) {}
         public virtual void VisitConst(ConstDefinition constDef) {}
         public virtual void VisitSharedAttr(SharedAttrDefinition sharedAttr) {}
         public virtual void VisitAttr(AttrDefinition attr) {}

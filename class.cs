@@ -189,6 +189,79 @@ namespace Babel.Sather.Compiler
         }
     }
 
+    public class AbstractIterSignature : AbstractRoutineSignature
+    {
+        protected TypeBuilder typeBuilder;
+        protected ConstructorBuilder constructor;
+        protected MethodBuilder moveNext;
+        protected MethodBuilder getCurrent;
+        protected TypedNodeList moveNextArguments;
+
+        public AbstractIterSignature(string name,
+                                     TypedNodeList arguments,
+                                     TypeSpecifier returnType,
+                                     Location location)
+            : base(name, arguments, returnType, location)
+        {
+            typeBuilder = null;
+            constructor = null;
+            moveNext = null;
+            getCurrent = null;
+            InitArguments();
+        }
+
+        protected override void InitArguments()
+        {
+            int index = 1;
+            int moveNextPos = 1;
+            moveNextArguments = new TypedNodeList();
+            argumentTable = new Hashtable();
+            foreach (Argument arg in Arguments) {
+                arg.Index = index++;
+                if (arg.Mode != ArgumentMode.Once) {
+                    Argument ma = (Argument) arg.Clone();
+                    ma.Index = moveNextPos++;
+                    moveNextArguments.Append(ma);
+                    argumentTable.Add(ma.Name, ma);
+                }
+            }
+        }
+
+        public virtual TypeBuilder TypeBuilder
+        {
+            get { return typeBuilder; }
+            set { typeBuilder = value; }
+        }
+
+        public virtual ConstructorBuilder Constructor
+        {
+            get { return constructor; }
+            set { constructor = value; }
+        }
+
+        public virtual MethodBuilder MoveNext
+        {
+            get { return moveNext; }
+            set { moveNext = value; }
+        }
+
+        public virtual MethodBuilder GetCurrent
+        {
+            get { return getCurrent; }
+            set { getCurrent = value; }
+        }
+
+        public virtual TypedNodeList MoveNextArguments
+        {
+            get { return moveNextArguments; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitAbstractIter(this);
+        }
+    }
+
     public interface ClassElement
     {
         string Name { get; }

@@ -271,12 +271,12 @@ abstract_routine_signature
           opt_routine_argument_list
           opt_return_type
           {
-              AbstractRoutineSignature signature =
+              AbstractRoutineSignature routine =
                   new AbstractRoutineSignature((string) $1,
                                                (TypedNodeList) $2,
                                                (TypeSpecifier) $3,
                                                lexer.Location);
-              currentClass.AddChild(signature);
+              currentClass.AddChild(routine);
           }
         ;
 
@@ -371,6 +371,12 @@ abstract_iter_signature
           opt_iter_argument_list
           opt_return_type
           {
+              AbstractIterSignature iter =
+                  new AbstractIterSignature((string) $1,
+                                            (TypedNodeList) $2,
+                                            (TypeSpecifier) $3,
+                                            lexer.Location);
+              currentClass.AddChild(iter);
           }
         ;
 
