@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babel.Sather.Base;
+using Babel.Base;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public class Parameter : ParameterInfo {
         public Parameter(ParameterBuilder pb, Type type,
                          MemberInfo member)

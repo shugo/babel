@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public class TypeCreatingVisitor : AbstractNodeVisitor {
         protected Program program;
         protected TypeManager typeManager;

@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base {
+namespace Babel.Base {
     public class INT {
         public static int plus(int self, int i)
         {
