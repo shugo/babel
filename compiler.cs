@@ -34,7 +34,7 @@ namespace Babel.Sather.Compiler
         {
             for (int i = 0; i < args.Length; i++) {
                 string arg = (string) args[i];
-                if (arg[0] == '-' || arg[0] == '/') {
+                if (arg[0] == '-') {
                     string[] vals = arg.Split(':');
                     string name, value;
                     name = vals[0].Substring(1);
