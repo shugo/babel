@@ -86,18 +86,13 @@ namespace Babel.Sather.Compiler
                 typeSpecifier.NodeType = currentClass.TypeBuilder;
                 return;
             }
-            Type type = typeManager.GetPredefinedType(typeSpecifier.Name);
-            if (type != null) {
-                typeSpecifier.NodeType = type;
-                return;
-            }
-            ClassDefinition cls = typeManager.GetClass(typeSpecifier.Name);
-            if (cls == null) {
+            Type type = typeManager.GetType(typeSpecifier.Name);
+            if (type == null) {
                 report.Error(typeSpecifier.Location,
                              "there is no class named {0}", typeSpecifier.Name);
                 return;
             }
-            typeSpecifier.NodeType = cls.TypeBuilder;
+            typeSpecifier.NodeType = type;
         }
 
         public override void VisitStatementList(StatementList statementList)
@@ -152,7 +147,10 @@ namespace Babel.Sather.Compiler
             Type lhsType;
             Argument arg = currentRoutine.GetArgument(assign.Name);
             if (arg != null) {
-                lhsType = arg.NodeType;
+                if (arg.NodeType.IsByRef)
+                    lhsType = arg.NodeType.GetElementType();
+                else
+                    lhsType = arg.NodeType;
             }
             else {
                 LocalVariable local = localVariableStack.Get(assign.Name);
@@ -396,7 +394,10 @@ namespace Babel.Sather.Compiler
             if (!inSharedContext) {
                 Argument arg = currentRoutine.GetArgument(localExpr.Name);
                 if (arg != null) {
-                    localExpr.NodeType = arg.NodeType;
+                    if (arg.NodeType.IsByRef)
+                        localExpr.NodeType = arg.NodeType.GetElementType();
+                    else
+                        localExpr.NodeType = arg.NodeType;
                     return;
                 }
                 LocalVariable local = localVariableStack.Get(localExpr.Name);
@@ -475,6 +476,22 @@ namespace Babel.Sather.Compiler
                 report.Error(call.Location,
                              "{0} for {1}", e.Message, routInfo);
             }
+        }
+
+        public override void VisitModalExpression(ModalExpression modalExpr)
+        {
+            modalExpr.Expression.Accept(this);
+            if (modalExpr.Mode == ArgumentMode.Out ||
+                modalExpr.Mode == ArgumentMode.InOut) {
+                LocalExpression local = modalExpr.Expression as LocalExpression;
+                if (local == null || local.Call != null) {
+                    report.Error(modalExpr.Location,
+                                 "out/inout argument must be " +
+                                 "a local variable or an argument");
+                    return;
+                }
+            }
+            modalExpr.NodeType = modalExpr.Expression.NodeType;
         }
 
         public override void VisitVoid(VoidExpression voidExpr)
@@ -582,7 +599,7 @@ namespace Babel.Sather.Compiler
                 ParameterInfo param = parameters[pos++];
                 switch (arg.Mode) {
                 case ArgumentMode.In:
-                    if (param.IsOut) {
+                    if (param.ParameterType.IsByRef) {
                         return false;
                     }
                     if (arg.NodeType == null)
@@ -591,15 +608,18 @@ namespace Babel.Sather.Compiler
                         return false;
                     break;
                 case ArgumentMode.Out:
-                    if (!(param.IsOut && !param.IsIn))
+                    if (!(param.ParameterType.IsByRef &&
+                          !param.IsIn && param.IsOut))
                         return false;
-                    if (!IsSubtype(param.ParameterType, arg.NodeType))
+                    if (!IsSubtype(param.ParameterType.GetElementType(),
+                                   arg.NodeType))
                         return false;
                     break;
                 case ArgumentMode.InOut:
-                    if (!(param.IsIn && param.IsOut))
+                    if (!(param.ParameterType.IsByRef &&
+                          param.IsIn && param.IsOut))
                         return false;
-                    if (arg.NodeType != param.ParameterType)
+                    if (arg.NodeType != param.ParameterType.GetElementType())
                         return false;
                     break;
                 }
@@ -621,8 +641,14 @@ namespace Babel.Sather.Compiler
                 }
                 else {
                     ArrayList currentPosWinners = new ArrayList();
-                    Type bestType =
-                        typeManager.GetParameters(firstMethod)[pos].ParameterType;
+                    ParameterInfo[] firstMethodParameters =
+                        typeManager.GetParameters(firstMethod);
+                    Type t = firstMethodParameters[pos].ParameterType;
+                    Type bestType;
+                    if (t.IsByRef)
+                        bestType = t.GetElementType();
+                    else
+                        bestType = t;
                     foreach (MethodInfo method in candidates) {
                         ParameterInfo param =
                             typeManager.GetParameters(method)[pos];
@@ -636,10 +662,12 @@ namespace Babel.Sather.Compiler
                                 currentPosWinners.Add(method);
                             }
                             break;
-                        case ArgumentMode.Out: 
-                            if (IsSubtype(bestType, param.ParameterType)) {
-                                if (param.ParameterType != bestType) {
-                                    bestType = param.ParameterType;
+                        case ArgumentMode.Out:
+                            Type paramType =
+                                param.ParameterType.GetElementType();
+                            if (IsSubtype(bestType, paramType)) {
+                                if (paramType != bestType) {
+                                    bestType = paramType;
                                     currentPosWinners.Clear();
                                 }
                                 currentPosWinners.Add(method);

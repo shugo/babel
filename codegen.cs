@@ -140,15 +140,25 @@ namespace Babel.Sather.Compiler
 
         public override void VisitAssign(AssignStatement assign)
         {
-            assign.Value.Accept(this);
 
             Argument arg = currentRoutine.GetArgument(assign.Name);
             if (arg != null) {
-                BoxIfNecessary(assign.Value.NodeType, arg.NodeType);
-                ilGenerator.Emit(OpCodes.Starg, arg.Index);
+                if (arg.NodeType.IsByRef) {
+                    Type argType = arg.NodeType.GetElementType();
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                    assign.Value.Accept(this);
+                    BoxIfNecessary(assign.Value.NodeType, argType);
+                    EmitStind(argType);
+                }
+                else {
+                    assign.Value.Accept(this);
+                    BoxIfNecessary(assign.Value.NodeType, arg.NodeType);
+                    ilGenerator.Emit(OpCodes.Starg, arg.Index);
+                }
             }
             else {
                 LocalVariable local = localVariableStack.Get(assign.Name);
+                assign.Value.Accept(this);
                 BoxIfNecessary(assign.Value.NodeType, local.LocalType);
                 ilGenerator.Emit(OpCodes.Stloc, local.LocalBuilder);
             }
@@ -344,6 +354,8 @@ namespace Babel.Sather.Compiler
             Argument arg = currentRoutine.GetArgument(localExpr.Name);
             if (arg != null) {
                 ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                if (arg.NodeType.IsByRef)
+                    EmitLdind(arg.NodeType.GetElementType());
                 return;
             }
             LocalVariable local = localVariableStack.Get(localExpr.Name);
@@ -379,6 +391,25 @@ namespace Babel.Sather.Compiler
                 ilGenerator.EmitCall(OpCodes.Callvirt, method, null);
             else
                 ilGenerator.EmitCall(OpCodes.Call, method, null);
+        }
+
+        public override void VisitModalExpression(ModalExpression modalExpr)
+        {
+            if (modalExpr.Mode == ArgumentMode.Out ||
+                modalExpr.Mode == ArgumentMode.InOut) {
+                LocalExpression localExpr =
+                    modalExpr.Expression as LocalExpression;
+                Argument arg = currentRoutine.GetArgument(localExpr.Name);
+                if (arg != null) {
+                    ilGenerator.Emit(OpCodes.Ldarga, arg.Index);
+                    return;
+                }
+                LocalVariable local = localVariableStack.Get(localExpr.Name);
+                ilGenerator.Emit(OpCodes.Ldloca, local.LocalBuilder);
+            }
+            else {
+                modalExpr.Expression.Accept(this);
+            }
         }
 
         public override void VisitVoid(VoidExpression voidExpr)
@@ -464,6 +495,32 @@ namespace Babel.Sather.Compiler
             }
             else {
                 ilGenerator.Emit(OpCodes.Ldnull);
+            }
+        }
+
+        protected void EmitLdind(Type type)
+        {
+            if (type == typeof(bool) ||
+                type == typeof(int)) {
+                ilGenerator.Emit(OpCodes.Ldind_I4);
+            } else if (type == typeof(char)) {
+                ilGenerator.Emit(OpCodes.Ldind_I2);
+            }
+            else {
+                ilGenerator.Emit(OpCodes.Ldind_Ref);
+            }
+        }
+
+        protected void EmitStind(Type type)
+        {
+            if (type == typeof(bool) ||
+                type == typeof(int)) {
+                ilGenerator.Emit(OpCodes.Stind_I4);
+            } else if (type == typeof(char)) {
+                ilGenerator.Emit(OpCodes.Stind_I2);
+            }
+            else {
+                ilGenerator.Emit(OpCodes.Stind_Ref);
             }
         }
     }
