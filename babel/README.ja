@@ -42,3 +42,5 @@ Microsoftの.NET Frameworkでも動くかもしれません。
   $ bsc -out:hello.exe hello.sa
   $ mono hello.exe
   hello world!
+
+コマンドラインオプションについてはbsc -hで確認してください。
