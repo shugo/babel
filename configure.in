@@ -15,7 +15,7 @@ AC_ARG_WITH(cs,
     AC_MSG_RESULT(using $withval for cs)
     CS="$withval"
 ], [
-    AC_PATH_PROG(CS, mcs, no)
+    AC_PATH_PROGS(CS, mcs csc, no)
 ])
 
 AC_MSG_CHECKING(flags for cs)
@@ -24,7 +24,7 @@ AC_ARG_WITH(csflags,
 [
     CSFLAGS="$withval"
 ], [
-    CSFLAGS="-g"
+    CSFLAGS="-debug"
 ])
 AC_MSG_RESULT($CSFLAGS)
 AC_SUBST(CSFLAGS)
