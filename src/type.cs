@@ -249,4 +249,22 @@ namespace Babel.Compiler {
             }
         }
     }
+
+    public class TypeParameterData : TypeData {
+        protected TypeData constrainingType;
+
+        public TypeParameterData(TypeManager typeManager,
+                                 GenericTypeParameterBuilder typeBuilder,
+                                 TypeData constrainingType)
+            : base(typeManager, typeBuilder)
+        {
+            this.constrainingType = constrainingType;
+        }
+
+        public override ArrayList Methods {
+            get {
+                return constrainingType.Methods;
+            }
+        }
+    }
 }
