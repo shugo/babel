@@ -61,6 +61,7 @@ namespace Babel.Compiler {
 %token GUARD
 %token IF
 %token IMMUTABLE
+%token IMPORT
 %token INOUT
 %token INCLUDE
 %token INITIAL
@@ -150,6 +151,7 @@ source_file
         : {
               sourceFile = new SourceFile();
           }
+          opt_import_directives
           class_def_list
           opt_EOF
           {
@@ -160,6 +162,27 @@ source_file
 opt_EOF
         : /* empty */
         | EOF
+        ;
+
+opt_import_directives
+	: /* empty */
+	| import_directives
+	;
+
+import_directives
+	: import_directive 
+	| import_directives import_directive
+	;
+
+import_directive
+	: IMPORT namespace_name SEMI
+          {
+              sourceFile.AddNamespace((string) $2);
+          }
+	;
+
+namespace_name
+        : qualified_identifier
         ;
 
 class_def_list

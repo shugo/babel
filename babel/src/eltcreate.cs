@@ -17,6 +17,7 @@ namespace Babel.Compiler {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
+        protected SourceFile currentSouceFile;
         protected ClassDefinition currentClass;
         protected int iterCount;
         protected ArrayList ancestorMethods;
@@ -35,6 +36,7 @@ namespace Babel.Compiler {
 
         public override void VisitSourceFile(SourceFile sourceFile)
         {
+            currentSouceFile = sourceFile;
             sourceFile.Children.Accept(this);
         }
 
@@ -137,7 +139,7 @@ namespace Babel.Compiler {
                              paramTypes);
             SupertypingAdapterMethod adapterMethod =
                 new SupertypingAdapterMethod(mb, adapteeMethod,
-                                         parameters.Length);
+                                             parameters.Length);
             adapter.Methods.Add(adapterMethod);
             adapter.TypeBuilder.DefineMethodOverride(mb, method);
         }
@@ -534,7 +536,9 @@ namespace Babel.Compiler {
                     typeManager.GetTypeData(currentClass.TypeBuilder);
                 return;
             }
-            TypeData type = typeManager.GetType(typeSpecifier.Name);
+            TypeData type =
+                typeManager.GetType(typeSpecifier.Name,
+                                    currentSouceFile.ImportedNamespaces);
             if (type == null) {
                 report.Error(typeSpecifier.Location,
                              "there is no class named {0}",

@@ -31,15 +31,11 @@ namespace Babel.Compiler {
         }
         
         public virtual string Name {
-            get {
-                return rawType.Name;
-            }
+            get { return rawType.Name; }
         }
         
         public virtual string FullName {
-            get {
-                return rawType.FullName;
-            }
+            get { return rawType.FullName; }
         }
 
         public virtual bool IsVoid {
@@ -221,25 +217,16 @@ namespace Babel.Compiler {
         }
         
         public override string Name {
-            get {
-                return name;
-            }
+            get { return name; }
         }
         
         public override string FullName {
-            get {
-                return name;
-            }
+            get { return name; }
         }
         
         public virtual Type BuiltinMethodContainer {
-            get {
-                return builtinMethodContainer;
-            }
-
-            set {
-                builtinMethodContainer = value;
-            }
+            get { return builtinMethodContainer; }
+            set { builtinMethodContainer = value; }
         }
 
         public override ArrayList Methods {

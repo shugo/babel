@@ -15,6 +15,7 @@ namespace Babel.Compiler {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
+        protected SourceFile currentSouceFile;
         protected Hashtable visitingClasses;
         protected int adapterCount;
 
@@ -34,6 +35,7 @@ namespace Babel.Compiler {
 
         public override void VisitSourceFile(SourceFile sourceFile)
         {
+            currentSouceFile = sourceFile;
             sourceFile.Children.Accept(this);
         }
 
@@ -138,7 +140,9 @@ namespace Babel.Compiler {
                              "SAME cannot appear in subtyping clause");
                 return;
             }
-            TypeData type = typeManager.GetType(typeSpecifier.Name);
+            TypeData type =
+                typeManager.GetType(typeSpecifier.Name,
+                                    currentSouceFile.ImportedNamespaces);
             if (type != null) {
                 typeSpecifier.NodeType = type;
                 return;

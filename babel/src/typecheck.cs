@@ -17,6 +17,7 @@ namespace Babel.Compiler {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
+        protected SourceFile currentSouceFile;
         protected ClassDefinition currentClass;
         protected RoutineDefinition currentRoutine;
         protected IterDefinition currentIter;
@@ -41,6 +42,7 @@ namespace Babel.Compiler {
 
         public override void VisitSourceFile(SourceFile sourceFile)
         {
+            currentSouceFile = sourceFile;
             sourceFile.Children.Accept(this);
         }
 
@@ -89,7 +91,9 @@ namespace Babel.Compiler {
                     typeManager.GetTypeData(currentClass.TypeBuilder);
             }
             else {
-                TypeData type = typeManager.GetType(typeSpecifier.Name);
+                TypeData type =
+                    typeManager.GetType(typeSpecifier.Name,
+                                        currentSouceFile.ImportedNamespaces);
                 if (type == null) {
                     report.Error(typeSpecifier.Location,
                                  "there is no class named {0}",

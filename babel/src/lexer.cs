@@ -75,6 +75,7 @@ namespace Babel.Compiler {
             keywords.Add("guard", Token.GUARD);
             keywords.Add("if", Token.IF);
             keywords.Add("immutable", Token.IMMUTABLE);
+            keywords.Add("import", Token.IMPORT);
             keywords.Add("inout", Token.INOUT);
             keywords.Add("include", Token.INCLUDE);
             keywords.Add("initial", Token.INITIAL);
