@@ -22,6 +22,7 @@ namespace Babel.Compiler {
     public class ClassDefinition : CompositeNode, ICloneable {
         protected string name;
         protected ClassKind kind;
+        protected NodeList typeParameters;
         protected TypedNodeList supertypes;
         protected TypedNodeList subtypes;
         protected TypeBuilder typeBuilder;
@@ -32,6 +33,7 @@ namespace Babel.Compiler {
         protected ArrayList adapters;
 
         public ClassDefinition(string name, ClassKind kind,
+                               NodeList typeParameters,
                                TypedNodeList supertypes,
                                TypedNodeList subtypes,
                                Location location)
@@ -39,6 +41,7 @@ namespace Babel.Compiler {
         {
             this.name = name;
             this.kind = kind;
+            this.typeParameters = typeParameters;
             this.supertypes = supertypes;
             this.subtypes = subtypes;
             typeBuilder = null;
@@ -51,9 +54,10 @@ namespace Babel.Compiler {
 
 
         public ClassDefinition(string name, ClassKind kind,
+                               NodeList typeParameters,
                                TypedNodeList supertypes,
                                Location location)
-            : this(name, kind, supertypes, null, location) {}
+            : this(name, kind, typeParameters, supertypes, null, location) {}
 
         public virtual string Name {
             get { return name; }
@@ -61,6 +65,10 @@ namespace Babel.Compiler {
 
         public virtual ClassKind Kind {
             get { return kind; }
+        }
+
+        public virtual NodeList TypeParameters {
+            get { return typeParameters; }
         }
 
         public virtual TypedNodeList Supertypes {
@@ -120,6 +128,40 @@ namespace Babel.Compiler {
             cls.staticConstructor = null;
             cls.staticConstructorIL = null;
             return cls;
+        }
+    }
+
+    public class ParameterDeclaration : Node {
+        protected string name;
+        protected TypeSpecifier constrainingType;
+        protected GenericTypeParameterBuilder builder;
+
+        public ParameterDeclaration(string name,
+                                    TypeSpecifier constrainingType,
+                                    Location location)
+            : base(location)
+        {
+            this.name = name;
+            this.constrainingType = constrainingType;
+            builder = null;
+        }
+
+        public string Name {
+            get { return name; }
+        }
+
+        public TypeSpecifier ConstrainingType {
+            get { return constrainingType; }
+        }
+
+        public GenericTypeParameterBuilder Builder {
+            get { return builder; }
+            set { builder = value; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            ConstrainingType.Accept(visitor);
         }
     }
 

@@ -214,6 +214,7 @@ abstract_class_definition
         : ABSTRACT
           CLASS
           ABSTRACT_CLASS_NAME
+	  parameterization
           subtyping_clause
           supertyping_clause
           {
@@ -225,8 +226,9 @@ abstract_class_definition
                   name = sourceFile.Namespace + Type.Delimiter + (string) $3;
               currentClass = new ClassDefinition(name,
                                                  ClassKind.Abstract,
-                                                 (TypedNodeList) $4,
+                                                 (NodeList) $4,
                                                  (TypedNodeList) $5,
+                                                 (TypedNodeList) $6,
                                                  lexer.Location);
           }
           IS
@@ -237,6 +239,47 @@ abstract_class_definition
               $$ = currentClass;
           }
         ;
+
+parameterization
+	: /* empty */
+          {
+              $$ = new NodeList();
+          }
+	| LBRACE parameter_declaration_list RBRACE
+	  {
+              $$ = new NodeList((Node) $2);
+	  }
+	;
+
+parameter_declaration_list
+        : parameter_declaration
+        | parameter_declaration_list COMMA type_specifier
+          {
+              Node list = (Node) $1;
+              list.Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+parameter_declaration
+	: IDENTIFIER type_constraint_clause
+	  {
+	      $$ = new ParameterDeclaration((string) $1,
+	                                    (TypeSpecifier) $2,
+					    lexer.Location);
+	  }
+	;
+
+type_constraint_clause
+	: /* empty */
+	  {
+	      $$ = new TypeSpecifier("$OB", TypeKind.Normal, lexer.Location);
+	  }
+	| IS_LT type_specifier
+	  {
+	      $$ = $2;
+	  }
+	;
 
 subtyping_clause
         : /* empty */
@@ -511,6 +554,7 @@ opt_iter_mode
 class_definition
         : CLASS
           IDENTIFIER
+	  parameterization
           subtyping_clause
           {
               string name;
@@ -521,7 +565,8 @@ class_definition
                   name = sourceFile.Namespace + Type.Delimiter + (string) $2;
               currentClass = new ClassDefinition(name,
                                                  ClassKind.Reference,
-                                                 (TypedNodeList) $3,
+						 (NodeList) $3,
+                                                 (TypedNodeList) $4,
                                                  lexer.Location);
           }
           IS

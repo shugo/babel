@@ -84,6 +84,19 @@ namespace Babel.Compiler {
                                               cls.TypeData.AncestorRawTypes);
                 cls.TypeData.RawType = cls.TypeBuilder;
                 typeManager.AddType(cls.TypeData);
+                cls.TypeParameters.Accept(this);
+                string[] typeParamNames =
+                    new string[cls.TypeParameters.Length];
+                int i = 0;
+                foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                    typeParamNames[i++] = pd.Name;
+                }
+                GenericTypeParameterBuilder[] typeParameters =
+                    cls.TypeBuilder.DefineGenericParameters(typeParamNames);
+                i = 0;
+                foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                    pd.Builder = typeParameters[i++];
+                }
                 if (cls.Kind == ClassKind.Reference) {
                     cls.Constructor = 
                         cls.TypeBuilder.
