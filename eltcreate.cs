@@ -49,15 +49,13 @@ namespace Babel.Sather.Compiler
             rout.Arguments.Accept(this);
             rout.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
-            rout.MethodBuilder =
-                typeBuilder.DefineMethod(rout.Name,
-                                         MethodAttributes.Public |
-                                         MethodAttributes.Virtual |
-                                         MethodAttributes.Abstract |
-                                         MethodAttributes.HideBySig,
-                                         rout.ReturnType.NodeType,
-                                         rout.Arguments.NodeTypes);
-            typeManager.AddMethod(typeBuilder, rout.MethodBuilder);
+            rout.MethodBuilder = DefineMethod(typeBuilder, rout.Name,
+                                              MethodAttributes.Public |
+                                              MethodAttributes.Virtual |
+                                              MethodAttributes.Abstract |
+                                              MethodAttributes.HideBySig,
+                                              rout.ReturnType.NodeType,
+                                              rout.Arguments);
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -76,18 +74,15 @@ namespace Babel.Sather.Compiler
                 break;
             }
             constDef.FieldBuilder =
-                typeBuilder.DefineField(constDef.Name,
+                typeBuilder.DefineField("_" + constDef.Name,
                                         constType,
                                         FieldAttributes.Private |
                                         FieldAttributes.Static |
                                         FieldAttributes.Literal);
             constDef.FieldBuilder.SetConstant(constDef.Value);
-            constDef.Reader =
-                typeBuilder.DefineMethod(constDef.Name,
-                                         readerAttributes,
-                                         constType,
-                                         Type.EmptyTypes);
-            typeManager.AddMethod(typeBuilder, constDef.Reader);
+            constDef.Reader = DefineReader(typeBuilder, constDef.Name,
+                                           readerAttributes,
+                                           constDef.TypeSpecifier);
         }
 
         public override void VisitSharedAttr(SharedAttrDefinition attr)
@@ -114,22 +109,16 @@ namespace Babel.Sather.Compiler
                 break;
             }
             attr.FieldBuilder =
-                typeBuilder.DefineField(attr.Name,
+                typeBuilder.DefineField("_" + attr.Name,
                                         attrType,
                                         FieldAttributes.Private |
                                         FieldAttributes.Static);
-            attr.Reader =
-                typeBuilder.DefineMethod(attr.Name,
-                                         readerAttributes,
-                                         attrType,
-                                         Type.EmptyTypes);
-            attr.Writer =
-                typeBuilder.DefineMethod(attr.Name,
-                                         writerAttributes,
-                                         typeof(void),
-                                         new Type[] { attrType });
-            typeManager.AddMethod(typeBuilder, attr.Reader);
-            typeManager.AddMethod(typeBuilder, attr.Writer);
+            attr.Reader = DefineReader(typeBuilder, attr.Name,
+                                       readerAttributes,
+                                       attr.TypeSpecifier);
+            attr.Writer = DefineWriter(typeBuilder, attr.Name,
+                                       readerAttributes,
+                                       attr.TypeSpecifier);
         }
 
         public override void VisitAttr(AttrDefinition attr)
@@ -156,21 +145,15 @@ namespace Babel.Sather.Compiler
                 break;
             }
             attr.FieldBuilder =
-                typeBuilder.DefineField(attr.Name,
+                typeBuilder.DefineField("_" + attr.Name,
                                         attrType,
                                         FieldAttributes.Private);
-            attr.Reader =
-                typeBuilder.DefineMethod(attr.Name,
-                                         readerAttributes,
-                                         attrType,
-                                         Type.EmptyTypes);
-            attr.Writer =
-                typeBuilder.DefineMethod(attr.Name,
-                                         writerAttributes,
-                                         typeof(void),
-                                         new Type[] { attrType });
-            typeManager.AddMethod(typeBuilder, attr.Reader);
-            typeManager.AddMethod(typeBuilder, attr.Writer);
+            attr.Reader = DefineReader(typeBuilder, attr.Name,
+                                       readerAttributes,
+                                       attr.TypeSpecifier);
+            attr.Writer = DefineWriter(typeBuilder, attr.Name,
+                                       readerAttributes,
+                                       attr.TypeSpecifier);
         }
 
         public override void VisitRoutine(RoutineDefinition rout)
@@ -189,17 +172,18 @@ namespace Babel.Sather.Compiler
                 break;
             }
             rout.MethodBuilder =
-                typeBuilder.DefineMethod(rout.Name,
-                                         attributes,
-                                         rout.ReturnType.NodeType,
-                                         rout.Arguments.NodeTypes);
-            typeManager.AddMethod(typeBuilder, rout.MethodBuilder);
+                DefineMethod(typeBuilder, rout.Name, attributes,
+                             rout.ReturnType.NodeType, rout.Arguments);
         }
 
         public override void VisitArgument(Argument arg)
         {
             arg.TypeSpecifier.Accept(this);
             arg.NodeType = arg.TypeSpecifier.NodeType;
+            if (arg.Mode == ArgumentMode.Out ||
+                arg.Mode == ArgumentMode.InOut) {
+                // FIXME
+            }
         }
 
         public override void VisitInclude(IncludeClause include)
@@ -253,6 +237,60 @@ namespace Babel.Sather.Compiler
                 return;
             }
             typeSpecifier.NodeType = cls.TypeBuilder;
+        }
+
+        protected MethodBuilder DefineMethod(TypeBuilder type,
+                                             string name,
+                                             MethodAttributes attributes,
+                                             Type returnType,
+                                             TypedNodeList arguments)
+        {
+            MethodBuilder method =
+                type.DefineMethod(name,
+                                  attributes,
+                                  returnType,
+                                  arguments.NodeTypes);
+            ParameterInfo[] parameters = new ParameterInfo[arguments.Length];
+            foreach (Argument arg in arguments) {
+                ParameterAttributes attrs = 0;
+                switch (arg.Mode) {
+                case ArgumentMode.Out:
+                    attrs |= ParameterAttributes.Out;
+                    break;
+                case ArgumentMode.InOut:
+                    attrs |= ParameterAttributes.In;
+                    attrs |= ParameterAttributes.Out;
+                    break;
+                }
+                ParameterBuilder pb =
+                    method.DefineParameter(arg.Index, attrs, arg.Name);
+                parameters[arg.Index - 1] =
+                    new Parameter(pb, arg.NodeType, method);
+            }
+            typeManager.AddMethod(type, method);
+            typeManager.AddParameters(method, parameters);
+            return method;
+        }
+
+        protected MethodBuilder DefineReader(TypeBuilder type, string name,
+                                             MethodAttributes attributes,
+                                             TypeSpecifier attrType)
+        {
+            return DefineMethod(type, name, attributes,
+                                attrType.NodeType, new TypedNodeList());
+        }
+
+        protected MethodBuilder DefineWriter(TypeBuilder type, string name,
+                                             MethodAttributes attributes,
+                                             TypeSpecifier attrType)
+        {
+            Argument arg = new Argument(ArgumentMode.In, "value",
+                                        attrType, Location.Null);
+            arg.Index = 1;
+            arg.NodeType = attrType.NodeType;
+            TypedNodeList args = new TypedNodeList(arg);
+            return DefineMethod(type, name, attributes,
+                                typeof(void), args);
         }
     }
 }
