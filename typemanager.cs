@@ -20,7 +20,6 @@ namespace Babel.Sather.Compiler
         Hashtable parentsTable;
         Hashtable ancestorsTable;
         Hashtable visitingClasses;
-        ClassDefinition currentClass;
 
         public TypeManager()
         {
