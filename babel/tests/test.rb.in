@@ -5,9 +5,7 @@ require "stringio"
 $error = StringIO.new
 $stdout.sync = true
 
-$topdir = "%top_builddir%"
-ENV["MONO_PATH"] = "#{$topdir}/src:#{$topdir}/lib/base:#{$topdir}/lib/io"
-$compiler = File.expand_path("src/bsc.exe", $topdir)
+$compiler = "./bsc.exe"
 
 $mono = "%MONO%"
 
@@ -26,7 +24,7 @@ def test(source)
     return "E"
   end
 
-  actual_error = `#{$mono} #{$compiler} -lib:#{$topdir}/src,#{$topdir}/lib/base,#{$topdir}/lib/io #{source} 2>&1`
+  actual_error = `#{$mono} #{$compiler} #{source} 2>&1`.gsub("\r\n", "\n")
   if expected_error
     if $?.exitstatus == 0
       $error.printf("%s: compilation succeeded unexpectedly\n",
@@ -59,7 +57,7 @@ def test(source)
   end
 
   program = source.sub(/\.sa$/, ".exe")
-  actual_output = `#{$mono} #{program}`
+  actual_output = `#{$mono} ./#{program}`
   if actual_output == expected_output
     return "."
   else

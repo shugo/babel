@@ -1,5 +1,10 @@
 check_SCRIPTS		= test.rb
 
+check_DATA		= bsc.exe \
+			  bscore.dll \
+			  bsbase.dll \
+			  bsio.dll
+
 TESTS			= test.rb
 
 EXTRA_DIST		= test.rb.in \
@@ -34,3 +39,15 @@ test.rb: test.rb.in
 		$(srcdir)/test.rb.in > test.rb
 	chmod +x test.rb
 	chmod -w test.rb
+
+bsc.exe: ../src/bsc.exe
+	cp ../src/bsc.exe bsc.exe
+
+bscore.dll: ../src/bscore.dll
+	cp ../src/bscore.dll bscore.dll
+
+bsbase.dll: ../lib/base/bsbase.dll
+	cp ../lib/base/bsbase.dll bsbase.dll
+
+bsio.dll: ../lib/io/bsio.dll
+	cp ../lib/io/bsio.dll bsio.dll

@@ -253,7 +253,7 @@ namespace Babel.Compiler {
                 ilGenerator.Emit(OpCodes.Ret);
             }
 
-            iter.TypeBuilder.CreateType();
+            nestedTypes.Add(iter.TypeBuilder);
             currentRoutine = currentIter = null;
         }
 
