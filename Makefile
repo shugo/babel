@@ -47,9 +47,9 @@ check: all
 	cd tests; $(MAKE) check
 
 clean:
-	rm -f $(COMPILER)
-	rm -f $(BASE_LIB)
 	rm -f $(CORE_LIB)
+	rm -f $(COMPILER)
+	rm -f $(STD_LIBS)
 	rm -f parser.cs
 	rm -f y.output
 	rm -f *~
@@ -71,8 +71,9 @@ $(BASE_LIB): $(BASE_LIB_SRCS) $(COMPILER)
 	rm -f $(BASE_LIB)
 	./$(COMPILER) -target:library \
 		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
+	echo foo
 
-$(IO_LIB): $(IO_LIB_SRCS) $(COMPILER)
+$(IO_LIB): $(IO_LIB_SRCS) $(BASE_LIB) $(COMPILER)
 	rm -f $(IO_LIB)
 	./$(COMPILER) -target:library \
 		-out:$(IO_LIB) $(IO_LIB_SRCS)
