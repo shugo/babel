@@ -29,8 +29,6 @@ namespace Babel.Sather.Compiler
         protected Type currentExceptionType;
         protected bool inSharedContext;
 
-        const string temporallyPrefix = "__temp_";
-
         public TypeCheckingVisitor(Report report)
         {
             this.report = report;
@@ -684,7 +682,7 @@ namespace Babel.Sather.Compiler
 
         protected virtual string getTemporallyName()
         {
-            string name = temporallyPrefix + temporallyCount.ToString();
+            string name = "__temp_" + temporallyCount.ToString();
             temporallyCount++;
             return name;
         }
