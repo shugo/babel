@@ -367,7 +367,7 @@ abstract_iter_signature
 iter_name
         : IDENTIFIER ITER_BANG
           {
-              $$ = (string) $1;
+              $$ = (string) $1 + "!";
           }
         ;
 
