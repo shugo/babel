@@ -71,7 +71,6 @@ $(BASE_LIB): $(BASE_LIB_SRCS) $(COMPILER)
 	rm -f $(BASE_LIB)
 	./$(COMPILER) -target:library \
 		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
-	echo foo
 
 $(IO_LIB): $(IO_LIB_SRCS) $(BASE_LIB) $(COMPILER)
 	rm -f $(IO_LIB)
