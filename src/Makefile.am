@@ -38,7 +38,17 @@ CLEANFILES		= parser.cs \
 			  bsc.exe \
 			  bscore.dll
 
-SKELETON	= `$(JAY) -p`/skeleton.cs
+SKELETON		= `$(JAY) -p`/skeleton.cs
+
+ETAGS_ARGS		= $(bscore_dll_SRCS) \
+			  $(bsc_exe_SOURCES)
+
+ETAGSFLAGS		= --c\#-kinds=-n --extra=+q
+
+CTAGS_ARGS		= $(bscore_dll_SRCS) \
+			  $(bsc_exe_SOURCES)
+
+CTAGSFLAGS		= --c\#-kinds=-n --extra=+q
 
 bsc.exe: $(bsc_exe_SOURCES) bscore.dll
 	$(CS) $(CSFLAGS) -target:exe -out:bsc.exe \
