@@ -28,49 +28,6 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class ModalExpression : TypedNode
-    {
-        ArgumentMode mode;
-        Expression expression;
-
-        public ModalExpression(ArgumentMode mode, Expression expression,
-                               Location location)
-            : base(location)
-        {
-            this.mode = mode;
-            this.expression = expression;
-        }
-
-        public ArgumentMode Mode
-        {
-            get { return mode; }
-        }
-
-        public Expression Expression
-        {
-            get { return expression; }
-        }
-
-        public override Type NodeType
-        {
-            get { return expression.NodeType; }
-            set { expression.NodeType = value; }
-        }
-
-        public override void Accept(NodeVisitor visitor)
-        {
-            expression.Accept(visitor);
-        }
-
-        public override object Clone()
-        {
-            ModalExpression modalExpr =
-                (ModalExpression) base.Clone();
-            modalExpr.expression = (Expression) expression.Clone();
-            return modalExpr;
-        }
-    }
-
     public abstract class LiteralExpression : Expression
     {
         public LiteralExpression(Location location) : base(location) {}
@@ -345,6 +302,43 @@ namespace Babel.Sather.Compiler
                 expr.typeSpecifier = (TypeSpecifier) typeSpecifier.Clone();
             expr.arguments = (TypedNodeList) arguments.Clone();
             return expr;
+        }
+    }
+
+    public class ModalExpression : Expression
+    {
+        ArgumentMode mode;
+        Expression expression;
+
+        public ModalExpression(ArgumentMode mode, Expression expression,
+                               Location location)
+            : base(location)
+        {
+            this.mode = mode;
+            this.expression = expression;
+        }
+
+        public ArgumentMode Mode
+        {
+            get { return mode; }
+        }
+
+        public Expression Expression
+        {
+            get { return expression; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitModalExpression(this);
+        }
+
+        public override object Clone()
+        {
+            ModalExpression modalExpr =
+                (ModalExpression) base.Clone();
+            modalExpr.expression = (Expression) expression.Clone();
+            return modalExpr;
         }
     }
 
