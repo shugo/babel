@@ -441,6 +441,7 @@ namespace Babel.Compiler {
                                              TypeAttributes.NestedPublic,
                                              typeof(object),
                                              iterTypeAncestors);
+            DefineIterTypeParameters(iter);
             
             ArrayList list = new ArrayList();
             list.Add(typeBuilder);
@@ -497,13 +498,20 @@ namespace Babel.Compiler {
                 break;
             }
 
+            TypeData iterType = typeManager.GetTypeData(iter.TypeBuilder);
+            TypeData boundIterType;
+            if (currentClass.TypeParameters.Length > 0) {
+                TypeData td = iterType.GetGenericTypeDefinition();
+                boundIterType =
+                    td.BindGenericParameters(currentClass.TypeParameters);
+            }
+            else
+                boundIterType = iterType;
             TypedNodeList creatorArguments =
                 GetIterCreatorArguments(iter.Arguments);
-
             iter.Creator =
                 DefineMethod(typeBuilder, creatorName, attributes,
-                             typeManager.GetTypeData(iter.TypeBuilder),
-                             creatorArguments);
+                             boundIterType, creatorArguments);
             typeManager.AddIterCreator(iter.Creator);
 
             iter.MethodBuilder =
@@ -528,6 +536,41 @@ namespace Babel.Compiler {
             }
 
             iterCount++;
+        }
+
+        protected virtual void DefineIterTypeParameters(IterDefinition iter)
+        {
+            if (currentClass.TypeParameters.Length > 0) {
+                string[] typeParamNames =
+                    new string[currentClass.TypeParameters.Length];
+                int i = 0;
+                foreach (ParameterDeclaration pd in currentClass.TypeParameters) {
+                    typeParamNames[i++] = pd.Name;
+                }
+                GenericTypeParameterBuilder[] typeParameters =
+                    iter.TypeBuilder.DefineGenericParameters(typeParamNames);
+                i = 0;
+                foreach (ParameterDeclaration pd in currentClass.TypeParameters) {
+                    GenericTypeParameterBuilder pb = typeParameters[i++];
+                    if (pd.ConstrainingType.NodeType.IsAbstract) {
+                        Type[] ifaces = new Type[] {
+                            pd.ConstrainingType.RawType
+                        };
+                        pb.SetInterfaceConstraints(ifaces);
+                    }
+                    else {
+                        Type baseType = pd.ConstrainingType.RawType;
+                        if (baseType != typeof(object))
+                            pb.SetBaseTypeConstraint(baseType);
+                    }
+                    TypeData td =
+                        new TypeParameterData(typeManager, pb,
+                                              pd.ConstrainingType.NodeType);
+                    typeManager.AddType(td);
+                    td.Parents = new ArrayList();
+                    td.Parents.Add(pd.ConstrainingType.NodeType);
+                }
+            }
         }
 
         public override void VisitArgument(Argument arg)

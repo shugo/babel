@@ -716,9 +716,7 @@ namespace Babel.Compiler {
             }
 
             iter.IsBuiltin = method.IsBuiltin;
-            string createName =
-                typeManager.GetIterCreatorName(method.MethodInfo);
-            MethodData creator = receiverType.LookupMethod(createName);
+            MethodData creator = method.IterCreator;
 
             iter.Method = creator.MethodInfo;
             iter.NodeType = method.ReturnType;

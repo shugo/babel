@@ -14,6 +14,10 @@ class VALUE_HOLDER{T} is
    set(value: T) is
       self.value := value;
    end;
+
+   elt!: T is
+      yield value;
+   end;
 end;
 
 class MAIN is
@@ -22,5 +26,10 @@ class MAIN is
       #OUT + x.get + "\n";
       x.set("bar");
       #OUT + x.get + "\n";
+      (*
+      loop
+         #OUT + x.elt! + "\n";
+      end;
+      *)
    end
 end

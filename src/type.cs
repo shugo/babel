@@ -403,7 +403,12 @@ namespace Babel.Compiler {
 
         protected override MethodData CreateMethodData(MethodInfo method)
         {
-            return new GenericInstanceMethodData(typeManager, method);
+            if (method.DeclaringType == typeof(object)) {
+                return new PredefinedMethodData(typeManager, method);
+            }
+            else {
+                return new GenericInstanceMethodData(typeManager, method);
+            }
         }
     }
 
