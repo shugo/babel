@@ -88,18 +88,18 @@ namespace Babell.Compiler {
 
         protected virtual void InitBuiltinTypes()
         {
-            obType = AddBuiltinType("$OB", typeof(object));
-            boolType = AddBuiltinType("BOOL", typeof(bool),
+            obType = AddBuiltinType("$ob", typeof(object));
+            boolType = AddBuiltinType("bool", typeof(bool),
                                       typeof(Babell.Base.BOOL));
-            intType = AddBuiltinType("INT", typeof(int),
+            intType = AddBuiltinType("int", typeof(int),
                                      typeof(Babell.Base.INT));
-            fltType = AddBuiltinType("FLT", typeof(float));
-            charType = AddBuiltinType("CHAR", typeof(char));
-            strType = AddBuiltinType("STR", typeof(string),
+            fltType = AddBuiltinType("flt", typeof(float));
+            charType = AddBuiltinType("char", typeof(char));
+            strType = AddBuiltinType("str", typeof(string),
                                      typeof(Babell.Base.STR));
-            voidType = new PredefinedTypeData(this, typeof(void));
-            exceptionType = new PredefinedTypeData(this,
-                                                   typeof(System.Exception));
+	    voidType = new PredefinedTypeData(this, typeof(void));
+	    exceptionType = new PredefinedTypeData(this,
+						   typeof(System.Exception));
         }
 
         protected virtual BuiltinTypeData AddBuiltinType(string name, Type type)
@@ -147,21 +147,21 @@ namespace Babell.Compiler {
 
         public virtual TypeData GetPredefinedType(string name)
         {
-            TypeData typeData = (TypeData) builtinTypes[name];
+            TypeData typeData = (TypeData) builtinTypes[name.ToLower()];
             if (typeData != null)
                 return typeData;
             foreach (Assembly assembly in assemblies) {
-                Type type = (Type) assembly.GetType(name);
+                Type type = (Type) assembly.GetType(name, false, true);
                 if (type != null)
                     return GetTypeData(type);
             }
-            return GetTypeData(Type.GetType(name));
+            return GetTypeData(Type.GetType(name, false, true));
         }
 
         public virtual TypeData GetTypeFromModules(string name)
         {
             foreach (Module module in modules) {
-                Type type = (Type) module.GetType(name);
+                Type type = (Type) module.GetType(name, false, true);
                 if (type != null)
                     return GetTypeData(type);
             }
@@ -207,12 +207,12 @@ namespace Babell.Compiler {
 
         public virtual void AddClass(ClassDefinition cls)
         {
-            classes.Add(cls.Name, cls);
+            classes.Add(cls.Name.ToLower(), cls);
         }
 
         public virtual ClassDefinition GetClass(string name)
         {
-            return (ClassDefinition) classes[name];
+            return (ClassDefinition) classes[name.ToLower()];
         }
 
         public void AddType(TypeData type)

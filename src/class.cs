@@ -223,7 +223,7 @@ namespace Babell.Compiler {
             argumentTable = new Hashtable();
             foreach (Argument arg in arguments) {
                 arg.Index = index++;
-                argumentTable.Add(arg.Name, arg);
+                argumentTable.Add(arg.Name.ToLower(), arg);
             }
         }
 
@@ -246,7 +246,7 @@ namespace Babell.Compiler {
 
         public virtual Argument GetArgument(string name)
         {
-            return (Argument) argumentTable[name];
+            return (Argument) argumentTable[name.ToLower()];
         }
 
         public override void Accept(NodeVisitor visitor)

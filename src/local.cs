@@ -51,8 +51,10 @@ namespace Babell.Compiler {
     public abstract class LocalVariableStack : Stack {
         public virtual LocalVariable GetLocal(string name)
         {
+	    string lowerName = name.ToLower();
+
             foreach (Hashtable tbl in this) {
-                LocalVariable local = (LocalVariable) tbl[name];
+                LocalVariable local = (LocalVariable) tbl[lowerName];
                 if (local != null) {
                     return local;
                 }
@@ -66,9 +68,11 @@ namespace Babell.Compiler {
         public virtual LocalVariable AddLocal(string name, TypeData type,
                                               bool isTypecaseVariable)
         {
+	    string lowerName = name.ToLower();
             Hashtable tbl = (Hashtable) Peek();
-            LocalVariable local = CreateLocal(name, type, isTypecaseVariable);
-            tbl.Add(name, local);
+            LocalVariable local = CreateLocal(lowerName, type,
+					      isTypecaseVariable);
+            tbl.Add(lowerName, local);
             return local;
         }
 

@@ -31,7 +31,9 @@ EXTRA_DIST		= test.rb.in \
 			  subtype.out \
 			  subtype.sa \
 			  valuetype.out \
-			  valuetype.sa
+			  valuetype.sa \
+			  caseinsensitive.out \
+			  caseinsensitive.sa
 
 CLEANFILES		= test.rb \
 			  bsc.exe \
@@ -45,7 +47,8 @@ CLEANFILES		= test.rb \
 			  new.exe \
 			  outarg.exe \
 			  subtype.exe \
-			  valuetype.exe
+			  valuetype.exe \
+			  caseinsensitive
 
 test.rb: test.rb.in
 	rm -f test.rb

@@ -66,7 +66,7 @@ namespace Babell.Compiler {
 
         public virtual bool ConformTo(MethodData method)
         {
-            if (method.Name != Name)
+            if (method.Name.ToLower() != Name.ToLower())
                 return false;
             if (method.Parameters.Count != Arguments.Length)
                 return false;
@@ -214,7 +214,7 @@ namespace Babell.Compiler {
 
         public virtual bool ConflictWith(MethodSignature method)
         {
-            if (Name != method.Name) {
+            if (Name.ToLower() != method.Name.ToLower()) {
                 return false;
             }
             if (Parameters.Count != method.Arguments.Length)
@@ -255,7 +255,7 @@ namespace Babell.Compiler {
 
         public virtual bool ConformTo(MethodData method)
         {
-            if (Name != method.Name)
+            if (Name.ToLower() != method.Name.ToLower())
                 return false;
             if (Parameters.Count != method.Parameters.Count)
                 return false;

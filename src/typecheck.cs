@@ -716,7 +716,7 @@ namespace Babell.Compiler {
                                            bool hasReturnValue)
         {
             string methodName = typeManager.GetMethodName(method);
-            if (methodName != name)
+            if (methodName.ToLower() != name.ToLower())
                 return false;
             Type returnType = typeManager.GetIterReturnType(method);
             if (returnType == null)

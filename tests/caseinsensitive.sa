@@ -1,0 +1,19 @@
+class fOo is
+  Create: SAME is
+    return new;
+  end;
+
+  bar(baZ: int) is
+    QUX: INT := 2;
+    Quux: Int := 3;
+    #OUT + (Baz + qux + QUUX) + "\n";
+  end;
+end;
+
+class MAIN is
+  main is
+    f: foo := #FOO;
+    f.Bar(1);
+    f.BAR(1);
+  end;
+end;

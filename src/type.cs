@@ -212,7 +212,7 @@ namespace Babell.Compiler {
                                Type rawType, string name)
             : base(typeManager, rawType)
         {
-            this.name = name;
+            this.name = name.ToUpper();
             this.builtinMethodContainer = null;
         }
         
