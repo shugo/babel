@@ -59,6 +59,27 @@ namespace Babel.Sather.Compiler
                 cls.StaticConstructorIL.Emit(OpCodes.Ret);
             }
             currentType.CreateType();
+            foreach (SupertypingAdapter adapter in cls.Adapters) {
+                ilGenerator = adapter.Constructor.GetILGenerator();
+                ilGenerator.Emit(OpCodes.Ldarg_0);
+                ilGenerator.Emit(OpCodes.Ldarg_1);
+                ilGenerator.Emit(OpCodes.Stfld, adapter.AdapteeField);
+                ilGenerator.Emit(OpCodes.Ret);
+                foreach (SupertypingBridgeMethod method in adapter.Methods) {
+                    ilGenerator = method.MethodBuilder.GetILGenerator();
+                    ilGenerator.Emit(OpCodes.Ldarg_0);
+                    ParameterInfo[] parameters =
+                        typeManager.GetParameters(method.AdapteeMethod);
+                    foreach (ParameterInfo param in parameters) {
+                        ilGenerator.Emit(OpCodes.Ldarg, param.Position);
+                    }
+                    ilGenerator.EmitCall(OpCodes.Callvirt, method.AdapteeMethod,
+                                         null);
+                    ilGenerator.Emit(OpCodes.Ret);
+
+                }
+                adapter.TypeBuilder.CreateType();
+            }
         }
 
         public override void VisitConst(ConstDefinition constDef)

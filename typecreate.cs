@@ -49,29 +49,28 @@ namespace Babel.Sather.Compiler
                 return;
             }
             visitingClasses.Add(cls, cls);
-            cls.Supertypes.Accept(this);
-            Type[] parents = new Type[cls.Supertypes.Length];
-            int i = 0;
-            foreach (TypeSpecifier supertype in cls.Supertypes) {
-                Type t = supertype.NodeType;
-                if (t == null) {
-                    error = true;
-                    break;
+            try {
+                cls.Supertypes.Accept(this);
+                Type[] parents = new Type[cls.Supertypes.Length];
+                int i = 0;
+                foreach (TypeSpecifier supertype in cls.Supertypes) {
+                    Type t = supertype.NodeType;
+                    if (t == null)
+                        return;
+                    if (!t.IsInterface) {
+                        report.Error(supertype.Location,
+                                     "supertype {0} is not abstract",
+                                     supertype.Name);
+                        return;
+                    }
+                    parents[i++] = t;
                 }
-                if (!t.IsInterface) {
-                    report.Error(supertype.Location,
-                                 "supertype {0} is not abstract",
-                                 supertype.Name);
-                    error = true;
-                    break;
-                }
-                parents[i++] = t;
-            }
-            if (!error) {
                 Type[] ancestors = typeManager.ExtractAncestors(parents);
                 TypeAttributes attrs = TypeAttributes.Public;
                 if (cls.Kind == ClassKind.Abstract)
                     attrs |= TypeAttributes.Interface;
+                else
+                    attrs |= TypeAttributes.Class;
                 cls.TypeBuilder =
                     program.Module.DefineType(cls.Name, attrs,
                                               typeof(object), ancestors);
@@ -90,8 +89,36 @@ namespace Babel.Sather.Compiler
                                           CallingConventions.Standard,
                                           Type.EmptyTypes);
                 }
+                if (cls.Subtypes != null) {
+                    cls.Subtypes.Accept(this);
+                    int adapterCount = 0;
+                    Type[] subtypeAncestors = new Type[ancestors.Length + 1];
+                    ancestors.CopyTo(subtypeAncestors, 0);
+                    subtypeAncestors[subtypeAncestors.Length - 1] =
+                        cls.TypeBuilder;
+                    foreach (TypeSpecifier subtype in cls.Subtypes) {
+                        if (subtype.NodeType == null)
+                            return;
+                        SupertypingAdapter adapter =
+                            new SupertypingAdapter(subtype.NodeType);
+                        adapter.TypeBuilder =
+                            cls.TypeBuilder.
+                            DefineNestedType("__adapter" + adapterCount,
+                                             TypeAttributes.Class |
+                                             TypeAttributes.NestedPublic,
+                                             typeof(object),
+                                             subtypeAncestors);
+                        typeManager.AddType(adapter.TypeBuilder,
+                                            new Type[] { cls.TypeBuilder },
+                                            subtypeAncestors);
+                        cls.Adapters.Add(adapter);
+                        adapterCount++;
+                    }
+                }
             }
-            visitingClasses.Remove(cls);
+            finally {
+                visitingClasses.Remove(cls);
+            }
         }
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)

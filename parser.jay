@@ -180,10 +180,12 @@ abstract_class_definition
           CLASS
           ABSTRACT_CLASS_NAME
           subtyping_clause
+          supertyping_clause
           {
               currentClass = new ClassDefinition((string) $3,
                                                  ClassKind.Abstract,
                                                  (TypedNodeList) $4,
+                                                 (TypedNodeList) $5,
                                                  lexer.Location);
 	  }
           IS
@@ -200,8 +202,7 @@ subtyping_clause
           {
               $$ = new TypedNodeList();
           }
-        | IS_LT
-          type_specifier_list
+        | IS_LT type_specifier_list
           {
               $$ = new TypedNodeList((Node) $2);
           }
@@ -232,6 +233,17 @@ type_specifier
           {
               $$ = new TypeSpecifier((string) $1, TypeKind.Same,
                                      lexer.Location);
+          }
+        ;
+
+supertyping_clause
+        : /* empty */
+          {
+              $$ = new TypedNodeList();
+          }
+        | IS_GT type_specifier_list
+          {
+              $$ = new TypedNodeList((Node) $2);
           }
         ;
 

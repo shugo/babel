@@ -26,24 +26,35 @@ namespace Babel.Sather.Compiler
         protected string name;
         protected ClassKind kind;
         protected TypedNodeList supertypes;
+        protected TypedNodeList subtypes;
         protected TypeBuilder typeBuilder;
         protected ConstructorBuilder constructor;
         protected ConstructorBuilder staticConstructor;
         protected ILGenerator staticConstructorIL;
+        protected ArrayList adapters;
 
         public ClassDefinition(string name, ClassKind kind,
                                TypedNodeList supertypes,
+                               TypedNodeList subtypes,
                                Location location)
             : base(location)
         {
             this.name = name;
             this.kind = kind;
             this.supertypes = supertypes;
+            this.subtypes = subtypes;
             typeBuilder = null;
             constructor = null;
             staticConstructor = null;
             staticConstructorIL = null;
+            adapters = new ArrayList();
         }
+
+
+        public ClassDefinition(string name, ClassKind kind,
+                               TypedNodeList supertypes,
+                               Location location)
+            : this(name, kind, supertypes, null, location) {}
 
         public virtual string Name
         {
@@ -58,6 +69,11 @@ namespace Babel.Sather.Compiler
         public virtual TypedNodeList Supertypes
         {
             get { return supertypes; }
+        }
+
+        public virtual TypedNodeList Subtypes
+        {
+            get { return subtypes; }
         }
 
         public virtual TypeBuilder TypeBuilder
@@ -91,6 +107,11 @@ namespace Babel.Sather.Compiler
             }
         }
 
+        public virtual ArrayList Adapters
+        {
+            get { return adapters; }
+        }
+
         public override void Accept(NodeVisitor visitor)
         {
             visitor.VisitClass(this);
@@ -105,6 +126,75 @@ namespace Babel.Sather.Compiler
             cls.staticConstructor = null;
             cls.staticConstructorIL = null;
             return cls;
+        }
+    }
+
+    public class SupertypingAdapter
+    {
+        Type adapteeType;
+        TypeBuilder typeBuilder;
+        FieldBuilder adapteeField;
+        ConstructorBuilder constructor;
+        ArrayList methods;
+
+        public SupertypingAdapter(Type adapteeType)
+        {
+            this.adapteeType = adapteeType;
+            this.typeBuilder = null;
+            this.adapteeField = null;
+            this.constructor = null;
+            this.methods = new ArrayList();
+        }
+
+        public virtual Type AdapteeType
+        {
+            get { return adapteeType; }
+        }
+
+        public virtual TypeBuilder TypeBuilder
+        {
+            get { return typeBuilder; }
+            set { typeBuilder = value; }
+        }
+
+        public virtual FieldBuilder AdapteeField
+        {
+            get { return adapteeField; }
+            set { adapteeField = value; }
+        }
+
+        public virtual ConstructorBuilder Constructor
+        {
+            get { return constructor; }
+            set { constructor = value; }
+        }
+
+        public virtual ArrayList Methods
+        {
+            get { return methods; }
+        }
+    }
+
+    public class SupertypingBridgeMethod
+    {
+        MethodBuilder methodBuilder;
+        MethodInfo adapteeMethod;
+
+        public SupertypingBridgeMethod(MethodBuilder methodBuilder,
+                                       MethodInfo adapteeMethod)
+        {
+            this.methodBuilder = methodBuilder;
+            this.adapteeMethod = adapteeMethod;
+        }
+
+        public virtual MethodBuilder MethodBuilder
+        {
+            get { return methodBuilder; }
+        }
+
+        public virtual MethodInfo AdapteeMethod
+        {
+            get { return adapteeMethod; }
         }
     }
 

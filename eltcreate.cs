@@ -63,6 +63,45 @@ namespace Babel.Sather.Compiler
                                  typeManager.GetTypeName(cls.TypeBuilder));
                 }
             }
+            foreach (SupertypingAdapter adapter in cls.Adapters) {
+                adapter.AdapteeField =
+                    adapter.TypeBuilder.DefineField("__adaptee",
+                                                    adapter.AdapteeType,
+                                                    FieldAttributes.Private);
+                adapter.Constructor =
+                    DefineConstructor(adapter.TypeBuilder,
+                                      MethodAttributes.Public,
+                                      CallingConventions.Standard,
+                                      new Type[] { adapter.AdapteeType });
+                MethodInfo[] subtypeMethods =
+                    typeManager.GetMethods(adapter.AdapteeType);
+                ArrayList supertypeMethods =
+                    typeManager.GetAncestorMethods(adapter.TypeBuilder);
+                foreach (MethodInfo subtypeMethod in subtypeMethods) {
+                    ArrayList conformableMethods =
+                        CheckMethodConformance(subtypeMethod, supertypeMethods);
+                    foreach (MethodInfo m in conformableMethods) {
+                        ParameterInfo[] parameters =
+                            typeManager.GetParameters(m);
+                        Type[] paramTypes = new Type[parameters.Length];
+                        for (int i = 0; i < parameters.Length; i++) {
+                            paramTypes[i] = parameters[i].ParameterType;
+                        }
+                        MethodBuilder mb =
+                            adapter.TypeBuilder.
+                            DefineMethod(m.DeclaringType.FullName + "." +
+                                         m.Name,
+                                         MethodAttributes.Private |
+                                         MethodAttributes.Virtual |
+                                         MethodAttributes.HideBySig,
+                                         m.ReturnType,
+                                         paramTypes);
+                        SupertypingBridgeMethod bridgeMethod =
+                            new SupertypingBridgeMethod(mb, m);
+                        adapter.Methods.Add(bridgeMethod);
+                    }
+                }
+            }
             currentClass = prevClass;
             iterCount = prevIterCount;
             ancestorMethods = prevAncestorMethods;
@@ -112,8 +151,8 @@ namespace Babel.Sather.Compiler
             iter.TypeBuilder =
                 typeBuilder.DefineNestedType("__itertype" + iterCount +
                                              "_" + baseName,
-                                             TypeAttributes.Public |
-                                             TypeAttributes.Interface,
+                                             TypeAttributes.Interface |
+                                             TypeAttributes.Public,
                                              typeof(object));
 
             iter.MoveNext =
@@ -301,7 +340,8 @@ namespace Babel.Sather.Compiler
             }
             CheckMethodConformance(typeBuilder, rout.Name,
                                    rout.ReturnType.NodeType,
-                                   rout.Arguments);
+                                   rout.Arguments,
+                                   ancestorMethods);
 
             MethodAttributes attributes =
                 MethodAttributes.Virtual | MethodAttributes.HideBySig;
@@ -337,7 +377,8 @@ namespace Babel.Sather.Compiler
             ArrayList conformableMethods =
                 CheckMethodConformance(typeBuilder, iter.Name,
                                        iter.ReturnType.NodeType,
-                                       iter.Arguments);
+                                       iter.Arguments,
+                                       ancestorMethods);
 
             string baseName = iter.Name.Substring(0, iter.Name.Length - 1);
 
@@ -350,7 +391,8 @@ namespace Babel.Sather.Compiler
             iter.TypeBuilder =
                 typeBuilder.DefineNestedType("__itertype" + iterCount +
                                              "_" + baseName,
-                                             TypeAttributes.Public,
+                                             TypeAttributes.Class |
+                                             TypeAttributes.NestedPublic,
                                              typeof(object),
                                              iterTypeAncestors);
             
@@ -605,11 +647,55 @@ namespace Babel.Sather.Compiler
         CheckMethodConformance(TypeBuilder type,
                                string name,
                                Type returnType,
-                               TypedNodeList arguments)
+                               TypedNodeList arguments,
+                               ArrayList ancestorMethods)
         {
             ArrayList conformableMethods = new ArrayList();
             foreach (MethodInfo m in ancestorMethods) {
                 if (ConformMethod(name, arguments, returnType, m))
+                    conformableMethods.Add(m);
+            }
+            foreach (MethodInfo m in conformableMethods) {
+                ancestorMethods.Remove(m);
+            }
+            return conformableMethods;
+        }
+
+        protected virtual bool
+        ConformMethod(MethodInfo method1,
+                      MethodInfo method2)
+        {
+            if (typeManager.GetMethodName(method1) !=
+                typeManager.GetMethodName(method2))
+                return false;
+            ParameterInfo[] parameters1 = typeManager.GetParameters(method1);
+            ParameterInfo[] parameters2 = typeManager.GetParameters(method2);
+            if (parameters1.Length != parameters2.Length)
+                return false;
+            if (typeManager.GetReturnType(method1) !=
+                typeManager.GetReturnType(method2))
+                return false;
+
+            for (int i = 0; i < parameters1.Length; i++) {
+                ParameterInfo param1 = parameters1[i];
+                ParameterInfo param2 = parameters2[i];
+                ArgumentMode mode1 = typeManager.GetArgumentMode(param1);
+                ArgumentMode mode2 = typeManager.GetArgumentMode(param2);
+                if (mode1 != mode2)
+                    return false;
+                if (param1.ParameterType != param2.ParameterType)
+                    return false;
+            }
+            return true;
+        }
+
+        protected virtual ArrayList
+        CheckMethodConformance(MethodInfo method,
+                               ArrayList ancestorMethods)
+        {
+            ArrayList conformableMethods = new ArrayList();
+            foreach (MethodInfo m in ancestorMethods) {
+                if (ConformMethod(method, m))
                     conformableMethods.Add(m);
             }
             foreach (MethodInfo m in conformableMethods) {
