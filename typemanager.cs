@@ -18,6 +18,7 @@ namespace Babel.Sather.Compiler
     {
         protected Hashtable builtinTypes;
         protected Hashtable builtinTypeNames;
+        protected Hashtable builtinMethodContainers;
         protected ArrayList assemblies;
         protected ArrayList modules;
         protected Hashtable classes;
@@ -32,6 +33,7 @@ namespace Babel.Sather.Compiler
         {
             builtinTypes = new Hashtable();
             builtinTypeNames = new Hashtable();
+            builtinMethodContainers = new Hashtable();
             assemblies = new ArrayList();
             modules = new ArrayList();
             classes = new Hashtable();
@@ -47,17 +49,32 @@ namespace Babel.Sather.Compiler
         protected virtual void InitBuiltinTypes()
         {
             AddBuiltinType("$OB", typeof(object));
-            AddBuiltinType("BOOL", typeof(bool));
-            AddBuiltinType("INT", typeof(int));
+            AddBuiltinType("BOOL", typeof(bool),
+                           typeof(Babel.Sather.Base.BOOL));
+            AddBuiltinType("INT", typeof(int),
+                           typeof(Babel.Sather.Base.INT));
             AddBuiltinType("FLT", typeof(float));
             AddBuiltinType("CHAR", typeof(char));
-            AddBuiltinType("STR", typeof(string));
+            AddBuiltinType("STR", typeof(string),
+                           typeof(Babel.Sather.Base.STR));
         }
 
         protected virtual void AddBuiltinType(string name, Type type)
         {
             builtinTypes.Add(name, type);
             builtinTypeNames.Add(type, name);
+        }
+
+        protected virtual void AddBuiltinType(string name, Type type,
+                                              Type builtintMethodContainer)
+        {
+            AddBuiltinType(name, type);
+            builtinMethodContainers.Add(type, builtintMethodContainer);
+        }
+
+        public virtual Type GetBuiltinMethodContainer(Type type)
+        {
+            return (Type) builtinMethodContainers[type];
         }
 
         public virtual Type GetPredefinedType(string name)

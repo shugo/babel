@@ -101,6 +101,12 @@ namespace Babel.Sather.Compiler
                         adapter.Methods.Add(adapterMethod);
                     }
                 }
+                foreach (MethodInfo method in supertypeMethods) {
+                    report.Error(cls.Location,
+                                 "no implementation for {0} in {1}",
+                                 typeManager.GetMethodInfo(method),
+                                 typeManager.GetTypeName(adapter.AdapteeType));
+                }
             }
             currentClass = prevClass;
             iterCount = prevIterCount;

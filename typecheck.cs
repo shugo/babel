@@ -19,7 +19,6 @@ namespace Babel.Sather.Compiler
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
-        protected Hashtable builtinMethodContainers;
         protected ClassDefinition currentClass;
         protected RoutineDefinition currentRoutine;
         protected IterDefinition currentIter;
@@ -33,18 +32,6 @@ namespace Babel.Sather.Compiler
         {
             this.report = report;
             inSharedContext = false;
-            InitBuiltinRoutines();
-        }
-
-        protected virtual void InitBuiltinRoutines()
-        {
-            builtinMethodContainers = new Hashtable();
-            builtinMethodContainers.Add(typeof(bool),
-                                        typeof(Babel.Sather.Base.BOOL));
-            builtinMethodContainers.Add(typeof(int),
-                                        typeof(Babel.Sather.Base.INT));
-            builtinMethodContainers.Add(typeof(string),
-                                        typeof(Babel.Sather.Base.STR));
         }
 
         public override void VisitProgram(Program program)
@@ -481,7 +468,7 @@ namespace Babel.Sather.Compiler
             call.Arguments.Accept(this);
             MethodInfo method;
             Type builtinMethodContainer =
-                (Type) builtinMethodContainers[receiverType];
+                typeManager.GetBuiltinMethodContainer(receiverType);
             if (builtinMethodContainer != null) {
                 try {
                     Expression expr = new VoidExpression(Location.Null);
@@ -549,7 +536,7 @@ namespace Babel.Sather.Compiler
             iter.Arguments.Accept(this);
             MethodInfo method;
             Type builtinMethodContainer =
-                (Type) builtinMethodContainers[receiverType];
+                typeManager.GetBuiltinMethodContainer(receiverType);
             if (builtinMethodContainer != null) {
                 try {
                     Expression expr = new VoidExpression(Location.Null);
