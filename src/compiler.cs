@@ -11,7 +11,7 @@ using System.Collections;
 using System.Text;
 using System.Reflection;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class Compiler {
         public const string VERSION = "0.0.1";
 
@@ -173,7 +173,7 @@ namespace Babell.Compiler {
 
         protected virtual void PrintVersion()
         {
-            Console.Write("Babell Sather Compiler version " + VERSION + "\n");
+            Console.Write("Babel Sather Compiler version " + VERSION + "\n");
         }
 
         protected virtual void PrintUsage()

@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babell.Base {
+namespace Babel.Base {
     public class BOOL {
         public static bool not(bool self)
         {

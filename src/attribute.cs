@@ -10,11 +10,11 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babell.Base {
-    public class SatherNameAttribute : Attribute {
+namespace Babel.Base {
+    public class BabelNameAttribute : Attribute {
         protected string name;
 
-        public SatherNameAttribute(string name)
+        public BabelNameAttribute(string name)
         {
             this.name = name;
         }

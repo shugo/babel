@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babell.Base;
+using Babel.Base;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class TypeManager {
         protected ArrayList assemblies;
         protected ArrayList modules;
@@ -90,13 +90,13 @@ namespace Babell.Compiler {
         {
             obType = AddBuiltinType("$ob", typeof(object));
             boolType = AddBuiltinType("bool", typeof(bool),
-                                      typeof(Babell.Base.BOOL));
+                                      typeof(Babel.Base.BOOL));
             intType = AddBuiltinType("int", typeof(int),
-                                     typeof(Babell.Base.INT));
+                                     typeof(Babel.Base.INT));
             fltType = AddBuiltinType("flt", typeof(float));
             charType = AddBuiltinType("char", typeof(char));
             strType = AddBuiltinType("str", typeof(string),
-                                     typeof(Babell.Base.STR));
+                                     typeof(Babel.Base.STR));
 	    voidType = new PredefinedTypeData(this, typeof(void));
 	    exceptionType = new PredefinedTypeData(this,
 						   typeof(System.Exception));
@@ -403,28 +403,28 @@ namespace Babell.Compiler {
             }
         }
 
-        public void AddSatherName(MethodBuilder methodBuilder,
-                                  string satherName)
+        public void AddBabelName(MethodBuilder methodBuilder,
+                                  string babelName)
         {
             Type[] paramTypes = new Type[] { typeof(string) };
             ConstructorInfo constructor =
-                typeof(SatherNameAttribute).GetConstructor(paramTypes);
+                typeof(BabelNameAttribute).GetConstructor(paramTypes);
             CustomAttributeBuilder attrBuilder =
                 new CustomAttributeBuilder(constructor,
-                                           new object[] { satherName });
+                                           new object[] { babelName });
             methodBuilder.SetCustomAttribute(attrBuilder);
-            Attribute attr = new SatherNameAttribute(satherName);
+            Attribute attr = new BabelNameAttribute(babelName);
             AddCustomAttribute(methodBuilder, attr);
         }
 
-        public virtual string GetSatherName(ICustomAttributeProvider provider)
+        public virtual string GetBabelName(ICustomAttributeProvider provider)
         {
             object[] attrs =
-                GetCustomAttributes(provider, typeof(SatherNameAttribute));
+                GetCustomAttributes(provider, typeof(BabelNameAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
             else
-                return ((SatherNameAttribute) attrs[0]).Name;
+                return ((BabelNameAttribute) attrs[0]).Name;
         }
 
         public void AddIterReturnType(MethodBuilder methodBuilder,
@@ -499,7 +499,7 @@ namespace Babell.Compiler {
 
         public virtual string GetMethodName(MethodInfo method)
         {
-            string name = GetSatherName(method);
+            string name = GetBabelName(method);
             if (name == null)
                 return method.Name;
             else 
@@ -538,7 +538,7 @@ namespace Babell.Compiler {
         public virtual string GetMethodInfo(MethodInfo method)
         {
             string methodInfo = GetTypeName(method.DeclaringType);
-            string name = GetSatherName(method);
+            string name = GetBabelName(method);
             if (name == null)
                 name = method.Name;
             methodInfo += "::" + name;

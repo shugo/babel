@@ -8,7 +8,7 @@
 using System;
 using System.Collections;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public abstract class Node : ICloneable, IEnumerable {
         protected Location location;
         protected Node next;

@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babell.Base;
+using Babel.Base;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class MethodSignature {
         protected TypeData declaringType;
         protected string name;

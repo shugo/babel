@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babell.Base;
+using Babel.Base;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class TypeElementCreatingVisitor : AbstractNodeVisitor {
         protected Program program;
         protected TypeManager typeManager;
@@ -220,7 +220,7 @@ namespace Babell.Compiler {
                              typeManager.GetTypeData(iter.TypeBuilder),
                              iter.Arguments);
             
-            typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
+            typeManager.AddBabelName(iter.MethodBuilder, iter.Name);
             typeManager.AddIterReturnType(iter.MethodBuilder,
                                           iter.ReturnType.NodeType);
 
@@ -471,7 +471,7 @@ namespace Babell.Compiler {
                              typeManager.GetTypeData(iter.TypeBuilder),
                              iter.Arguments);
 
-            typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
+            typeManager.AddBabelName(iter.MethodBuilder, iter.Name);
             typeManager.AddIterReturnType(iter.MethodBuilder,
                                           iter.ReturnType.NodeType);
 

@@ -9,7 +9,7 @@ using System;
 using System.Collections;
 using System.Text;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class SourceFile : CompositeNode {
         protected string _namespace;
         protected ArrayList importedNamespaces;

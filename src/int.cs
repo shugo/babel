@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babell.Base {
+namespace Babel.Base {
     public class INT {
         public static int plus(int self, int i)
         {
@@ -240,7 +240,7 @@ namespace Babell.Base {
             return self <= 0;
         }
 
-        [SatherNameAttribute("up!")]
+        [BabelNameAttribute("up!")]
         [IterReturnTypeAttribute(typeof(int))]
         public static __itertype_up __iter_up_int(int self)
         {
@@ -267,7 +267,7 @@ namespace Babell.Base {
             }
         }
 
-        [SatherNameAttribute("upto!")]
+        [BabelNameAttribute("upto!")]
         [IterReturnTypeAttribute(typeof(int))]
         public static __itertype_upto
         __iter_upto(int self,
@@ -298,7 +298,7 @@ namespace Babell.Base {
             }
         }
 
-        [SatherNameAttribute("times!")]
+        [BabelNameAttribute("times!")]
         [IterReturnTypeAttribute(null)]
         // use null instead of typeof(void) to avoid mcs bug
         public static __itertype_times __iter_times(int self)
@@ -306,7 +306,7 @@ namespace Babell.Base {
             return new __itertype_times(self);
         }
 
-        [SatherNameAttribute("times!")]
+        [BabelNameAttribute("times!")]
         [IterReturnTypeAttribute(typeof(int))]
         public static __itertype_times __iter_times_int(int self)
         {
@@ -318,7 +318,7 @@ namespace Babell.Base {
                 : base(0, self - 1) {}
         }
 
-        [SatherNameAttribute("for!")]
+        [BabelNameAttribute("for!")]
         [IterReturnTypeAttribute(typeof(int))]
         public static __itertype_for
         __iter_for(int self,

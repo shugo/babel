@@ -10,7 +10,7 @@ using System.Collections;
 using System.IO;
 using System.Text;
 
-namespace Babell.Compiler {
+namespace Babel.Compiler {
     public class LexicalAnalyzer : yyParser.yyInput {
         const int EOF = -1;
         const int EMPTY = -2;
