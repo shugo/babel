@@ -49,8 +49,7 @@ namespace Babel.Compiler {
             get { return value; }
         }
 
-        public override object ValueAsObject
-        {
+        public override object ValueAsObject {
             get { return value; }
         }
 
@@ -73,8 +72,7 @@ namespace Babel.Compiler {
             get { return value; }
         }
 
-        public override object ValueAsObject
-        {
+        public override object ValueAsObject {
             get { return value; }
         }
 
@@ -97,8 +95,7 @@ namespace Babel.Compiler {
             get { return value; }
         }
 
-        public override object ValueAsObject
-        {
+        public override object ValueAsObject {
             get { return value; }
         }
 
@@ -122,8 +119,7 @@ namespace Babel.Compiler {
             set { this.value = value; }
         }
 
-        public override object ValueAsObject
-        {
+        public override object ValueAsObject {
             get { return value; }
         }
 
@@ -476,8 +472,7 @@ namespace Babel.Compiler {
             visitor.VisitAnd(this);
         }
 
-        public override string Name
-        {
+        public override string Name {
             get { return "and"; }
         }
     }
@@ -492,8 +487,7 @@ namespace Babel.Compiler {
             visitor.VisitOr(this);
         }
 
-        public override string Name
-        {
+        public override string Name {
             get { return "or"; }
         }
     }
