@@ -23,6 +23,7 @@ namespace Babel.Sather.Compiler
         Hashtable parentsTable;
         Hashtable ancestorsTable;
         Hashtable methodsTable;
+        Hashtable constructorsTable;
         Hashtable parametersTable;
         Hashtable customAttributesTable;
 
@@ -35,6 +36,7 @@ namespace Babel.Sather.Compiler
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
             methodsTable = new Hashtable();
+            constructorsTable = new Hashtable();
             parametersTable = new Hashtable();
             customAttributesTable = new Hashtable();
             InitBuiltinTypes();
@@ -193,12 +195,38 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public void AddParameters(MethodInfo method, ParameterInfo[] parameters)
+        public void AddConstructor(Type type, ConstructorInfo constructor)
+        {
+            ArrayList constructors = (ArrayList) constructorsTable[type];
+            if (constructors == null)
+                constructorsTable[type] = constructors = new ArrayList();
+            constructors.Add(constructor);
+        }
+
+
+        public ConstructorInfo[] GetConstructors(Type type)
+        {
+            if (type is TypeBuilder) {
+                ArrayList constructors = (ArrayList) constructorsTable[type];
+                if (constructors == null)
+                    return new ConstructorInfo[0];
+                ConstructorInfo[] result =
+                    new ConstructorInfo[constructors.Count];
+                constructors.CopyTo(result);
+                return result;
+            }
+            else {
+                return type.GetConstructors(BindingFlags.Instance |
+                                            BindingFlags.Public |
+                                            BindingFlags.NonPublic);
+            }
+        }
+        public void AddParameters(MethodBase method, ParameterInfo[] parameters)
         {
             parametersTable[method] = parameters;
         }
 
-        public ParameterInfo[] GetParameters(MethodInfo method)
+        public ParameterInfo[] GetParameters(MethodBase method)
         {
             ParameterInfo[] parameters =
                 (ParameterInfo[]) parametersTable[method];
@@ -251,6 +279,16 @@ namespace Babel.Sather.Compiler
             if (attrs == null || attrs.Length == 0)
                 return null;
             return ((IterReturnTypeAttribute) attrs[0]).Type;
+        }
+
+        public ArgumentMode GetArgumentMode(ICustomAttributeProvider provider)
+        {
+            object[] attrs =
+                GetCustomAttributes(provider,
+                                    typeof(ArgumentModeAttribute));
+            if (attrs == null || attrs.Length == 0)
+                return ArgumentMode.In;
+            return ((ArgumentModeAttribute) attrs[0]).Mode;
         }
     }
 }

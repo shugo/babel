@@ -24,6 +24,7 @@ namespace Babel.Sather.Compiler
         RoutineDefinition currentRoutine;
         IterDefinition currentIter;
         LocalVariableStack localVariableStack;
+        LoopStatement currentLoop;
         int temporallyCount;
         Type currentExceptionType;
         bool inSharedContext;
@@ -349,7 +350,10 @@ namespace Babel.Sather.Compiler
 
         public override void VisitLoop(LoopStatement loop)
         {
+            LoopStatement prevLoop = currentLoop;
+            currentLoop = loop;
             loop.StatementList.Accept(this);
+            currentLoop = prevLoop;
         }
 
         public override void VisitYield(YieldStatement yield)
@@ -525,6 +529,11 @@ namespace Babel.Sather.Compiler
 
         public override void VisitIterCall(IterCallExpression iter)
         {
+            if (currentLoop == null) {
+                report.Error(iter.Location,
+                             "iterator calls must appear inside loops");
+                return;
+            }
             Type receiverType;
             if (iter.Receiver != null) {
                 iter.Receiver.Accept(this);
@@ -547,7 +556,56 @@ namespace Babel.Sather.Compiler
                                       iter.Name, iter.Arguments,
                                       iter.HasValue,
                                       true);
+                SetupMethod(iter, method, receiverType);
                 iter.NodeType = typeManager.GetIterReturnType(method);
+
+                string localName = getTemporallyName();
+                iter.Local = localVariableStack.AddLocal(localName,
+                                                         method.ReturnType);
+
+                TypedNodeList newArguments = new TypedNodeList();
+                TypedNodeList moveNextArguments = new TypedNodeList();
+                ModalExpression receiver =
+                    new ModalExpression(ArgumentMode.In,
+                                        (Expression) iter.Receiver.Clone(),
+                                        iter.Receiver.Location);
+                newArguments.Append(receiver);
+                ParameterInfo[] parameters = typeManager.GetParameters(method);
+                ModalExpression arg = (ModalExpression) iter.Arguments.First;
+                foreach (ParameterInfo param in parameters) {
+                    if (arg == null)
+                        break;
+                    ArgumentMode mode = typeManager.GetArgumentMode(param);
+                    if (mode == ArgumentMode.Once) {
+                        ModalExpression a = (ModalExpression) arg.Clone();
+                        a.Mode = ArgumentMode.In;
+                        newArguments.Append(a);
+                    }
+                    else {
+                        moveNextArguments.Append((ModalExpression) arg.Clone());
+                    }
+                    arg = (ModalExpression) arg.Next;
+                }
+                iter.New = new NewExpression(method.ReturnType,
+                                             newArguments,
+                                             iter.Location);
+                iter.New.Accept(this);
+                LocalExpression moveNextReceiver =
+                    new LocalExpression(iter.Local.Name, iter.Location);
+                iter.MoveNext = new CallExpression(moveNextReceiver,
+                                                   "MoveNext",
+                                                   moveNextArguments,
+                                                   iter.Location);
+                iter.MoveNext.Accept(this);
+                if (iter.NodeType != typeof(void)) {
+                    LocalExpression getCurrentReceiver =
+                        new LocalExpression(iter.Local.Name, iter.Location);
+                    iter.GetCurrent = new CallExpression(getCurrentReceiver,
+                                                         "GetCurrent",
+                                                         new TypedNodeList(),
+                                                         iter.Location);
+                    iter.GetCurrent.Accept(this);
+                }
             }
             catch (LookupMethodException e) {
                 string routInfo = typeManager.GetTypeName(receiverType) +
@@ -597,7 +655,32 @@ namespace Babel.Sather.Compiler
 
         public override void VisitNew(NewExpression newExpr)
         {
-            newExpr.NodeType = currentClass.TypeBuilder;
+            if (newExpr.Type == null) {
+                newExpr.Constructor = currentClass.Constructor;
+                newExpr.NodeType = currentClass.TypeBuilder;
+                return;
+            }
+            newExpr.Arguments.Accept(this);
+            try {
+                ConstructorInfo constructor =
+                    LookupConstructor(newExpr.Type, newExpr.Arguments);
+                SetupConstructor(newExpr, constructor, newExpr.Type);
+            }
+            catch (LookupMethodException e) {
+                string ctorInfo =
+                    typeManager.GetTypeName(newExpr.Type) + "::.ctor";
+                if (newExpr.Arguments.Length > 0) {
+                    ctorInfo += "(";
+                    foreach (ModalExpression arg in newExpr.Arguments) {
+                        if (arg != newExpr.Arguments.First)
+                            ctorInfo += ",";
+                        ctorInfo += typeManager.GetTypeName(arg.NodeType);
+                    }
+                    ctorInfo += ")";
+                }
+                report.Error(newExpr.Location,
+                             "{0} for {1}", e.Message, ctorInfo);
+            }
         }
 
         public override void VisitAnd(AndExpression and)
@@ -612,6 +695,11 @@ namespace Babel.Sather.Compiler
 
         public override void VisitBreak(BreakExpression breakExpr)
         {
+            if (currentLoop == null) {
+                report.Error(breakExpr.Location,
+                             "`break!', `while!', `until!' calls must appear inside loops");
+                return;
+            }
             breakExpr.NodeType = typeof(void);
         }
 
@@ -664,7 +752,7 @@ namespace Babel.Sather.Compiler
                 throw new LookupMethodException("no match");
             if (candidates.Count == 1)
                 return (MethodInfo) candidates[0];
-            return SelectBestOverload(candidates, arguments);
+            return (MethodInfo) SelectBestOverload(candidates, arguments);
         }
 
         protected bool ConfirmMethod(MethodInfo method,
@@ -731,11 +819,68 @@ namespace Babel.Sather.Compiler
             return true;
         }
 
-        protected MethodInfo SelectBestOverload(ArrayList candidates,
+        protected ConstructorInfo LookupConstructor(Type type,
+                                                    TypedNodeList arguments)
+        {
+            ConstructorInfo[] constructors = typeManager.GetConstructors(type);
+            ArrayList candidates = new ArrayList();
+            foreach (ConstructorInfo constructor in constructors) {
+                if (ConfirmConstructor(constructor, arguments))
+                    candidates.Add(constructor);
+            }
+            if (candidates.Count == 0)
+                throw new LookupMethodException("no match");
+            if (candidates.Count == 1)
+                return (ConstructorInfo) candidates[0];
+            return (ConstructorInfo) SelectBestOverload(candidates, arguments);
+        }
+
+        protected bool ConfirmConstructor(ConstructorInfo constructor,
+                                          TypedNodeList arguments)
+        {
+            ParameterInfo[] parameters = typeManager.GetParameters(constructor);
+            if (parameters.Length != arguments.Length) {
+                return false;
+            }
+            int pos = 0;
+            foreach (ModalExpression arg in arguments) {
+                ParameterInfo param = parameters[pos++];
+                switch (arg.Mode) {
+                case ArgumentMode.In:
+                    if (param.ParameterType.IsByRef) {
+                        return false;
+                    }
+                    if (arg.NodeType == null)
+                        continue;
+                    if (!IsSubtype(arg.NodeType, param.ParameterType))
+                        return false;
+                    break;
+                case ArgumentMode.Out:
+                    if (!(param.ParameterType.IsByRef &&
+                          !param.IsIn && param.IsOut))
+                        return false;
+                    Type paramType = param.ParameterType.GetElementType();
+                    if (!IsSubtype(paramType, arg.NodeType) ||
+                        paramType.IsValueType && !arg.NodeType.IsValueType)
+                        return false;
+                    break;
+                case ArgumentMode.InOut:
+                    if (!(param.ParameterType.IsByRef &&
+                          param.IsIn && param.IsOut))
+                        return false;
+                    if (arg.NodeType != param.ParameterType.GetElementType())
+                        return false;
+                    break;
+                }
+            }
+            return true;
+        }
+
+        protected MethodBase SelectBestOverload(ArrayList candidates,
                                                 TypedNodeList arguments)
         {
             ArrayList winners = null;
-            MethodInfo firstMethod = (MethodInfo) candidates[0];
+            MethodBase firstMethod = (MethodBase) candidates[0];
 
             int pos = 0;
             foreach (ModalExpression arg in arguments) {
@@ -753,7 +898,7 @@ namespace Babel.Sather.Compiler
                         bestType = t.GetElementType();
                     else
                         bestType = t;
-                    foreach (MethodInfo method in candidates) {
+                    foreach (MethodBase method in candidates) {
                         ParameterInfo param =
                             typeManager.GetParameters(method)[pos];
                         switch (arg.Mode) {
@@ -785,7 +930,7 @@ namespace Babel.Sather.Compiler
                     }
                     else {
                         ArrayList newWinners = new ArrayList();
-                        foreach (MethodInfo m in winners) {
+                        foreach (MethodBase m in winners) {
                             if (currentPosWinners.Contains(m))
                                 newWinners.Add(m);
                         }
@@ -800,7 +945,7 @@ namespace Babel.Sather.Compiler
             if (winners.Count > 1) {
                 throw new LookupMethodException("multiple matches");
             }
-            return (MethodInfo) winners[0];
+            return (MethodBase) winners[0];
         }
 
         protected bool IsSubtype(Type type, Type supertype)
@@ -832,6 +977,28 @@ namespace Babel.Sather.Compiler
                 (call.IsBuiltin || !method.IsStatic)) {
                 call.Receiver = new VoidExpression(call.Location);
                 call.Receiver.NodeType = receiverType;
+            }
+        }
+
+        protected void SetupConstructor(NewExpression newExpr,
+                                        ConstructorInfo constructor,
+                                        Type type)
+        {
+            if (!constructor.IsPublic &&
+                currentClass.TypeBuilder != type) {
+                report.Error(newExpr.Location,
+                             "cannot call private constructor");
+                return;
+            }
+
+            newExpr.Constructor = constructor;
+            newExpr.NodeType = type;
+            ParameterInfo[] parameters = typeManager.GetParameters(constructor);
+            int i = 0;
+            foreach (ModalExpression arg in newExpr.Arguments) {
+                ParameterInfo param = parameters[i++];
+                if (arg.NodeType == null) // void expression
+                    arg.NodeType = param.ParameterType;
             }
         }
     }

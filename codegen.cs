@@ -358,6 +358,7 @@ namespace Babel.Sather.Compiler
                 return;
             }
             if (yield.Value != null) {
+                ilGenerator.Emit(OpCodes.Ldarg_0);
                 yield.Value.Accept(this);
                 BoxIfNecessary(yield.Value.NodeType,
                                currentIter.Current.FieldType);
@@ -510,6 +511,25 @@ namespace Babel.Sather.Compiler
                 ilGenerator.EmitCall(OpCodes.Call, method, null);
         }
 
+        public override void VisitIterCall(IterCallExpression iter)
+        {
+            Label moveNextLabel = ilGenerator.DefineLabel();
+            Label getCurrentLabel = ilGenerator.DefineLabel();
+            iter.Local.Declare(ilGenerator);
+            iter.Local.EmitLoad(ilGenerator);
+            ilGenerator.Emit(OpCodes.Brtrue, moveNextLabel);
+            iter.Local.EmitStorePrefix(ilGenerator);
+            iter.New.Accept(this);
+            iter.Local.EmitStore(ilGenerator);
+            ilGenerator.MarkLabel(moveNextLabel);
+            iter.MoveNext.Accept(this);
+            ilGenerator.Emit(OpCodes.Brtrue, getCurrentLabel);
+            ilGenerator.Emit(OpCodes.Leave, currentLoop.EndLabel);
+            ilGenerator.MarkLabel(getCurrentLabel);
+            if (iter.GetCurrent != null)
+                iter.GetCurrent.Accept(this);
+        }
+
         public override void VisitModalExpression(ModalExpression modalExpr)
         {
             if (modalExpr.Mode == ArgumentMode.Out ||
@@ -544,7 +564,17 @@ namespace Babel.Sather.Compiler
 
         public override void VisitNew(NewExpression newExpr)
         {
-            ilGenerator.Emit(OpCodes.Newobj, currentClass.Constructor);
+            ParameterInfo[] parameters =
+                typeManager.GetParameters(newExpr.Constructor);
+            ModalExpression arg = (ModalExpression) newExpr.Arguments.First;
+            foreach (ParameterInfo param in parameters) {
+                if (arg == null)
+                    break;
+                arg.Accept(this);
+                BoxIfNecessary(arg.NodeType, param.ParameterType);
+                arg = (ModalExpression) arg.Next;
+            }
+            ilGenerator.Emit(OpCodes.Newobj, newExpr.Constructor);
         }
 
         public override void VisitAnd(AndExpression and)
@@ -575,12 +605,7 @@ namespace Babel.Sather.Compiler
 
         public override void VisitBreak(BreakExpression breakExpr)
         {
-            if (currentLoop == null) {
-                report.Error(breakExpr.Location,
-                             "`break!', `while!', `until!' calls must appear inside loops");
-                return;
-            }
-            ilGenerator.Emit(OpCodes.Br, currentLoop.EndLabel);
+            ilGenerator.Emit(OpCodes.Leave, currentLoop.EndLabel);
         }
 
         public override void VisitException(ExceptionExpression exception)

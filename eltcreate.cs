@@ -202,9 +202,10 @@ namespace Babel.Sather.Compiler
             list.CopyTo(constructorParams);
 
             iter.Constructor =
-                iter.Enumerator.DefineConstructor(MethodAttributes.Public,
-                                                  CallingConventions.Standard,
-                                                  constructorParams);
+                DefineConstructor(iter.Enumerator,
+                                  MethodAttributes.Public,
+                                  CallingConventions.Standard,
+                                  constructorParams);
             iter.Self =
                 iter.Enumerator.DefineField("_self",
                                             typeBuilder,
@@ -357,6 +358,10 @@ namespace Babel.Sather.Compiler
                 pb.SetCustomAttribute(cbuilder);
                 parameters[arg.Index - 1] =
                     new Parameter(pb, arg.NodeType, method);
+                ArgumentModeAttribute attr =
+                    new ArgumentModeAttribute(arg.Mode);
+                typeManager.AddCustomAttribute(parameters[arg.Index - 1], attr);
+
             }
             typeManager.AddMethod(type, method);
             typeManager.AddParameters(method, parameters);
@@ -383,6 +388,28 @@ namespace Babel.Sather.Compiler
             TypedNodeList args = new TypedNodeList(arg);
             return DefineMethod(type, name, attributes,
                                 typeof(void), args, false);
+        }
+
+        protected ConstructorBuilder
+        DefineConstructor(TypeBuilder type,
+                          MethodAttributes attributes,
+                          CallingConventions callingConventions,
+                          Type[] paramTypes)
+        {
+            ConstructorBuilder constructor =
+                type.DefineConstructor(attributes,
+                                       callingConventions,
+                                       paramTypes);
+            ParameterInfo[] parameters = new ParameterInfo[paramTypes.Length];
+            for (int i = 0; i < parameters.Length; i++) {
+                ParameterBuilder pb =
+                    constructor.DefineParameter(i + 1, 0, null);
+                parameters[i] =
+                    new Parameter(pb, paramTypes[i], constructor);
+            }
+            typeManager.AddConstructor(type, constructor);
+            typeManager.AddParameters(constructor, parameters);
+            return constructor;
         }
     }
 }

@@ -80,6 +80,8 @@ namespace Babel.Sather.Compiler
                     cls.Constructor = 
                         cls.TypeBuilder.
                         DefineDefaultConstructor(MethodAttributes.Public);
+                    typeManager.AddConstructor(cls.TypeBuilder,
+                                               cls.Constructor);
                     cls.StaticConstructor = 
                         cls.TypeBuilder.
                         DefineConstructor(MethodAttributes.Static,

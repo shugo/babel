@@ -309,9 +309,10 @@ namespace Babel.Sather.Compiler
 
     public class IterCallExpression : CallExpression
     {
-        CallExpression createCall;
-        CallExpression moveNextCall;
-        CallExpression getCurrentCall;
+        LocalVariable local;
+        NewExpression newExpression;
+        CallExpression moveNext;
+        CallExpression getCurrent;
 
         public IterCallExpression(Expression receiver,
                                   string name,
@@ -319,22 +320,28 @@ namespace Babel.Sather.Compiler
                                   Location location)
             : base(receiver, name, arguments, location) {}
 
-        public CallExpression CreateCall
+        public LocalVariable Local
         {
-            get { return createCall; }
-            set { createCall = value; }
+            get { return local; }
+            set { local = value; }
         }
 
-        public CallExpression MoveNextCall
+        public NewExpression New
         {
-            get { return moveNextCall; }
-            set { moveNextCall = value; }
+            get { return newExpression; }
+            set { newExpression = value; }
         }
 
-        public CallExpression GetCurrentCall
+        public CallExpression MoveNext
         {
-            get { return getCurrentCall; }
-            set { getCurrentCall = value; }
+            get { return moveNext; }
+            set { moveNext = value; }
+        }
+
+        public CallExpression GetCurrent
+        {
+            get { return getCurrent; }
+            set { getCurrent = value; }
         }
 
         public override void Accept(NodeVisitor visitor)
@@ -359,6 +366,7 @@ namespace Babel.Sather.Compiler
         public ArgumentMode Mode
         {
             get { return mode; }
+            set { mode = value; }
         }
 
         public Expression Expression
@@ -422,8 +430,37 @@ namespace Babel.Sather.Compiler
 
     public class NewExpression : Expression
     {
+        Type type;
+        TypedNodeList arguments;
+        ConstructorInfo constructor;
+
+        public NewExpression(Type type, TypedNodeList arguments,
+                             Location location)
+            : base(location)
+        {
+            this.type = type;
+            this.arguments = arguments;
+            this.constructor = null;
+        }
+
         public NewExpression(Location location)
-            : base(location) {}
+            : this(null, new TypedNodeList(), location) {}
+
+        public Type Type
+        {
+            get { return type; }
+        }
+
+        public TypedNodeList Arguments
+        {
+            get { return arguments; }
+        }
+
+        public ConstructorInfo Constructor
+        {
+            get { return constructor; }
+            set { constructor = value; }
+        }
 
         public override void Accept(NodeVisitor visitor)
         {
