@@ -150,7 +150,7 @@ namespace Babel.Compiler {
             ClassDefinition cls = typeManager.GetClass(typeSpecifier.Name);
             if (cls == null) {
                 report.Error(typeSpecifier.Location,
-                             "there is no class named {0}", typeSpecifier.Name);
+                             "there is no class named {0}", typeSpecifier);
                 return;
             }
             if (visitingClasses.ContainsKey(cls)) {

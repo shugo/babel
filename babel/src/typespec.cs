@@ -36,7 +36,7 @@ namespace Babel.Compiler {
 
         public override string ToString()
         {
-            return name;
+            return name.Replace(".", "::");
         }
 
         public virtual string Name {
