@@ -429,25 +429,27 @@ namespace Babel.Sather.Compiler
 
     public class NewExpression : Expression
     {
-        protected Type type;
+        protected TypeSpecifier typeSpecifier;
         protected TypedNodeList arguments;
         protected ConstructorInfo constructor;
 
-        public NewExpression(Type type, TypedNodeList arguments,
+        public NewExpression(TypeSpecifier typeSpecifier,
+                             TypedNodeList arguments,
                              Location location)
             : base(location)
         {
-            this.type = type;
+            this.typeSpecifier = typeSpecifier;
             this.arguments = arguments;
             this.constructor = null;
         }
-
+        
         public NewExpression(Location location)
-            : this(null, new TypedNodeList(), location) {}
+            : this(new TypeSpecifier("SAME", TypeKind.Same, location),
+                   new TypedNodeList(), location) {}
 
-        public virtual Type Type
+        public virtual TypeSpecifier TypeSpecifier
         {
-            get { return type; }
+            get { return typeSpecifier; }
         }
 
         public virtual TypedNodeList Arguments

@@ -103,13 +103,16 @@ namespace Babel.Sather.Compiler
                 typeSpecifier.NodeType = currentClass.TypeBuilder;
                 return;
             }
-            Type type = typeManager.GetType(typeSpecifier.Name);
-            if (type == null) {
-                report.Error(typeSpecifier.Location,
-                             "there is no class named {0}", typeSpecifier.Name);
-                return;
+            else {
+                Type type = typeManager.GetType(typeSpecifier.Name);
+                if (type == null) {
+                    report.Error(typeSpecifier.Location,
+                                 "there is no class named {0}",
+                                 typeSpecifier.Name);
+                    return;
+                }
+                typeSpecifier.NodeType = type;
             }
-            typeSpecifier.NodeType = type;
         }
 
         public override void VisitStatementList(StatementList statementList)
@@ -620,20 +623,19 @@ namespace Babel.Sather.Compiler
 
         public override void VisitNew(NewExpression newExpr)
         {
-            if (newExpr.Type == null) {
-                newExpr.Constructor = currentClass.Constructor;
-                newExpr.NodeType = currentClass.TypeBuilder;
+            newExpr.TypeSpecifier.Accept(this);
+            if (newExpr.TypeSpecifier.NodeType == null)
                 return;
-            }
             newExpr.Arguments.Accept(this);
+            Type type = newExpr.TypeSpecifier.NodeType;
             try {
                 ConstructorInfo constructor =
-                    LookupConstructor(newExpr.Type, newExpr.Arguments);
-                SetupConstructor(newExpr, constructor, newExpr.Type);
+                    LookupConstructor(type, newExpr.Arguments);
+                SetupConstructor(newExpr, constructor, type);
             }
             catch (LookupMethodException e) {
                 string ctorInfo =
-                    typeManager.GetTypeName(newExpr.Type) + "::.ctor";
+                    typeManager.GetTypeName(type) + "::.ctor";
                 if (newExpr.Arguments.Length > 0) {
                     ctorInfo += "(";
                     foreach (ModalExpression arg in newExpr.Arguments) {

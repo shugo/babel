@@ -1434,6 +1434,14 @@ new_expression
           {
               $$ = new NewExpression(lexer.Location);
           }
+        | NEW class_name opt_mode_expr_list
+          {
+              TypeSpecifier typeSpecifier =
+                  new TypeSpecifier((string) $2, TypeKind.Normal,
+                                    lexer.Location);
+              $$ = new NewExpression(typeSpecifier, (TypedNodeList) $3,
+                                     lexer.Location);
+          }
         ;
 
 create_expression
