@@ -11,7 +11,7 @@ using System.Reflection.Emit;
 using System.Collections;
 using System.Text;
 
-using Babel.Base;
+using Babel.Core;
 
 namespace Babel.Compiler {
     public enum ClassKind {

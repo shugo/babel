@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Base {
+namespace Babel.Core {
     public class STR {
         public static string create(string self)
         {

@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babel.Base;
+using Babel.Core;
 
 namespace Babel.Compiler {
     public class TypeManager {
@@ -90,13 +90,13 @@ namespace Babel.Compiler {
         {
             obType = AddBuiltinType("$ob", typeof(object));
             boolType = AddBuiltinType("bool", typeof(bool),
-                                      typeof(Babel.Base.BOOL));
+                                      typeof(Babel.Core.BOOL));
             intType = AddBuiltinType("int", typeof(int),
-                                     typeof(Babel.Base.INT));
+                                     typeof(Babel.Core.INT));
             fltType = AddBuiltinType("flt", typeof(float));
             charType = AddBuiltinType("char", typeof(char));
             strType = AddBuiltinType("str", typeof(string),
-                                     typeof(Babel.Base.STR));
+                                     typeof(Babel.Core.STR));
 	    voidType = new PredefinedTypeData(this, typeof(void));
 	    exceptionType = new PredefinedTypeData(this,
 						   typeof(System.Exception));

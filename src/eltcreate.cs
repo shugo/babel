@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babel.Base;
+using Babel.Core;
 
 namespace Babel.Compiler {
     public class TypeElementCreatingVisitor : AbstractNodeVisitor {
