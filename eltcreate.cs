@@ -429,9 +429,10 @@ namespace Babel.Sather.Compiler
                                                               arguments,
                                                               returnType);
                     string minfo2 = typeManager.GetMethodInfo(m);
-                    throw new MethodConflictionException(minfo1 +
-                                                         " conflicts with " +
-                                                         minfo2);
+                    string msg = "The signature: " + minfo1 +
+                        " conflicts with the earlier feature signature: " +
+                        minfo2;
+                    throw new MethodConflictionException(msg);
                 }
             }
 
