@@ -576,7 +576,7 @@ class_definition
                   name = sourceFile.Namespace + Type.Delimiter + (string) $2;
               currentClass = new ClassDefinition(name,
                                                  ClassKind.Reference,
-						 (NodeList) $3,
+						 (TypedNodeList) $3,
                                                  (TypedNodeList) $4,
                                                  lexer.Location);
           }

@@ -88,7 +88,7 @@ namespace Babel.Compiler {
         {
             typeSpecifier.TypeParameters.Accept(this);
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType = currentClass.TypeData;
+                typeSpecifier.NodeType = currentClass.BoundTypeData;
             }
             else {
                 TypeData type =
@@ -424,7 +424,7 @@ namespace Babel.Compiler {
 
         public override void VisitSelf(SelfExpression self)
         {
-            self.NodeType = typeManager.GetTypeData(currentClass.TypeBuilder);
+            self.NodeType = currentClass.BoundTypeData;
         }
 
         public override void VisitLocal(LocalExpression localExpr)

@@ -533,7 +533,7 @@ namespace Babel.Compiler {
         {
             typeSpecifier.TypeParameters.Accept(this);
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType = currentClass.TypeData;
+                typeSpecifier.NodeType = currentClass.BoundTypeData;
             }
             else {
                 TypeData type =

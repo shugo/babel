@@ -131,7 +131,8 @@ namespace Babel.Compiler {
                 }
                 else {
                     Type baseType = pd.ConstrainingType.RawType;
-                    pd.Builder.SetBaseTypeConstraint(baseType);
+                    if (baseType != typeof(object))
+                        pd.Builder.SetBaseTypeConstraint(baseType);
                 }
                 pd.NodeType =
                     new TypeParameterData(typeManager, pd.Builder,

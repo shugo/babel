@@ -22,7 +22,7 @@ namespace Babel.Compiler {
     public class ClassDefinition : CompositeNode, ICloneable {
         protected string name;
         protected ClassKind kind;
-        protected NodeList typeParameters;
+        protected TypedNodeList typeParameters;
         protected TypedNodeList supertypes;
         protected TypedNodeList subtypes;
         protected TypeBuilder typeBuilder;
@@ -33,7 +33,7 @@ namespace Babel.Compiler {
         protected ArrayList adapters;
 
         public ClassDefinition(string name, ClassKind kind,
-                               NodeList typeParameters,
+                               TypedNodeList typeParameters,
                                TypedNodeList supertypes,
                                TypedNodeList subtypes,
                                Location location)
@@ -54,7 +54,7 @@ namespace Babel.Compiler {
 
 
         public ClassDefinition(string name, ClassKind kind,
-                               NodeList typeParameters,
+                               TypedNodeList typeParameters,
                                TypedNodeList supertypes,
                                Location location)
             : this(name, kind, typeParameters, supertypes, null, location) {}
@@ -67,7 +67,7 @@ namespace Babel.Compiler {
             get { return kind; }
         }
 
-        public virtual NodeList TypeParameters {
+        public virtual TypedNodeList TypeParameters {
             get { return typeParameters; }
         }
 
@@ -87,6 +87,17 @@ namespace Babel.Compiler {
         public virtual TypeData TypeData {
             get { return typeData; }
             set { typeData = value; }
+        }
+
+        public virtual TypeData BoundTypeData {
+            get {
+                if (TypeParameters.Length > 0) {
+                    return TypeData.BindGenericParameters(TypeParameters);
+                }
+                else {
+                    return TypeData;
+                }
+            }
         }
 
         public virtual ConstructorBuilder Constructor {
