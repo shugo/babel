@@ -84,13 +84,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class DefiningConstructorData : ConstructorData
+    public class UserDefinedConstructorData : ConstructorData
     {
-        public DefiningConstructorData(TypeManager typeManager,
-                                       MethodBuilder methodBuilder)
+        public UserDefinedConstructorData(TypeManager typeManager,
+                                          MethodBuilder methodBuilder)
             : base(typeManager, methodBuilder)
         {
-            parameterList = new DefiningParameterList();
+            parameterList = new UserDefinedParameterList();
         }
     }
 
@@ -122,13 +122,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class DefiningMethodData : MethodData
+    public class UserDefinedMethodData : MethodData
     {
-        public DefiningMethodData(TypeManager typeManager,
-                                  MethodBuilder methodBuilder)
+        public UserDefinedMethodData(TypeManager typeManager,
+                                     MethodBuilder methodBuilder)
             : base(typeManager, methodBuilder)
         {
-            parameterList = new DefiningParameterList();
+            parameterList = new UserDefinedParameterList();
         }
     }
 }

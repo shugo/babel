@@ -68,11 +68,11 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class DefiningParameterData : ParameterData
+    public class UserDefinedParameterData : ParameterData
     {
         protected ArgumentMode mode;
 
-        public DefiningParameterData(TypeManager typeManager,
+        public UserDefinedParameterData(TypeManager typeManager,
                                      ParameterInfo rawParameter)
             : base(typeManager, rawParameter)
         {
@@ -126,11 +126,11 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class DefiningParameterList : ParameterList
+    public class UserDefinedParameterList : ParameterList
     {
         protected ArrayList parameters;
 
-        public DefiningParameterList()
+        public UserDefinedParameterList()
         {
             parameters = null;
         }
