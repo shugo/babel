@@ -25,7 +25,7 @@ namespace Babel.Sather.Compiler
         protected LocalVariableStack localVariableStack;
         protected LoopStatement currentLoop;
         protected int temporallyCount;
-        protected Type currentExceptionType;
+        protected TypeData currentExceptionType;
         protected bool inSharedContext;
 
         public TypeCheckingVisitor(Report report)
@@ -87,11 +87,11 @@ namespace Babel.Sather.Compiler
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType = currentClass.TypeBuilder;
-                return;
+                typeSpecifier.NodeType =
+                    typeManager.GetTypeData(currentClass.TypeBuilder);
             }
             else {
-                Type type = typeManager.GetType(typeSpecifier.Name);
+                TypeData type = typeManager.GetType(typeSpecifier.Name);
                 if (type == null) {
                     report.Error(typeSpecifier.Location,
                                  "there is no class named {0}",
@@ -116,7 +116,7 @@ namespace Babel.Sather.Compiler
                 report.Error(decl.Location,
                              "this local variable declaration is " +
                              "in the scope of {0}:{1} which has the same name",
-                             arg.Name, arg.NodeType);
+                             arg.Name, arg.NodeType.FullName);
                 return;
             }
             LocalVariable local = localVariableStack.GetLocal(decl.Name);
@@ -127,7 +127,7 @@ namespace Babel.Sather.Compiler
                              local.Name, local.LocalType);
                 return;
             }
-            Type type;
+            TypeData type;
             if (!decl.TypeSpecifier.IsNull) {
                 decl.TypeSpecifier.Accept(this);
                 type = decl.TypeSpecifier.NodeType;
@@ -151,11 +151,11 @@ namespace Babel.Sather.Compiler
 
         public override void VisitAssign(AssignStatement assign)
         {
-            Type lhsType;
+            TypeData lhsType;
             Argument arg = currentRoutine.GetArgument(assign.Name);
             if (arg != null) {
                 if (arg.NodeType.IsByRef)
-                    lhsType = arg.NodeType.GetElementType();
+                    lhsType = arg.NodeType.ElementType;
                 else
                     lhsType = arg.NodeType;
             }
@@ -184,7 +184,8 @@ namespace Babel.Sather.Compiler
                         return;
                     ParameterInfo[] parameters =
                         typeManager.GetParameters(assign.Call.Method);
-                    lhsType = parameters[0].ParameterType;
+                    lhsType =
+                        typeManager.GetTypeData(parameters[0].ParameterType);
                 }
             }
             if (assign.Value is VoidExpression) {
@@ -196,7 +197,7 @@ namespace Babel.Sather.Compiler
                     assign.Value.Accept(this);
                 if (assign.Value.NodeType == null)
                     return;
-                if (!IsSubtype(assign.Value.NodeType, lhsType)) {
+                if (!assign.Value.NodeType.IsSubtypeOf(lhsType)) {
                     report.Error(assign.Location,
                                  "{0} is not a subtype of {1}",
                                  assign.Value.NodeType, lhsType);
@@ -208,7 +209,7 @@ namespace Babel.Sather.Compiler
         public override void VisitIf(IfStatement ifStmt)
         {
             ifStmt.Test.Accept(this);
-            if (ifStmt.Test.NodeType != typeof(bool)) {
+            if (ifStmt.Test.NodeType != typeManager.BoolType) {
                 report.Error(ifStmt.Test.Location,
                              "BOOL expression expected");
             }
@@ -247,16 +248,13 @@ namespace Babel.Sather.Compiler
                     ret.Value.NodeType = currentRoutine.ReturnType.NodeType;
                 }
                 else {
-                    Type expectedType = currentRoutine.ReturnType.NodeType;
-                    if (!IsSubtype(ret.Value.NodeType, expectedType)) {
-                        string destType =
-                            typeManager.GetTypeName(expectedType);
-                        string srcType =
-                            typeManager.GetTypeName(ret.Value.NodeType);
+                    TypeData expectedType = currentRoutine.ReturnType.NodeType;
+                    if (!ret.Value.NodeType.IsSubtypeOf(expectedType)) {
                         report.Error(ret.Location,
                                      "the type of the destination: {0} is " +
                                      "not a supertype of {1}",
-                                     destType, srcType);
+                                     expectedType.Name,
+                                     ret.Value.NodeType.FullName);
                         return;
                     }
                 }
@@ -280,18 +278,15 @@ namespace Babel.Sather.Compiler
                     CallExpression call =
                         new CallExpression(test, "is_eq", args, value.Location);
                     call.Accept(this);
-                    if (call.NodeType == typeof(bool)) {
+                    if (call.NodeType == typeManager.BoolType) {
                         when.TestCallList.Append(call);
                     }
                     else {
                         if (call.NodeType != null) {
-                            string receiverType =
-                                typeManager.GetTypeName(caseStmt.Test.NodeType);
-                            string argType =
-                                typeManager.GetTypeName(value.NodeType);
                             report.Error(value.Location,
                                          "no match for {0}::is_eq({1}):BOOL",
-                                         receiverType, argType);
+                                         caseStmt.Test.NodeType.FullName,
+                                         value.NodeType.FullName);
                         }
                     }
                 }
@@ -312,13 +307,13 @@ namespace Babel.Sather.Compiler
                              "or an argument");
                 return;
             }
+            TypeData varType = typecase.Variable.NodeType;
             foreach (TypecaseWhen when in typecase.WhenPartList) {
                 when.TypeSpecifier.Accept(this);
                 if (when.TypeSpecifier.NodeType == null)
                     continue;
-                Type localType;
-                if (IsSubtype(typecase.Variable.NodeType,
-                               when.TypeSpecifier.NodeType)) {
+                TypeData localType;
+                if (varType.IsSubtypeOf(when.TypeSpecifier.NodeType)) {
                     localType = typecase.Variable.NodeType;
                 }
                 else {
@@ -361,14 +356,15 @@ namespace Babel.Sather.Compiler
             protect.StatementList.Accept(this);
             foreach (ProtectWhen when in protect.WhenPartList) {
                 when.TypeSpecifier.Accept(this);
-                Type prevExceptionType = currentExceptionType;
+                TypeData prevExceptionType = currentExceptionType;
                 currentExceptionType = when.TypeSpecifier.NodeType;
                 when.ThenPart.Accept(this);
                 currentExceptionType = prevExceptionType;
             }
             if (protect.ElsePart != null) {
-                Type prevExceptionType = currentExceptionType;
-                currentExceptionType = typeof(Exception);
+                TypeData prevExceptionType = currentExceptionType;
+                currentExceptionType =
+                    typeManager.GetTypeData(typeof(Exception));
                 protect.ElsePart.Accept(this);
                 currentExceptionType = prevExceptionType;
             }
@@ -382,45 +378,47 @@ namespace Babel.Sather.Compiler
         public override void VisitRaise(RaiseStatement raise)
         {
             raise.Value.Accept(this);
-            if (raise.Value.NodeType != typeof(string) &&
-                !IsSubtype(raise.Value.NodeType, typeof(Exception))) {
+            if (raise.Value.NodeType != typeManager.StrType &&
+                !raise.Value.NodeType.IsSubtypeOf(typeManager.ExceptionType)) {
                 report.Error(raise.Location, "exception expected");
             }
         }
 
-        public override void VisitExpressionStatement(ExpressionStatement exprStmt)
+        public override void
+        VisitExpressionStatement(ExpressionStatement exprStmt)
         {
             exprStmt.Expression.Accept(this);
             if (exprStmt.Expression.NodeType != null &&
-                exprStmt.Expression.NodeType != typeof(void)) {
+                !exprStmt.Expression.NodeType.IsVoid) {
                 report.Error(exprStmt.Location,
-                             "expressions used as statements may not have return values");
+                             "expressions used as statements may not have " +
+                             "return values");
             }
         }
 
         public override void VisitBoolLiteral(BoolLiteralExpression boolLiteral)
         {
-            boolLiteral.NodeType = typeof(bool);
+            boolLiteral.NodeType = typeManager.BoolType;
         }
 
         public override void VisitIntLiteral(IntLiteralExpression intLiteral)
         {
-            intLiteral.NodeType = typeof(int);
+            intLiteral.NodeType = typeManager.IntType;
         }
 
         public override void VisitCharLiteral(CharLiteralExpression charLiteral)
         {
-            charLiteral.NodeType = typeof(char);
+            charLiteral.NodeType = typeManager.CharType;
         }
 
         public override void VisitStrLiteral(StrLiteralExpression strLiteral)
         {
-            strLiteral.NodeType = typeof(string);
+            strLiteral.NodeType = typeManager.StrType;
         }
 
         public override void VisitSelf(SelfExpression self)
         {
-            self.NodeType = currentClass.TypeBuilder;
+            self.NodeType = typeManager.GetTypeData(currentClass.TypeBuilder);
         }
 
         public override void VisitLocal(LocalExpression localExpr)
@@ -429,7 +427,7 @@ namespace Babel.Sather.Compiler
                 Argument arg = currentRoutine.GetArgument(localExpr.Name);
                 if (arg != null) {
                     if (arg.NodeType.IsByRef)
-                        localExpr.NodeType = arg.NodeType.GetElementType();
+                        localExpr.NodeType = arg.NodeType.ElementType;
                     else
                         localExpr.NodeType = arg.NodeType;
                     return;
@@ -452,7 +450,7 @@ namespace Babel.Sather.Compiler
 
         public override void VisitCall(CallExpression call)
         {
-            Type receiverType;
+            TypeData receiverType;
             if (call.Receiver != null) {
                 call.Receiver.Accept(this);
                 receiverType = call.Receiver.NodeType;
@@ -467,7 +465,7 @@ namespace Babel.Sather.Compiler
             }
             call.Arguments.Accept(this);
             MethodInfo method;
-            Type builtinMethodContainer =
+            TypeData builtinMethodContainer =
                 typeManager.GetBuiltinMethodContainer(receiverType);
             if (builtinMethodContainer != null) {
                 try {
@@ -495,14 +493,14 @@ namespace Babel.Sather.Compiler
                 SetupMethod(call, method, receiverType);
             }
             catch (LookupMethodException e) {
-                string routInfo = typeManager.GetTypeName(receiverType) +
+                string routInfo = receiverType.FullName +
                     "::" + call.Name;
                 if (call.Arguments.Length > 0) {
                     routInfo += "(";
                     foreach (ModalExpression arg in call.Arguments) {
                         if (arg != call.Arguments.First)
                             routInfo += ",";
-                        routInfo += typeManager.GetTypeName(arg.NodeType);
+                        routInfo += arg.NodeType.FullName;
                     }
                     routInfo += ")";
                 }
@@ -520,7 +518,7 @@ namespace Babel.Sather.Compiler
                              "iterator calls must appear inside loops");
                 return;
             }
-            Type receiverType;
+            TypeData receiverType;
             if (iter.Receiver != null) {
                 iter.Receiver.Accept(this);
                 receiverType = iter.Receiver.NodeType;
@@ -535,7 +533,7 @@ namespace Babel.Sather.Compiler
             }
             iter.Arguments.Accept(this);
             MethodInfo method;
-            Type builtinMethodContainer =
+            TypeData builtinMethodContainer =
                 typeManager.GetBuiltinMethodContainer(receiverType);
             if (builtinMethodContainer != null) {
                 try {
@@ -563,14 +561,14 @@ namespace Babel.Sather.Compiler
                 SetupIter(iter, method, receiverType);
             }
             catch (LookupMethodException e) {
-                string iterInfo = typeManager.GetTypeName(receiverType) +
+                string iterInfo = receiverType.FullName +
                     "::" + iter.Name;
                 if (iter.Arguments.Length > 0) {
                     iterInfo += "(";
                     foreach (ModalExpression arg in iter.Arguments) {
                         if (arg != iter.Arguments.First)
                             iterInfo += ",";
-                        iterInfo += typeManager.GetTypeName(arg.NodeType);
+                        iterInfo += arg.NodeType.FullName;
                     }
                     iterInfo += ")";
                 }
@@ -605,7 +603,7 @@ namespace Babel.Sather.Compiler
         public override void VisitVoidTest(VoidTestExpression voidTest)
         {
             voidTest.Expression.Accept(this);
-            voidTest.NodeType = typeof(bool);
+            voidTest.NodeType = typeManager.BoolType;
         }
 
         public override void VisitNew(NewExpression newExpr)
@@ -614,7 +612,7 @@ namespace Babel.Sather.Compiler
             if (newExpr.TypeSpecifier.NodeType == null)
                 return;
             newExpr.Arguments.Accept(this);
-            Type type = newExpr.TypeSpecifier.NodeType;
+            TypeData type = newExpr.TypeSpecifier.NodeType;
             try {
                 ConstructorInfo constructor =
                     LookupConstructor(type, newExpr.Arguments);
@@ -622,13 +620,13 @@ namespace Babel.Sather.Compiler
             }
             catch (LookupMethodException e) {
                 string ctorInfo =
-                    typeManager.GetTypeName(type) + "::.ctor";
+                    type.FullName + "::.ctor";
                 if (newExpr.Arguments.Length > 0) {
                     ctorInfo += "(";
                     foreach (ModalExpression arg in newExpr.Arguments) {
                         if (arg != newExpr.Arguments.First)
                             ctorInfo += ",";
-                        ctorInfo += typeManager.GetTypeName(arg.NodeType);
+                        ctorInfo += arg.NodeType.FullName;
                     }
                     ctorInfo += ")";
                 }
@@ -655,7 +653,7 @@ namespace Babel.Sather.Compiler
                              "must appear inside loops");
                 return;
             }
-            breakExpr.NodeType = typeof(void);
+            breakExpr.NodeType = typeManager.VoidType;
         }
 
         public override void VisitException(ExceptionExpression exception)
@@ -681,16 +679,17 @@ namespace Babel.Sather.Compiler
         {
             cond.Left.Accept(this);
             cond.Right.Accept(this);
-            if (cond.Left.NodeType != typeof(bool) ||
-                cond.Right.NodeType != typeof(bool)) {
+            if (cond.Left.NodeType != typeManager.BoolType ||
+                cond.Right.NodeType != typeManager.BoolType) {
                 report.Error(cond.Location,
                              "operand of `{0}' must be BOOL",
                              cond.Name);
                 return;
             }
+            cond.NodeType = typeManager.BoolType;
         }
 
-        protected virtual MethodInfo LookupMethod(Type type,
+        protected virtual MethodInfo LookupMethod(TypeData type,
                                                   string name,
                                                   TypedNodeList arguments,
                                                   bool hasReturnValue)
@@ -728,31 +727,33 @@ namespace Babel.Sather.Compiler
             int pos = 0;
             foreach (ModalExpression arg in arguments) {
                 ParameterInfo param = parameters[pos++];
+                TypeData paramType =
+                    typeManager.GetTypeData(param.ParameterType);
                 switch (arg.Mode) {
                 case ArgumentMode.In:
                 case ArgumentMode.Once:
-                    if (param.ParameterType.IsByRef) {
+                    if (paramType.IsByRef) {
                         return false;
                     }
                     if (arg.NodeType == null)
                         continue;
-                    if (!IsSubtype(arg.NodeType, param.ParameterType))
+                    if (!arg.NodeType.IsSubtypeOf(paramType))
                         return false;
                     break;
                 case ArgumentMode.Out:
-                    if (!(param.ParameterType.IsByRef &&
+                    if (!(paramType.IsByRef &&
                           !param.IsIn && param.IsOut))
                         return false;
-                    Type paramType = param.ParameterType.GetElementType();
-                    if (!IsSubtype(paramType, arg.NodeType) ||
-                        paramType.IsValueType && !arg.NodeType.IsValueType)
+                    TypeData eltType = paramType.ElementType;
+                    if (!eltType.IsSubtypeOf(arg.NodeType) ||
+                        eltType.IsValueType && !arg.NodeType.IsValueType)
                         return false;
                     break;
                 case ArgumentMode.InOut:
-                    if (!(param.ParameterType.IsByRef &&
+                    if (!(paramType.IsByRef &&
                           param.IsIn && param.IsOut))
                         return false;
-                    if (arg.NodeType != param.ParameterType.GetElementType())
+                    if (arg.NodeType != paramType.ElementType)
                         return false;
                     break;
                 }
@@ -761,10 +762,11 @@ namespace Babel.Sather.Compiler
         }
 
         protected virtual ConstructorInfo
-        LookupConstructor(Type type,
+        LookupConstructor(TypeData type,
                           TypedNodeList arguments)
         {
-            ConstructorInfo[] constructors = typeManager.GetConstructors(type);
+            ConstructorInfo[] constructors =
+                typeManager.GetConstructors(type.RawType);
             ArrayList candidates = new ArrayList();
             foreach (ConstructorInfo constructor in constructors) {
                 if (CheckConstructor(constructor, arguments))
@@ -786,30 +788,32 @@ namespace Babel.Sather.Compiler
             int pos = 0;
             foreach (ModalExpression arg in arguments) {
                 ParameterInfo param = parameters[pos++];
+                TypeData paramType =
+                    typeManager.GetTypeData(param.ParameterType);
                 switch (arg.Mode) {
                 case ArgumentMode.In:
-                    if (param.ParameterType.IsByRef) {
+                    if (paramType.IsByRef) {
                         return false;
                     }
                     if (arg.NodeType == null)
                         continue;
-                    if (!IsSubtype(arg.NodeType, param.ParameterType))
+                    if (!arg.NodeType.IsSubtypeOf(paramType))
                         return false;
                     break;
                 case ArgumentMode.Out:
-                    if (!(param.ParameterType.IsByRef &&
+                    if (!(paramType.IsByRef &&
                           !param.IsIn && param.IsOut))
                         return false;
-                    Type paramType = param.ParameterType.GetElementType();
-                    if (!IsSubtype(paramType, arg.NodeType) ||
-                        paramType.IsValueType && !arg.NodeType.IsValueType)
+                    TypeData eltType = paramType.ElementType;
+                    if (!eltType.IsSubtypeOf(arg.NodeType) ||
+                        eltType.IsValueType && !arg.NodeType.IsValueType)
                         return false;
                     break;
                 case ArgumentMode.InOut:
-                    if (!(param.ParameterType.IsByRef &&
+                    if (!(paramType.IsByRef &&
                           param.IsIn && param.IsOut))
                         return false;
-                    if (arg.NodeType != param.ParameterType.GetElementType())
+                    if (arg.NodeType != paramType.ElementType)
                         return false;
                     break;
                 }
@@ -896,10 +900,11 @@ namespace Babel.Sather.Compiler
 
         protected virtual void SetupMethod(CallExpression call,
                                            MethodInfo method,
-                                           Type receiverType)
+                                           TypeData receiverType)
         {
             if (!method.IsPublic &&
-                currentClass.TypeBuilder != receiverType) {
+                typeManager.GetTypeData(currentClass.TypeBuilder) !=
+                receiverType) {
                 report.Error(call.Location,
                              "cannot call private routine {0}",
                              call.Name);
@@ -907,13 +912,13 @@ namespace Babel.Sather.Compiler
             }
 
             call.Method = method;
-            call.NodeType = method.ReturnType;
+            call.NodeType = typeManager.GetReturnType(method);
             ParameterInfo[] parameters = typeManager.GetParameters(method);
             int i = 0;
             foreach (ModalExpression arg in call.Arguments) {
                 ParameterInfo param = parameters[i++];
                 if (arg.NodeType == null) // void expression
-                    arg.NodeType = param.ParameterType;
+                    arg.NodeType = typeManager.GetTypeData(param.ParameterType);
             }
             if (call.Receiver == null &&
                 (call.IsBuiltin || !method.IsStatic)) {
@@ -924,10 +929,10 @@ namespace Babel.Sather.Compiler
 
         protected virtual void SetupConstructor(NewExpression newExpr,
                                                 ConstructorInfo constructor,
-                                                Type type)
+                                                TypeData type)
         {
             if (!constructor.IsPublic &&
-                currentClass.TypeBuilder != type) {
+                currentClass.TypeData != type) {
                 report.Error(newExpr.Location,
                              "cannot call private constructor");
                 return;
@@ -940,16 +945,16 @@ namespace Babel.Sather.Compiler
             foreach (ModalExpression arg in newExpr.Arguments) {
                 ParameterInfo param = parameters[i++];
                 if (arg.NodeType == null) // void expression
-                    arg.NodeType = param.ParameterType;
+                    arg.NodeType = typeManager.GetTypeData(param.ParameterType);
             }
         }
 
         protected virtual void SetupIter(IterCallExpression iter,
                                          MethodInfo method,
-                                         Type receiverType)
+                                         TypeData receiverType)
         {
             if (!method.IsPublic &&
-                currentClass.TypeBuilder != receiverType) {
+                currentClass.TypeData != receiverType) {
                 report.Error(iter.Location,
                              "cannot call private iterator {0}",
                              iter.Name);
@@ -957,14 +962,14 @@ namespace Babel.Sather.Compiler
             }
 
             iter.Method = method;
-            iter.NodeType = typeManager.GetIterReturnType(method);
+            iter.NodeType = typeManager.GetReturnType(method);
             if (iter.Receiver == null &&
                 (iter.IsBuiltin || !method.IsStatic)) {
                 iter.Receiver = new VoidExpression(iter.Location);
                 iter.Receiver.NodeType = receiverType;
             }
 
-            Type iterType = method.ReturnType;
+            TypeData iterType = typeManager.GetTypeData(method.ReturnType);
 
             string localName = getTemporallyName();
             iter.Local = localVariableStack.AddLocal(localName,
@@ -984,7 +989,7 @@ namespace Babel.Sather.Compiler
             foreach (ModalExpression arg in iter.Arguments) {
                 ParameterInfo param = parameters[i++];
                 if (arg.NodeType == null) // void expression
-                    arg.NodeType = param.ParameterType;
+                    arg.NodeType = typeManager.GetTypeData(param.ParameterType);
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
                 if (mode != ArgumentMode.Once) {
                     moveNextArguments.Append((ModalExpression) arg.Clone());
@@ -997,7 +1002,7 @@ namespace Babel.Sather.Compiler
                                                moveNextArguments,
                                                iter.Location);
             iter.MoveNext.Accept(this);
-            if (iter.NodeType != typeof(void)) {
+            if (iter.NodeType != typeManager.VoidType) {
                 LocalExpression getCurrentReceiver =
                     new LocalExpression(iter.Local.Name, iter.Location);
                 iter.GetCurrent = new CallExpression(getCurrentReceiver,

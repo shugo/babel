@@ -68,14 +68,13 @@ namespace Babel.Sather.Compiler
         public NullTypeSpecifier()
             : base(null, TypeKind.Normal, Location.Null)
         {
-            NodeType = typeof(void);
+            name = "System.Void";
+            kind = TypeKind.Normal;
         }
 
         public override bool IsNull
         {
             get { return true; }
         }
-
-        public override void Accept(NodeVisitor visitor) {}
     }
 }

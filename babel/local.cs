@@ -15,10 +15,10 @@ namespace Babel.Sather.Compiler
     public abstract class LocalVariable
     {
         protected string name;
-        protected Type localType;
+        protected TypeData localType;
         protected bool isTypecaseVariable;
 
-        public LocalVariable(string name, Type localType,
+        public LocalVariable(string name, TypeData localType,
                              bool isTypecaseVariable)
         {
             this.name = name;
@@ -31,9 +31,14 @@ namespace Babel.Sather.Compiler
             get { return name; }
         }
 
-        public virtual Type LocalType
+        public virtual TypeData LocalType
         {
             get { return localType; }
+        }
+
+        public virtual Type RawType
+        {
+            get { return localType.RawType; }
         }
 
         public virtual bool IsTypecaseVariable
@@ -62,10 +67,10 @@ namespace Babel.Sather.Compiler
             return null;
         }
 
-        public abstract LocalVariable CreateLocal(string name, Type type,
+        public abstract LocalVariable CreateLocal(string name, TypeData type,
                                                   bool isTypecaseVariable);
 
-        public virtual LocalVariable AddLocal(string name, Type type,
+        public virtual LocalVariable AddLocal(string name, TypeData type,
                                               bool isTypecaseVariable)
         {
             Hashtable tbl = (Hashtable) Peek();
@@ -74,7 +79,7 @@ namespace Babel.Sather.Compiler
             return local;
         }
 
-        public virtual LocalVariable AddLocal(string name, Type type)
+        public virtual LocalVariable AddLocal(string name, TypeData type)
         {
             return AddLocal(name, type, false);
         }
@@ -84,19 +89,19 @@ namespace Babel.Sather.Compiler
     {
         protected LocalBuilder localBuilder;
 
-        public RoutineLocalVariable(string name, Type localType,
+        public RoutineLocalVariable(string name, TypeData localType,
                                     bool isTypecaseVariable)
             : base(name, localType, isTypecaseVariable)
         {
             localBuilder = null;
         }
 
-        public RoutineLocalVariable(string name, Type localType)
+        public RoutineLocalVariable(string name, TypeData localType)
             : this(name, localType, false) {}
 
         public override void Declare(ILGenerator ilGenerator)
         {
-            localBuilder = ilGenerator.DeclareLocal(LocalType);
+            localBuilder = ilGenerator.DeclareLocal(LocalType.RawType);
         }
 
         public override void EmitStorePrefix(ILGenerator ilGenerator)
@@ -121,7 +126,7 @@ namespace Babel.Sather.Compiler
 
     public class RoutineLocalVariableStack : LocalVariableStack
     {
-        public override LocalVariable CreateLocal(string name, Type type,
+        public override LocalVariable CreateLocal(string name, TypeData type,
                                                   bool isTypecaseVariable)
         {
             return new RoutineLocalVariable(name, type, isTypecaseVariable);
@@ -134,7 +139,7 @@ namespace Babel.Sather.Compiler
         protected int index;
         protected FieldBuilder fieldBuilder;
 
-        public IterLocalVariable(string name, Type localType,
+        public IterLocalVariable(string name, TypeData localType,
                                  bool isTypecaseVariable,
                                  TypeBuilder enumerator,
                                  int index)
@@ -149,7 +154,8 @@ namespace Babel.Sather.Compiler
         {
             fieldBuilder =
                 enumerator.DefineField("__local" + index + "_" + Name,
-                                       LocalType, FieldAttributes.Private);
+                                       LocalType.RawType,
+                                       FieldAttributes.Private);
         }
 
         public override void EmitStorePrefix(ILGenerator ilGenerator)
@@ -186,7 +192,7 @@ namespace Babel.Sather.Compiler
             count = 0;
         }
 
-        public override LocalVariable CreateLocal(string name, Type type,
+        public override LocalVariable CreateLocal(string name, TypeData type,
                                                   bool isTypecaseVariable)
         {
             return new IterLocalVariable(name, type, isTypecaseVariable,

@@ -480,7 +480,6 @@ namespace Babel.Sather.Compiler
         {
             this.left = left;
             this.right = right;
-            NodeType = typeof(bool);
         }
 
         public virtual Expression Left
@@ -575,7 +574,6 @@ namespace Babel.Sather.Compiler
             : base(location)
         {
             ifStatement = new IfStatement(test, thenPart, elsePart, location);
-            NodeType = typeof(void);
         }
 
         public override void Accept(NodeVisitor visitor)

@@ -1,5 +1,5 @@
 CS	= mcs
-MONO	= mono
+MONO	= mono --debug
 JAY	= jay
 SACOMP	= $(MONO) $(COMPILER)
 
@@ -18,6 +18,8 @@ COMPILER_SRCS	= compiler.cs \
 		  local.cs \
 		  location.cs \
 		  report.cs \
+		  type.cs \
+		  method.cs \
 		  parameter.cs \
 		  typemanager.cs \
 		  typecreate.cs \
@@ -46,17 +48,24 @@ SKELETON	= `$(JAY) -p`/skeleton.cs
 
 all: $(COMPILER) $(STD_LIBS)
 
-check: all
-	cd tests; $(MAKE) check
-
 clean:
 	rm -f $(CORE_LIB)
 	rm -f $(COMPILER)
 	rm -f $(STD_LIBS)
 	rm -f parser.cs
 	rm -f y.output
+	rm -f TAGS
 	rm -f *~
 	cd tests; $(MAKE) clean
+
+check: all
+	cd tests; $(MAKE) check
+
+tags: TAGS
+
+TAGS: $(COMPILER_SRCS) $(CORE_LIB_SRCS)
+	ctags -e --c#-kinds=-fn --extra=+q \
+		$(COMPILER_SRCS) $(CORE_LIB_SRCS)
 
 bsc.exe: $(COMPILER_SRCS) $(CORE_LIB)
 	$(CS) $(CSFLAGS) -target:exe -out:bsc.exe \

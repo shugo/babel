@@ -16,108 +16,172 @@ namespace Babel.Sather.Compiler
 {
     public class TypeManager
     {
-        protected Hashtable builtinTypes;
-        protected Hashtable builtinTypeNames;
-        protected Hashtable builtinMethodContainers;
         protected ArrayList assemblies;
         protected ArrayList modules;
         protected Hashtable classes;
+        protected Hashtable typeDataTable;
         protected Hashtable parentsTable;
         protected Hashtable ancestorsTable;
         protected Hashtable methodsTable;
         protected Hashtable constructorsTable;
         protected Hashtable parametersTable;
         protected Hashtable customAttributesTable;
+        protected Hashtable builtinTypes;
+        protected Hashtable builtinTypeNames;
+        protected Hashtable builtinMethodContainers;
+        protected TypeData obType;
+        protected TypeData boolType;
+        protected TypeData intType;
+        protected TypeData fltType;
+        protected TypeData charType;
+        protected TypeData strType;
+        protected TypeData voidType;
+        protected TypeData exceptionType;
 
         public TypeManager()
         {
-            builtinTypes = new Hashtable();
-            builtinTypeNames = new Hashtable();
-            builtinMethodContainers = new Hashtable();
             assemblies = new ArrayList();
             modules = new ArrayList();
             classes = new Hashtable();
+            typeDataTable = new Hashtable();
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
             methodsTable = new Hashtable();
             constructorsTable = new Hashtable();
             parametersTable = new Hashtable();
             customAttributesTable = new Hashtable();
+            builtinTypes = new Hashtable();
+            builtinTypeNames = new Hashtable();
+            builtinMethodContainers = new Hashtable();
             InitBuiltinTypes();
+        }
+
+        public virtual TypeData ObType
+        {
+            get { return obType; }
+        }
+
+        public virtual TypeData BoolType
+        {
+            get { return boolType; }
+        }
+
+        public virtual TypeData IntType
+        {
+            get { return intType; }
+        }
+
+        public virtual TypeData FltType
+        {
+            get { return fltType; }
+        }
+
+        public virtual TypeData CharType
+        {
+            get { return charType; }
+        }
+
+        public virtual TypeData StrType
+        {
+            get { return strType; }
+        }
+
+        public virtual TypeData VoidType
+        {
+            get { return voidType; }
+        }
+
+        public virtual TypeData ExceptionType
+        {
+            get { return exceptionType; }
         }
 
         protected virtual void InitBuiltinTypes()
         {
-            AddBuiltinType("$OB", typeof(object));
-            AddBuiltinType("BOOL", typeof(bool),
-                           typeof(Babel.Sather.Base.BOOL));
-            AddBuiltinType("INT", typeof(int),
-                           typeof(Babel.Sather.Base.INT));
-            AddBuiltinType("FLT", typeof(float));
-            AddBuiltinType("CHAR", typeof(char));
-            AddBuiltinType("STR", typeof(string),
-                           typeof(Babel.Sather.Base.STR));
+            obType = AddBuiltinType("$OB", typeof(object));
+            boolType = AddBuiltinType("BOOL", typeof(bool),
+                                      typeof(Babel.Sather.Base.BOOL));
+            intType = AddBuiltinType("INT", typeof(int),
+                                     typeof(Babel.Sather.Base.INT));
+            fltType = AddBuiltinType("FLT", typeof(float));
+            charType = AddBuiltinType("CHAR", typeof(char));
+            strType = AddBuiltinType("STR", typeof(string),
+                                     typeof(Babel.Sather.Base.STR));
+            voidType = new TypeData(this, typeof(void));
+            exceptionType = new TypeData(this, typeof(System.Exception));
         }
 
-        protected virtual void AddBuiltinType(string name, Type type)
+        protected virtual BuiltinTypeData AddBuiltinType(string name, Type type)
         {
-            builtinTypes.Add(name, type);
+            BuiltinTypeData typeData = new BuiltinTypeData(this, type, name);
+            builtinTypes.Add(name, typeData);
             builtinTypeNames.Add(type, name);
+            typeDataTable.Add(type, typeData);
+            return typeData;
         }
 
-        protected virtual void AddBuiltinType(string name, Type type,
-                                              Type builtintMethodContainer)
+        protected virtual BuiltinTypeData
+        AddBuiltinType(string name, Type type,
+                       Type builtinMethodContainer)
         {
-            AddBuiltinType(name, type);
-            builtinMethodContainers.Add(type, builtintMethodContainer);
+            BuiltinTypeData typeData = AddBuiltinType(name, type);
+            TypeData container = GetTypeData(builtinMethodContainer);
+            builtinMethodContainers.Add(typeData, container);
+            return typeData;
         }
 
-        public virtual Type GetBuiltinMethodContainer(Type type)
+        public virtual TypeData GetBuiltinMethodContainer(TypeData typeData)
         {
-            return (Type) builtinMethodContainers[type];
+            return (TypeData) builtinMethodContainers[typeData];
         }
 
-        public virtual Type GetPredefinedType(string name)
+        public virtual TypeData GetTypeData(Type type)
         {
-            Type type = (Type) builtinTypes[name];
-            if (type != null)
-                return type;
-            foreach (Assembly assembly in assemblies) {
-                type = (Type) assembly.GetType(name);
-                if (type != null)
-                    return type;
+            if (type == null)
+                return null;
+            TypeData typeData = (TypeData) typeDataTable[type];
+            if (typeData == null) {
+                typeData = new TypeData(this, type);
+                typeDataTable[type] = typeData;
             }
-            return Type.GetType(name);
+            return typeData;
         }
 
-        public virtual Type GetTypeFromModules(string name)
+        public virtual TypeData GetPredefinedType(string name)
+        {
+            TypeData typeData = (TypeData) builtinTypes[name];
+            if (typeData != null)
+                return typeData;
+            foreach (Assembly assembly in assemblies) {
+                Type type = (Type) assembly.GetType(name);
+                if (type != null)
+                    return GetTypeData(type);
+            }
+            return GetTypeData(Type.GetType(name));
+        }
+
+        public virtual TypeData GetTypeFromModules(string name)
         {
             foreach (Module module in modules) {
                 Type type = (Type) module.GetType(name);
                 if (type != null)
-                    return type;
+                    return GetTypeData(type);
             }
             return null;
         }
 
-        public virtual Type GetType(string name)
+        public virtual TypeData GetType(string name)
         {
             ClassDefinition cls = GetClass(name);
             if (cls != null && cls.TypeBuilder != null)
-                return cls.TypeBuilder;
-            Type type = GetTypeFromModules(name);
-            if (type != null)
-                return type;
-            type = GetPredefinedType(name);
-            if (type != null)
-                return type;
+                return GetTypeData(cls.TypeBuilder);
+            TypeData typeData = GetTypeFromModules(name);
+            if (typeData != null)
+                return typeData;
+            typeData = GetPredefinedType(name);
+            if (typeData != null)
+                return typeData;
             return null;
-        }
-
-        public virtual Type GetReferenceType(Type type)
-        {
-            string refTypeName = type.FullName + "&";
-            return GetType(refTypeName);
         }
 
         public virtual void AddAssembly(Assembly assembly)
@@ -140,10 +204,9 @@ namespace Babel.Sather.Compiler
             return (ClassDefinition) classes[name];
         }
 
-        public void AddType(Type type, Type[] parents, Type[] ancestors)
+        public void AddType(TypeData type)
         {
-            parentsTable.Add(type, parents);
-            ancestorsTable.Add(type, ancestors);
+            typeDataTable[type.RawType] = type;
         }
 
         public virtual Type[] GetParents(Type type)
@@ -189,7 +252,7 @@ namespace Babel.Sather.Compiler
             Type[] ancestors = GetAncestors(type);
             if (((IList) ancestors).Contains(supertype))
                 return true;
-            return GetSubtypeAdapter(supertype, type) != null;
+            return GetSupertypingAdapter(supertype, type) != null;
         }
 
         public virtual string GetTypeName(Type type)
@@ -210,8 +273,10 @@ namespace Babel.Sather.Compiler
             methods.Add(method);
         }
 
-        public virtual MethodInfo[] GetMethods(Type type)
+        public virtual MethodInfo[] GetMethods(TypeData typeData)
         {
+            Type type = typeData.RawType;
+
             if (type is TypeBuilder) {
                 ArrayList methods = (ArrayList) methodsTable[type];
                 if (methods == null)
@@ -339,17 +404,17 @@ namespace Babel.Sather.Compiler
         }
 
         public void AddIterReturnType(MethodBuilder methodBuilder,
-                                      Type returnType)
+                                      TypeData returnType)
         {
             Type[] paramTypes = new Type[] { typeof(Type) };
             ConstructorInfo constructor =
                 typeof(IterReturnTypeAttribute).GetConstructor(paramTypes);
             CustomAttributeBuilder attrBuilder =
                 new CustomAttributeBuilder(constructor,
-                                           new object[] { returnType });
+                                           new object[] { returnType.RawType });
             methodBuilder.SetCustomAttribute(attrBuilder);
             Attribute attr =
-                new IterReturnTypeAttribute(returnType);
+                new IterReturnTypeAttribute(returnType.RawType);
             AddCustomAttribute(methodBuilder, attr);
         }
 
@@ -376,29 +441,32 @@ namespace Babel.Sather.Compiler
                 return ((ArgumentModeAttribute) attrs[0]).Mode;
         }
 
-        public void AddSubtypeAdapter(TypeBuilder typeBuilder,
-                                      Type adapteeType,
+        public void AddSupertypingAdapter(TypeBuilder typeBuilder,
+                                      TypeData adapteeType,
                                       Type adapterType)
         {
             Type[] paramTypes = new Type[] { typeof(Type), typeof(Type) };
             ConstructorInfo constructor =
-                typeof(SubtypeAdapterAttribute).GetConstructor(paramTypes);
-            object[] parameters = new object [] { adapteeType, adapterType };
+                typeof(SupertypingAdapterAttribute).GetConstructor(paramTypes);
+            object[] parameters = new object [] {
+                adapteeType.RawType,
+                adapterType
+            };
             CustomAttributeBuilder attrBuilder =
                 new CustomAttributeBuilder(constructor, parameters);
             typeBuilder.SetCustomAttribute(attrBuilder);
-            Attribute attr = new SubtypeAdapterAttribute(adapteeType,
+            Attribute attr = new SupertypingAdapterAttribute(adapteeType.RawType,
                                                          adapterType);
             AddCustomAttribute(typeBuilder, attr);
         }
 
-        public virtual Type GetSubtypeAdapter(Type type, Type subtype)
+        public virtual Type GetSupertypingAdapter(Type type, Type subtype)
         {
             object[] attrs =
-                GetCustomAttributes(type, typeof(SubtypeAdapterAttribute));
+                GetCustomAttributes(type, typeof(SupertypingAdapterAttribute));
             if (attrs == null)
                 return null;
-            foreach (SubtypeAdapterAttribute attr in attrs) {
+            foreach (SupertypingAdapterAttribute attr in attrs) {
                 if (attr.AdapteeType == subtype)
                     return attr.AdapterType;
             }
@@ -414,33 +482,32 @@ namespace Babel.Sather.Compiler
                 return name;
         }
 
-        public virtual Type GetReturnType(MethodInfo method)
+        public virtual TypeData GetReturnType(MethodInfo method)
         {
             Type returnType = GetIterReturnType(method);
             if (returnType == null)
-                return method.ReturnType;
+                return GetTypeData(method.ReturnType);
             else 
-                return returnType;
+                return GetTypeData(returnType);
         }
 
-        public virtual string GetMethodInfo(Type receiverType,
+        public virtual string GetMethodInfo(TypeData receiverType,
                                             string name,
                                             TypedNodeList arguments,
-                                            Type returnType)
+                                            TypeData returnType)
         {
-            string methodInfo = GetTypeName(receiverType) +
-                "::" + name;
+            string methodInfo = receiverType.FullName + "::" + name;
             if (arguments.Length > 0) {
                 methodInfo += "(";
                 foreach (TypedNode arg in arguments) {
                     if (arg != arguments.First)
                         methodInfo += ",";
-                    methodInfo += GetTypeName(arg.NodeType);
+                    methodInfo += arg.NodeType.FullName;
                 }
                 methodInfo += ")";
             }
-            if (returnType != null && returnType != typeof(void))
-                methodInfo += ":" + GetTypeName(returnType);
+            if (returnType != null && !returnType.IsVoid)
+                methodInfo += ":" + returnType.Name;
             return methodInfo;
         }
 
@@ -464,17 +531,17 @@ namespace Babel.Sather.Compiler
                 }
                 methodInfo += ")";
             }
-            Type returnType = GetReturnType(method);
-            if (returnType != typeof(void))
-                methodInfo += ":" + GetTypeName(returnType);
+            TypeData returnType = GetReturnType(method);
+            if (!returnType.IsVoid)
+                methodInfo += ":" + returnType.Name;
             return methodInfo;
         }
 
-        public virtual ArrayList GetAncestorMethods(Type type)
+        public virtual ArrayList GetAncestorMethods(TypeData type)
         {
-            Type[] ancestors = GetAncestors(type);
+            ArrayList ancestors = type.Ancestors;
             ArrayList result = new ArrayList();
-            foreach (Type ancestor in ancestors) {
+            foreach (TypeData ancestor in ancestors) {
                 MethodInfo[] methods = GetMethods(ancestor);
                 result.AddRange(methods);
             }

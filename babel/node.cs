@@ -239,7 +239,7 @@ namespace Babel.Sather.Compiler
 
     public abstract class TypedNode : Node
     {
-        Type nodeType;
+        TypeData nodeType;
 
         public TypedNode()
         {
@@ -251,10 +251,15 @@ namespace Babel.Sather.Compiler
             nodeType = null;
         }
 
-        public virtual Type NodeType
+        public virtual TypeData NodeType
         {
             get { return nodeType; }
             set { nodeType = value; }
+        }
+        
+        public virtual Type RawType
+        {
+            get { return nodeType.RawType; }
         }
 
         public override object Clone()
@@ -276,7 +281,7 @@ namespace Babel.Sather.Compiler
                 Type[] types = new Type[Length];
                 int i = 0;
                 foreach (TypedNode node in this) {
-                    types[i++] = node.NodeType;
+                    types[i++] = node.RawType;
                 }
                 return types;
             }

@@ -44,7 +44,7 @@ namespace Babel.Sather.Compiler
             bool error = false;
             if (cls.TypeBuilder != null)
                 return;
-            Type type = typeManager.GetPredefinedType(cls.Name);
+            TypeData type = typeManager.GetPredefinedType(cls.Name);
             if (type != null) {
                 report.Error(cls.Location,
                              "redefinition of class {0}", cls.Name);
@@ -53,21 +53,20 @@ namespace Babel.Sather.Compiler
             visitingClasses.Add(cls, cls);
             try {
                 cls.Supertypes.Accept(this);
-                Type[] parents = new Type[cls.Supertypes.Length];
-                int i = 0;
+                cls.TypeData = new TypeData(typeManager, null);
+                cls.TypeData.Parents = new ArrayList();
                 foreach (TypeSpecifier supertype in cls.Supertypes) {
-                    Type t = supertype.NodeType;
-                    if (t == null)
+                    TypeData anc = supertype.NodeType;
+                    if (anc == null)
                         return;
-                    if (!t.IsInterface) {
+                    if (!anc.IsAbstract) {
                         report.Error(supertype.Location,
                                      "supertype {0} is not abstract",
                                      supertype.Name);
                         return;
                     }
-                    parents[i++] = t;
+                    cls.TypeData.Parents.Add(anc);
                 }
-                Type[] ancestors = typeManager.ExtractAncestors(parents);
                 TypeAttributes attrs = TypeAttributes.Public;
                 if (cls.Kind == ClassKind.Abstract) {
                     attrs |= TypeAttributes.Abstract;
@@ -78,8 +77,10 @@ namespace Babel.Sather.Compiler
                 }
                 cls.TypeBuilder =
                     program.Module.DefineType(cls.Name, attrs,
-                                              typeof(object), ancestors);
-                typeManager.AddType(cls.TypeBuilder, parents, ancestors);
+                                              typeof(object),
+                                              cls.TypeData.AncestorRawTypes);
+                cls.TypeData.RawType = cls.TypeBuilder;
+                typeManager.AddType(cls.TypeData);
                 if (cls.Kind == ClassKind.Reference) {
                     cls.Constructor = 
                         cls.TypeBuilder.
@@ -96,27 +97,25 @@ namespace Babel.Sather.Compiler
                 }
                 if (cls.Subtypes != null) {
                     cls.Subtypes.Accept(this);
-                    Type[] subtypeAncestors = new Type[ancestors.Length + 1];
-                    ancestors.CopyTo(subtypeAncestors, 0);
-                    subtypeAncestors[subtypeAncestors.Length - 1] =
-                        cls.TypeBuilder;
                     foreach (TypeSpecifier subtype in cls.Subtypes) {
                         if (subtype.NodeType == null)
                             return;
-                        SubtypeAdapter adapter =
-                            new SubtypeAdapter(subtype.NodeType);
+                        SupertypingAdapter adapter =
+                            new SupertypingAdapter(subtype.NodeType);
+                        adapter.TypeData = new TypeData(typeManager, null);
+                        adapter.TypeData.Parents = new ArrayList();
+                        adapter.TypeData.Parents.Add(cls.TypeData);
                         adapter.TypeBuilder =
                             program.Module.
                             DefineType("__adapter" + adapterCount,
                                        TypeAttributes.Class |
                                        TypeAttributes.Public,
                                        typeof(object),
-                                       subtypeAncestors);
-                        typeManager.AddType(adapter.TypeBuilder,
-                                            new Type[] { cls.TypeBuilder },
-                                            subtypeAncestors);
+                                       adapter.TypeData.AncestorRawTypes);
+                        adapter.TypeData.RawType = adapter.TypeBuilder;
+                        typeManager.AddType(adapter.TypeData);
                         cls.Adapters.Add(adapter);
-                        typeManager.AddSubtypeAdapter(cls.TypeBuilder,
+                        typeManager.AddSupertypingAdapter(cls.TypeBuilder,
                                                       adapter.AdapteeType,
                                                       adapter.TypeBuilder);
                         adapterCount++;
@@ -135,7 +134,7 @@ namespace Babel.Sather.Compiler
                              "SAME cannot appear in subtyping clause");
                 return;
             }
-            Type type = typeManager.GetType(typeSpecifier.Name);
+            TypeData type = typeManager.GetType(typeSpecifier.Name);
             if (type != null) {
                 typeSpecifier.NodeType = type;
                 return;
@@ -153,7 +152,7 @@ namespace Babel.Sather.Compiler
                 return;
             }
             VisitClass(cls);
-            typeSpecifier.NodeType = cls.TypeBuilder;
+            typeSpecifier.NodeType = typeManager.GetTypeData(cls.TypeBuilder);
         }
     }
 }

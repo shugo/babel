@@ -52,7 +52,7 @@ namespace Babel.Sather.Compiler
             }
             else {
                 ancestorMethods =
-                    typeManager.GetAncestorMethods(cls.TypeBuilder);
+                    typeManager.GetAncestorMethods(cls.TypeData);
             }
             cls.Children.Accept(this);
             if (cls.Kind != ClassKind.Abstract && ancestorMethods.Count > 0) {
@@ -60,7 +60,7 @@ namespace Babel.Sather.Compiler
                     report.Error(cls.Location,
                                  "no implementation for {0} in {1}",
                                  typeManager.GetMethodInfo(method),
-                                 typeManager.GetTypeName(cls.TypeBuilder));
+                                 cls.TypeData.FullName);
                 }
             }
             CreateAdapterMethods(cls);
@@ -71,20 +71,21 @@ namespace Babel.Sather.Compiler
 
         protected virtual void CreateAdapterMethods(ClassDefinition cls)
         {
-            foreach (SubtypeAdapter adapter in cls.Adapters) {
+            foreach (SupertypingAdapter adapter in cls.Adapters) {
                 adapter.AdapteeField =
                     adapter.TypeBuilder.DefineField("__adaptee",
-                                                    adapter.AdapteeType,
+                                                    adapter.AdapteeType.RawType,
                                                     FieldAttributes.Private);
+                Type[] types = new Type[] { adapter.AdapteeType.RawType };
                 adapter.Constructor =
                     DefineConstructor(adapter.TypeBuilder,
                                       MethodAttributes.Public,
                                       CallingConventions.Standard,
-                                      new Type[] { adapter.AdapteeType });
+                                      types);
                 MethodInfo[] adapteeMethods =
                     typeManager.GetMethods(adapter.AdapteeType);
                 ArrayList supertypeMethods =
-                    typeManager.GetAncestorMethods(adapter.TypeBuilder);
+                    typeManager.GetAncestorMethods(adapter.TypeData);
                 foreach (MethodInfo adapteeMethod in adapteeMethods) {
                     ArrayList conformableMethods =
                         CheckMethodConformance(adapteeMethod, supertypeMethods);
@@ -92,7 +93,7 @@ namespace Babel.Sather.Compiler
                         AddAdapterMethod(adapter, m, adapteeMethod);
                     }
                 }
-                Type builtinMethodContainer =
+                TypeData builtinMethodContainer =
                     typeManager.GetBuiltinMethodContainer(adapter.AdapteeType);
                 if (builtinMethodContainer != null) {
                     MethodInfo[] adapteeBuiltinMethods =
@@ -110,12 +111,12 @@ namespace Babel.Sather.Compiler
                     report.Error(cls.Location,
                                  "no implementation for {0} in {1}",
                                  typeManager.GetMethodInfo(method),
-                                 typeManager.GetTypeName(adapter.AdapteeType));
+                                 adapter.AdapteeType.FullName);
                 }
             }
         }
 
-        protected virtual void AddAdapterMethod(SubtypeAdapter adapter,
+        protected virtual void AddAdapterMethod(SupertypingAdapter adapter,
                                                 MethodInfo method,
                                                 MethodInfo adapteeMethod)
         {
@@ -134,8 +135,8 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.HideBySig,
                              method.ReturnType,
                              paramTypes);
-            SubtypeAdapterMethod adapterMethod =
-                new SubtypeAdapterMethod(mb, adapteeMethod,
+            SupertypingAdapterMethod adapterMethod =
+                new SupertypingAdapterMethod(mb, adapteeMethod,
                                          parameters.Length);
             adapter.Methods.Add(adapterMethod);
         }
@@ -146,7 +147,7 @@ namespace Babel.Sather.Compiler
             rout.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             try {
-                CheckMethodConfliction(typeBuilder, rout.Name,
+                CheckMethodConfliction(currentClass.TypeData, rout.Name,
                                        rout.ReturnType.NodeType,
                                        rout.Arguments);
             }
@@ -172,7 +173,7 @@ namespace Babel.Sather.Compiler
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             try {
-                CheckMethodConfliction(typeBuilder, iter.Name,
+                CheckMethodConfliction(currentClass.TypeData, iter.Name,
                                        iter.ReturnType.NodeType,
                                        iter.Arguments);
             }
@@ -195,7 +196,7 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.Virtual |
                              MethodAttributes.Abstract |
                              MethodAttributes.HideBySig,
-                             typeof(bool),
+                             typeManager.BoolType,
                              iter.MoveNextArguments);
             if (!iter.ReturnType.IsNull) {
                 iter.GetCurrent =
@@ -214,7 +215,8 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.Virtual |
                              MethodAttributes.Abstract |
                              MethodAttributes.HideBySig,
-                             iter.TypeBuilder, iter.Arguments);
+                             typeManager.GetTypeData(iter.TypeBuilder),
+                             iter.Arguments);
             
             typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
             typeManager.AddIterReturnType(iter.MethodBuilder,
@@ -226,7 +228,7 @@ namespace Babel.Sather.Compiler
         public override void VisitConst(ConstDefinition constDef)
         {
             constDef.TypeSpecifier.Accept(this);
-            Type constType = constDef.TypeSpecifier.NodeType;
+            TypeData constType = constDef.TypeSpecifier.NodeType;
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             MethodAttributes readerAttributes =
                 MethodAttributes.Virtual | MethodAttributes.HideBySig;
@@ -240,7 +242,7 @@ namespace Babel.Sather.Compiler
             }
             constDef.FieldBuilder =
                 typeBuilder.DefineField("_" + constDef.Name,
-                                        constType,
+                                        constType.RawType,
                                         FieldAttributes.Private |
                                         FieldAttributes.Static |
                                         FieldAttributes.Literal);
@@ -258,7 +260,7 @@ namespace Babel.Sather.Compiler
         public override void VisitSharedAttr(SharedAttrDefinition attr)
         {
             attr.TypeSpecifier.Accept(this);
-            Type attrType = attr.TypeSpecifier.NodeType;
+            Type attrType = attr.TypeSpecifier.RawType;
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             MethodAttributes readerAttributes =
                 MethodAttributes.Virtual | MethodAttributes.HideBySig;
@@ -299,7 +301,7 @@ namespace Babel.Sather.Compiler
         public override void VisitAttr(AttrDefinition attr)
         {
             attr.TypeSpecifier.Accept(this);
-            Type attrType = attr.TypeSpecifier.NodeType;
+            Type attrType = attr.TypeSpecifier.RawType;
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             MethodAttributes readerAttributes =
                 MethodAttributes.Virtual | MethodAttributes.HideBySig;
@@ -342,7 +344,7 @@ namespace Babel.Sather.Compiler
             rout.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             try {
-                CheckMethodConfliction(typeBuilder, rout.Name,
+                CheckMethodConfliction(currentClass.TypeData, rout.Name,
                                        rout.ReturnType.NodeType,
                                        rout.Arguments);
             }
@@ -350,7 +352,7 @@ namespace Babel.Sather.Compiler
                 report.Error(rout.Location, e.Message);
                 return;
             }
-            CheckMethodConformance(typeBuilder, rout.Name,
+            CheckMethodConformance(currentClass.TypeData, rout.Name,
                                    rout.ReturnType.NodeType,
                                    rout.Arguments,
                                    ancestorMethods);
@@ -378,7 +380,7 @@ namespace Babel.Sather.Compiler
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             try {
-                CheckMethodConfliction(typeBuilder, iter.Name,
+                CheckMethodConfliction(currentClass.TypeData, iter.Name,
                                        iter.ReturnType.NodeType,
                                        iter.Arguments);
             }
@@ -387,7 +389,7 @@ namespace Babel.Sather.Compiler
                 return;
             }
             ArrayList conformableMethods =
-                CheckMethodConformance(typeBuilder, iter.Name,
+                CheckMethodConformance(currentClass.TypeData, iter.Name,
                                        iter.ReturnType.NodeType,
                                        iter.Arguments,
                                        ancestorMethods);
@@ -412,7 +414,7 @@ namespace Babel.Sather.Compiler
             list.Add(typeBuilder);
             foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once)
-                    list.Add(arg.NodeType);
+                    list.Add(arg.RawType);
             }
             Type[] constructorParams = new Type[list.Count];
             list.CopyTo(constructorParams);
@@ -436,12 +438,12 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.Virtual |
                              MethodAttributes.HideBySig |
                              MethodAttributes.Public,
-                             typeof(bool),
+                             typeManager.BoolType,
                              iter.MoveNextArguments);
             if (!iter.ReturnType.IsNull) {
                 iter.Current =
                     iter.TypeBuilder.DefineField("__current",
-                                                 iter.ReturnType.NodeType,
+                                                 iter.ReturnType.RawType,
                                                  FieldAttributes.Private);
                 iter.GetCurrent =
                     DefineMethod(iter.TypeBuilder, "GetCurrent",
@@ -464,7 +466,8 @@ namespace Babel.Sather.Compiler
             }
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                             iter.TypeBuilder, iter.Arguments);
+                             typeManager.GetTypeData(iter.TypeBuilder),
+                             iter.Arguments);
 
             typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
             typeManager.AddIterReturnType(iter.MethodBuilder,
@@ -473,7 +476,8 @@ namespace Babel.Sather.Compiler
             foreach (Type t in iterTypeAncestors) {
                 MethodBuilder bridgeMethod =
                     DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                                 t, iter.Arguments);
+                                 typeManager.GetTypeData(t),
+                                 iter.Arguments);
                 iter.BridgeMethods.Add(bridgeMethod);
             }
 
@@ -486,7 +490,7 @@ namespace Babel.Sather.Compiler
             arg.NodeType = arg.TypeSpecifier.NodeType;
             if (arg.Mode == ArgumentMode.Out ||
                 arg.Mode == ArgumentMode.InOut) {
-                arg.NodeType = typeManager.GetReferenceType(arg.NodeType);
+                arg.NodeType = arg.NodeType.ReferenceType;
             }
         }
 
@@ -526,10 +530,11 @@ namespace Babel.Sather.Compiler
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType = currentClass.TypeBuilder;
+                typeSpecifier.NodeType =
+                    typeManager.GetTypeData(currentClass.TypeBuilder);
                 return;
             }
-            Type type = typeManager.GetType(typeSpecifier.Name);
+            TypeData type = typeManager.GetType(typeSpecifier.Name);
             if (type == null) {
                 report.Error(typeSpecifier.Location,
                              "there is no class named {0}",
@@ -542,7 +547,7 @@ namespace Babel.Sather.Compiler
         protected virtual bool
         ConflictMethod(string name,
                        TypedNodeList arguments,
-                       Type returnType,
+                       TypeData returnType,
                        MethodInfo method)
         {
             if (name != typeManager.GetMethodName(method))
@@ -550,8 +555,8 @@ namespace Babel.Sather.Compiler
             ParameterInfo[] parameters = typeManager.GetParameters(method);
             if (arguments.Length != parameters.Length)
                 return false;
-            if ((returnType == typeof(void)) !=
-                (typeManager.GetReturnType(method) == typeof(void)))
+            if (returnType.IsVoid !=
+                typeManager.GetReturnType(method).IsVoid)
                 return false;
 
             bool conflict = false;
@@ -560,20 +565,20 @@ namespace Babel.Sather.Compiler
             int i = 0;
             foreach (Argument arg in arguments) {
                 ParameterInfo param = parameters[i++];
-                Type type1 = arg.NodeType;
-                Type type2 = param.ParameterType;
+                TypeData type1 = arg.NodeType;
+                TypeData type2 = typeManager.GetTypeData(param.ParameterType);
                 
                 if (type1 != type2)
                     sameArgs = false;
                 if (type1 != type2 &&
-                    !type1.IsInterface && !type2.IsInterface) {
+                    !type1.IsAbstract && !type2.IsAbstract) {
                     return false;
                 }
                 else {
-                    if (type1.IsInterface && type2.IsInterface) {
+                    if (type1.IsAbstract && type2.IsAbstract) {
                         abs = true; 
-                        if (!(typeManager.IsSubtype(type1, type2) ||
-                              typeManager.IsSubtype(type2, type1)))
+                        if (!(type1.IsSubtypeOf(type2) ||
+                              type2.IsSubtypeOf(type1)))
                             conflict = true;
                     }
                     else {
@@ -586,9 +591,9 @@ namespace Babel.Sather.Compiler
         }
 
         protected virtual void
-        CheckMethodConfliction(TypeBuilder type,
+        CheckMethodConfliction(TypeData type,
                                string name,
-                               Type returnType,
+                               TypeData returnType,
                                TypedNodeList arguments)
         {
             MethodInfo[] methods = typeManager.GetMethods(type);
@@ -610,7 +615,7 @@ namespace Babel.Sather.Compiler
         protected virtual bool
         ConformMethod(string name,
                       TypedNodeList arguments,
-                      Type returnType,
+                      TypeData returnType,
                       MethodInfo method)
         {
             if (name != typeManager.GetMethodName(method))
@@ -627,16 +632,17 @@ namespace Babel.Sather.Compiler
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
                 if (arg.Mode != mode)
                     return false;
-                if (arg.NodeType != param.ParameterType)
+                if (arg.NodeType !=
+                    typeManager.GetTypeData(param.ParameterType))
                     return false;
             }
             return true;
         }
 
         protected virtual ArrayList
-        CheckMethodConformance(TypeBuilder type,
+        CheckMethodConformance(TypeData type,
                                string name,
-                               Type returnType,
+                               TypeData returnType,
                                TypedNodeList arguments,
                                ArrayList ancestorMethods)
         {
@@ -741,13 +747,13 @@ namespace Babel.Sather.Compiler
         DefineMethod(TypeBuilder type,
                      string name,
                      MethodAttributes attributes,
-                     Type returnType,
+                     TypeData returnType,
                      TypedNodeList arguments)
         {
             MethodBuilder method =
                 type.DefineMethod(name,
                                   attributes,
-                                  returnType,
+                                  returnType.RawType,
                                   arguments.NodeTypes);
             ParameterInfo[] parameters = new ParameterInfo[arguments.Length];
             foreach (Argument arg in arguments) {
@@ -771,7 +777,7 @@ namespace Babel.Sather.Compiler
                                                new object[] { arg.Mode });
                 pb.SetCustomAttribute(cbuilder);
                 parameters[arg.Index - 1] =
-                    new Parameter(pb, arg.NodeType, method);
+                    new Parameter(pb, arg.NodeType.RawType, method);
                 ArgumentModeAttribute attr =
                     new ArgumentModeAttribute(arg.Mode);
                 typeManager.AddCustomAttribute(parameters[arg.Index - 1], attr);
@@ -788,7 +794,8 @@ namespace Babel.Sather.Compiler
                      MethodAttributes attributes,
                      TypeSpecifier attrType)
         {
-            CheckMethodConfliction(type, name,
+            CheckMethodConfliction(typeManager.GetTypeData(type),
+                                   name,
                                    attrType.NodeType,
                                    new TypedNodeList());
             return DefineMethod(type, name, attributes,
@@ -806,11 +813,12 @@ namespace Babel.Sather.Compiler
             arg.Index = 1;
             arg.NodeType = attrType.NodeType;
             TypedNodeList args = new TypedNodeList(arg);
-            CheckMethodConfliction(type, name,
-                                   typeof(void),
+            CheckMethodConfliction(typeManager.GetTypeData(type),
+                                   name,
+                                   typeManager.VoidType,
                                    new TypedNodeList());
             return DefineMethod(type, name, attributes,
-                                typeof(void), args);
+                                typeManager.VoidType, args);
         }
 
         protected virtual ConstructorBuilder

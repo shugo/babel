@@ -59,19 +59,19 @@ namespace Babel.Sather.Compiler
                 cls.StaticConstructorIL.Emit(OpCodes.Ret);
             }
             currentType.CreateType();
-            foreach (SubtypeAdapter adapter in cls.Adapters) {
+            foreach (SupertypingAdapter adapter in cls.Adapters) {
                 GenerateAdapter(adapter);
             }
         }
 
-        protected virtual void GenerateAdapter(SubtypeAdapter adapter)
+        protected virtual void GenerateAdapter(SupertypingAdapter adapter)
         {
             ilGenerator = adapter.Constructor.GetILGenerator();
             ilGenerator.Emit(OpCodes.Ldarg_0);
             ilGenerator.Emit(OpCodes.Ldarg_1);
             ilGenerator.Emit(OpCodes.Stfld, adapter.AdapteeField);
             ilGenerator.Emit(OpCodes.Ret);
-            foreach (SubtypeAdapterMethod method in adapter.Methods) {
+            foreach (SupertypingAdapterMethod method in adapter.Methods) {
                 ilGenerator = method.MethodBuilder.GetILGenerator();
                 ilGenerator.Emit(OpCodes.Ldarg_0);
                 ilGenerator.Emit(OpCodes.Ldfld, adapter.AdapteeField);
@@ -79,7 +79,7 @@ namespace Babel.Sather.Compiler
                     ilGenerator.Emit(OpCodes.Ldarg, i);
                 }
                 ilGenerator.Emit(OpCodes.Tailcall);
-                if (adapter.AdapteeType.IsInterface)
+                if (adapter.AdapteeType.IsAbstract)
                     ilGenerator.EmitCall(OpCodes.Callvirt,
                                          method.AdapteeMethod,
                                          null);
@@ -141,7 +141,7 @@ namespace Babel.Sather.Compiler
             foreach (Argument arg in routine.Arguments) {
                 if (arg.Mode == ArgumentMode.Out) {
                     ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
-                    Type argType = arg.NodeType.GetElementType();
+                    Type argType = arg.RawType.GetElementType();
                     EmitVoid(argType);
                     EmitStind(argType);
                 }
@@ -218,7 +218,7 @@ namespace Babel.Sather.Compiler
             foreach (Argument arg in iter.MoveNextArguments) {
                 if (arg.Mode == ArgumentMode.Out) {
                     ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
-                    Type argType = arg.NodeType.GetElementType();
+                    Type argType = arg.RawType.GetElementType();
                     EmitVoid(argType);
                     EmitStind(argType);
                 }
@@ -269,16 +269,16 @@ namespace Babel.Sather.Compiler
 
             Argument arg = currentRoutine.GetArgument(assign.Name);
             if (arg != null) {
-                if (arg.NodeType.IsByRef) {
-                    Type argType = arg.NodeType.GetElementType();
+                if (arg.RawType.IsByRef) {
+                    Type argType = arg.RawType.GetElementType();
                     ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
                     assign.Value.Accept(this);
-                    BoxIfNecessary(assign.Value.NodeType, argType);
+                    BoxIfNecessary(assign.Value.RawType, argType);
                     EmitStind(argType);
                 }
                 else {
                     assign.Value.Accept(this);
-                    BoxIfNecessary(assign.Value.NodeType, arg.NodeType);
+                    BoxIfNecessary(assign.Value.RawType, arg.RawType);
                     ilGenerator.Emit(OpCodes.Starg, arg.Index);
                 }
             }
@@ -286,7 +286,7 @@ namespace Babel.Sather.Compiler
                 LocalVariable local = localVariableStack.GetLocal(assign.Name);
                 local.EmitStorePrefix(ilGenerator);
                 assign.Value.Accept(this);
-                BoxIfNecessary(assign.Value.NodeType, local.LocalType);
+                BoxIfNecessary(assign.Value.RawType, local.RawType);
                 local.EmitStore(ilGenerator);
             }
         }
@@ -314,8 +314,8 @@ namespace Babel.Sather.Compiler
         {
             if (ret.Value != null) {
                 ret.Value.Accept(this);
-                BoxIfNecessary(ret.Value.NodeType,
-                               currentRoutine.ReturnType.NodeType);
+                BoxIfNecessary(ret.Value.RawType,
+                               currentRoutine.ReturnType.RawType);
             }
             if (exceptionLevel > 0) {
                 ilGenerator.Emit(OpCodes.Leave, returnLabel);
@@ -331,7 +331,7 @@ namespace Babel.Sather.Compiler
             test.Declare(ilGenerator);
             test.EmitStorePrefix(ilGenerator);
             caseStmt.Test.Accept(this);
-            BoxIfNecessary(caseStmt.Test.NodeType, test.LocalType);
+            BoxIfNecessary(caseStmt.Test.RawType, test.RawType);
             test.EmitStore(ilGenerator);
 
             Label endLabel = ilGenerator.DefineLabel();
@@ -359,15 +359,15 @@ namespace Babel.Sather.Compiler
             foreach (TypecaseWhen when in typecase.WhenPartList) {
                 Label nextLabel = ilGenerator.DefineLabel();
                 typecase.Variable.Accept(this);
-                ilGenerator.Emit(OpCodes.Isinst, when.TypeSpecifier.NodeType);
+                ilGenerator.Emit(OpCodes.Isinst, when.TypeSpecifier.RawType);
                 ilGenerator.Emit(OpCodes.Brfalse, nextLabel);
                 when.LocalVariable.Declare(ilGenerator);
                 when.LocalVariable.EmitStorePrefix(ilGenerator);
                 typecase.Variable.Accept(this);
-                if (!typeManager.IsSubtype(typecase.Variable.NodeType,
-                                           when.TypeSpecifier.NodeType)) {
-                    UnboxIfNecessary(typecase.Variable.NodeType,
-                                     when.TypeSpecifier.NodeType);
+                TypeData varType = typecase.Variable.NodeType;
+                TypeData whenType = when.TypeSpecifier.NodeType;
+                if (!varType.IsSubtypeOf(whenType)) {
+                    UnboxIfNecessary(varType.RawType, whenType.RawType);
                 }
                 when.LocalVariable.EmitStore(ilGenerator);
                 when.ThenPart.Accept(this);
@@ -403,7 +403,7 @@ namespace Babel.Sather.Compiler
             if (yield.Value != null) {
                 ilGenerator.Emit(OpCodes.Ldarg_0);
                 yield.Value.Accept(this);
-                BoxIfNecessary(yield.Value.NodeType,
+                BoxIfNecessary(yield.Value.RawType,
                                currentIter.Current.FieldType);
                 ilGenerator.Emit(OpCodes.Stfld, currentIter.Current);
             }
@@ -433,10 +433,10 @@ namespace Babel.Sather.Compiler
             ilGenerator.BeginExceptionBlock();
             protect.StatementList.Accept(this);
             foreach (ProtectWhen when in protect.WhenPartList) {
-                ilGenerator.BeginCatchBlock(when.TypeSpecifier.NodeType);
+                ilGenerator.BeginCatchBlock(when.TypeSpecifier.RawType);
                 LocalBuilder prevException = currentException;
                 currentException =
-                    ilGenerator.DeclareLocal(when.TypeSpecifier.NodeType);
+                    ilGenerator.DeclareLocal(when.TypeSpecifier.RawType);
                 ilGenerator.Emit(OpCodes.Stloc, currentException);
                 when.ThenPart.Accept(this);
                 currentException = prevException;
@@ -457,7 +457,7 @@ namespace Babel.Sather.Compiler
         public override void VisitRaise(RaiseStatement raise)
         {
             raise.Value.Accept(this);
-            if (raise.Value.NodeType == typeof(string)) {
+            if (raise.Value.NodeType == typeManager.StrType) {
                 Type etype = typeof(Exception);
                 ConstructorInfo constructor =
                     etype.GetConstructor(new Type[] { typeof(string) });
@@ -499,7 +499,7 @@ namespace Babel.Sather.Compiler
         public override void VisitSelf(SelfExpression self)
         {
             if (inSharedContext) {
-                EmitVoid(self.NodeType);
+                EmitVoid(self.RawType);
             }
             else if (currentIter == null) {
                 ilGenerator.Emit(OpCodes.Ldarg_0);
@@ -515,8 +515,8 @@ namespace Babel.Sather.Compiler
             Argument arg = currentRoutine.GetArgument(localExpr.Name);
             if (arg != null) {
                 ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
-                if (arg.NodeType.IsByRef)
-                    EmitLdind(arg.NodeType.GetElementType());
+                if (arg.RawType.IsByRef)
+                    EmitLdind(arg.RawType.GetElementType());
                 return;
             }
             LocalVariable local = localVariableStack.GetLocal(localExpr.Name);
@@ -531,7 +531,7 @@ namespace Babel.Sather.Compiler
             if (call.Flip) {
                 ModalExpression arg = (ModalExpression) call.Arguments.First;
                 arg.Accept(this);
-                BoxIfNecessary(arg.NodeType, parameters[i].ParameterType);
+                BoxIfNecessary(arg.RawType, parameters[i].ParameterType);
                 LocalBuilder tmp =
                     ilGenerator.DeclareLocal(parameters[i].ParameterType);
                 ilGenerator.Emit(OpCodes.Stloc, tmp);
@@ -541,7 +541,7 @@ namespace Babel.Sather.Compiler
             else {
                 if (call.Receiver != null) {
                     if (!call.IsBuiltin &&
-                        call.Receiver.NodeType.IsValueType) {
+                        call.Receiver.RawType.IsValueType) {
                         if (call.Receiver is LocalExpression) {
                             LocalExpression localExpr =
                                 (LocalExpression) call.Receiver;
@@ -558,7 +558,7 @@ namespace Babel.Sather.Compiler
                         }
                         else {
                             LocalBuilder tmp2 =
-                                ilGenerator.DeclareLocal(call.Receiver.NodeType);
+                                ilGenerator.DeclareLocal(call.Receiver.RawType);
                             call.Receiver.Accept(this);
                             ilGenerator.Emit(OpCodes.Stloc, tmp2);
                             ilGenerator.Emit(OpCodes.Ldloca, tmp2);
@@ -570,12 +570,12 @@ namespace Babel.Sather.Compiler
                 }
                 foreach (ModalExpression arg in call.Arguments) {
                     arg.Accept(this);
-                    BoxIfNecessary(arg.NodeType, parameters[i].ParameterType);
+                    BoxIfNecessary(arg.RawType, parameters[i].ParameterType);
                     i++;
                 }
             }
             if (call.Receiver != null &&
-                call.Receiver.NodeType.IsInterface)
+                call.Receiver.RawType.IsInterface)
                 ilGenerator.EmitCall(OpCodes.Callvirt, method, null);
             else
                 ilGenerator.EmitCall(OpCodes.Call, method, null);
@@ -599,14 +599,14 @@ namespace Babel.Sather.Compiler
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
                 if (mode == ArgumentMode.Once) {
                     arg.Accept(this);
-                    BoxIfNecessary(arg.NodeType, param.ParameterType);
+                    BoxIfNecessary(arg.RawType, param.ParameterType);
                 }
                 else {
                     EmitVoid(param.ParameterType);
                 }
             }
             if (iter.Receiver != null &&
-                iter.Receiver.NodeType.IsInterface)
+                iter.Receiver.RawType.IsInterface)
                 ilGenerator.EmitCall(OpCodes.Callvirt, method, null);
             else
                 ilGenerator.EmitCall(OpCodes.Call, method, null);
@@ -642,13 +642,13 @@ namespace Babel.Sather.Compiler
 
         public override void VisitVoid(VoidExpression voidExpr)
         {
-            EmitVoid(voidExpr.NodeType);
+            EmitVoid(voidExpr.RawType);
         }
 
         public override void VisitVoidTest(VoidTestExpression voidTest)
         {
             voidTest.Expression.Accept(this);
-            EmitVoid(voidTest.Expression.NodeType);
+            EmitVoid(voidTest.Expression.RawType);
             ilGenerator.Emit(OpCodes.Ceq);
         }
 
@@ -661,7 +661,7 @@ namespace Babel.Sather.Compiler
                 if (arg == null)
                     break;
                 arg.Accept(this);
-                BoxIfNecessary(arg.NodeType, param.ParameterType);
+                BoxIfNecessary(arg.RawType, param.ParameterType);
                 arg = (ModalExpression) arg.Next;
             }
             ilGenerator.Emit(OpCodes.Newobj, newExpr.Constructor);
@@ -706,7 +706,7 @@ namespace Babel.Sather.Compiler
         protected virtual void BoxIfNecessary(Type sourceType,
                                               Type destinationType)
         {
-            Type adapterType = typeManager.GetSubtypeAdapter(destinationType,
+            Type adapterType = typeManager.GetSupertypingAdapter(destinationType,
                                                              sourceType);
             if (adapterType != null) {
                 ConstructorInfo[] constructors =
