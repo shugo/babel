@@ -86,10 +86,12 @@ namespace Babel.Compiler {
                     cls.Constructor = 
                         cls.TypeBuilder.
                         DefineDefaultConstructor(MethodAttributes.Public);
-                    typeManager.AddConstructor(cls.TypeBuilder,
-                                               cls.Constructor);
+                    UserDefinedConstructorData constructorData =
+                        typeManager.AddConstructor(cls.TypeBuilder,
+                                                   cls.Constructor);
                     typeManager.AddParameters(cls.Constructor,
                                               new ParameterInfo[0]);
+                    constructorData.Parameters = new ArrayList();
                     cls.StaticConstructor = 
                         cls.TypeBuilder.
                         DefineConstructor(MethodAttributes.Static,

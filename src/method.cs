@@ -13,6 +13,39 @@ using System.Collections;
 using Babel.Base;
 
 namespace Babel.Compiler {
+    public interface MethodSignature {
+        string Name { get; }
+        TypeData ReturnType { get; }
+        TypedNodeList Arguments { get; }
+    }
+
+    public class MethodSignatureData : MethodSignature {
+        protected string name;
+        protected TypeData returnType;
+        protected TypedNodeList arguments;
+
+        public MethodSignatureData(string name,
+                                   TypeData returnType,
+                                   TypedNodeList arguments)
+        {
+            this.name = name;
+            this.returnType = returnType;
+            this.arguments = arguments;
+        }
+
+        public string Name {
+            get { return name; }
+        }
+
+        public TypeData ReturnType {
+            get { return returnType; }
+        }
+
+        public TypedNodeList Arguments {
+            get { return arguments; }
+        }
+    }
+
     public abstract class MethodBaseData {
         protected TypeManager typeManager;
         protected MethodBase methodBase;
@@ -22,6 +55,7 @@ namespace Babel.Compiler {
                                  MethodBase methodBase)
         {
             this.typeManager = typeManager;
+            this.methodBase = methodBase;
         }
 
         public virtual MethodBase MethodBase {
@@ -45,12 +79,32 @@ namespace Babel.Compiler {
                 return parameterList.Parameters;
             }
         }
+
+        public override string ToString()
+        {
+            string s = DeclaringType.FullName + "::" + Name;
+            if (Parameters.Count > 0) {
+                bool first = true;
+                s += "(";
+                foreach (ParameterData param in Parameters) {
+                    if (first) {
+                        first = false;
+                    }
+                    else {
+                        s += ",";
+                    }
+                    s += param.ParameterType.FullName;
+                }
+                s += ")";
+            }
+            return s;
+        }
     }
 
     public abstract class ConstructorData : MethodBaseData {
         protected ConstructorData(TypeManager typeManager,
-                                  MethodInfo methodInfo)
-            : base(typeManager, methodInfo)
+                                  ConstructorInfo constructorInfo)
+            : base(typeManager, constructorInfo)
         {
         }
 
@@ -63,20 +117,26 @@ namespace Babel.Compiler {
 
     public class PredefinedConstructorData : ConstructorData {
         public PredefinedConstructorData(TypeManager typeManager,
-                                         MethodInfo methodInfo)
-            : base(typeManager, methodInfo)
+                                         ConstructorInfo constructorInfo)
+            : base(typeManager, constructorInfo)
         {
             parameterList = new PredefinedParameterList(typeManager,
-                                                        methodInfo);
+                                                        constructorInfo);
         }
     }
 
     public class UserDefinedConstructorData : ConstructorData {
         public UserDefinedConstructorData(TypeManager typeManager,
-                                          MethodBuilder methodBuilder)
-            : base(typeManager, methodBuilder)
+                                          ConstructorBuilder constructorBuilder)
+            : base(typeManager, constructorBuilder)
         {
             parameterList = new UserDefinedParameterList();
+        }
+
+        public override ArrayList Parameters {
+            set {
+                ((UserDefinedParameterList) parameterList).Parameters = value;
+            }
         }
     }
 
@@ -91,6 +151,67 @@ namespace Babel.Compiler {
             get {
                 return (MethodInfo) MethodBase;
             }
+        }
+
+        public override string Name {
+            get {
+                return typeManager.GetMethodName(MethodInfo);
+            }
+        }
+
+        public virtual TypeData ReturnType {
+            get {
+                return typeManager.GetReturnType(MethodInfo);
+            }
+        }
+
+        public override string ToString()
+        {
+            string s = base.ToString();
+            if (!ReturnType.IsVoid)
+                s += ":" + ReturnType.FullName;
+            return s;
+        }
+
+        public virtual bool ConflictWith(MethodSignature method)
+        {
+            if (Name != method.Name) {
+                return false;
+            }
+            if (Parameters.Count != method.Arguments.Length)
+                return false;
+            if (ReturnType.IsVoid != method.ReturnType.IsVoid)
+                return false;
+
+            bool conflict = false;
+            bool abs = false;
+            bool sameArgs = true;
+            int i = 0;
+            foreach (Argument arg in method.Arguments) {
+                ParameterData param = (ParameterData) Parameters[i++];
+                TypeData type1 = arg.NodeType;
+                TypeData type2 = param.ParameterType;
+                
+                if (type1 != type2)
+                    sameArgs = false;
+                if (type1 != type2 &&
+                    !type1.IsAbstract && !type2.IsAbstract) {
+                    return false;
+                }
+                else {
+                    if (type1.IsAbstract && type2.IsAbstract) {
+                        abs = true; 
+                        if (!(type1.IsSubtypeOf(type2) ||
+                              type2.IsSubtypeOf(type1)))
+                            conflict = true;
+                    }
+                    else {
+                        if (type1 != type2)
+                            return false;
+                    }
+                }
+            }
+            return (abs && conflict) || !abs || sameArgs;
         }
     }
 
@@ -115,6 +236,12 @@ namespace Babel.Compiler {
         public virtual MethodBuilder MethodBuilder {
             get {
                 return (MethodBuilder) MethodBase;
+            }
+        }
+
+        public override ArrayList Parameters {
+            set {
+                ((UserDefinedParameterList) parameterList).Parameters = value;
             }
         }
     }

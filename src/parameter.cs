@@ -25,7 +25,7 @@ namespace Babel.Compiler {
         }
     }
 
-    public class ParameterData {
+    public abstract class ParameterData {
         protected TypeManager typeManager;
         protected ParameterInfo rawParameter;
 
@@ -39,6 +39,16 @@ namespace Babel.Compiler {
         public virtual ParameterInfo RawParameter {
             get { return rawParameter; }
         }
+
+        public virtual TypeData ParameterType {
+            get {
+                return typeManager.GetTypeData(rawParameter.ParameterType);
+            }
+        }
+
+        public abstract ArgumentMode Mode {
+            get;
+        }
     }
 
     public class PredefinedParameterData : ParameterData {
@@ -48,7 +58,7 @@ namespace Babel.Compiler {
         {
         }
         
-        public virtual ArgumentMode Mode {
+        public override ArgumentMode Mode {
             get {
                 object[] attrs =
                     RawParameter.GetCustomAttributes(
@@ -78,7 +88,7 @@ namespace Babel.Compiler {
         {
         }
         
-        public virtual ArgumentMode Mode {
+        public override ArgumentMode Mode {
             get { return mode; }
             
             set { mode = value; }
@@ -113,7 +123,7 @@ namespace Babel.Compiler {
                     parameters = new ArrayList();
                     foreach (ParameterInfo param in methodBase.GetParameters()) {
                         ParameterData paramData =
-                            new ParameterData(typeManager, param);
+                            new PredefinedParameterData(typeManager, param);
                         parameters.Add(paramData);
                     }
                 }

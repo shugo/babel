@@ -594,14 +594,16 @@ namespace Babel.Compiler {
                                TypeData returnType,
                                TypedNodeList arguments)
         {
-            MethodInfo[] methods = typeManager.GetMethods(type);
-            foreach (MethodInfo m in methods) {
-                if (ConflictMethod(name, arguments, returnType, m)) {
+            MethodSignature msig =
+                new MethodSignatureData(name, returnType, arguments);
+
+            foreach (MethodData m in type.Methods) {
+                if (m.ConflictWith(msig)) {
                     string minfo1 = typeManager.GetMethodInfo(type,
                                                               name,
                                                               arguments,
                                                               returnType);
-                    string minfo2 = typeManager.GetMethodInfo(m);
+                    string minfo2 = m.ToString();
                     string msg = "The signature: " + minfo1 +
                         " conflicts with the earlier feature signature: " +
                         minfo2;
@@ -754,6 +756,7 @@ namespace Babel.Compiler {
                                   returnType.RawType,
                                   arguments.NodeTypes);
             ParameterInfo[] parameters = new ParameterInfo[arguments.Length];
+            ArrayList parameterList = new ArrayList();
             foreach (Argument arg in arguments) {
                 ParameterAttributes attrs = 0;
                 switch (arg.Mode) {
@@ -780,9 +783,16 @@ namespace Babel.Compiler {
                     new ArgumentModeAttribute(arg.Mode);
                 typeManager.AddCustomAttribute(parameters[arg.Index - 1], attr);
 
+                UserDefinedParameterData paramData =
+                    new UserDefinedParameterData(typeManager,
+                                                 parameters[arg.Index - 1],
+                                                 arg.Mode);
+                parameterList.Add(paramData);
             }
-            typeManager.AddMethod(type, method);
+            UserDefinedMethodData methodData =
+                typeManager.AddMethod(type, method);
             typeManager.AddParameters(method, parameters);
+            methodData.Parameters = parameterList;
             return method;
         }
 
@@ -830,14 +840,22 @@ namespace Babel.Compiler {
                                        callingConventions,
                                        paramTypes);
             ParameterInfo[] parameters = new ParameterInfo[paramTypes.Length];
+            ArrayList parameterList = new ArrayList();
             for (int i = 0; i < parameters.Length; i++) {
                 ParameterBuilder pb =
                     constructor.DefineParameter(i + 1, 0, null);
                 parameters[i] =
                     new Parameter(pb, paramTypes[i], constructor);
+                UserDefinedParameterData paramData =
+                    new UserDefinedParameterData(typeManager,
+                                                 parameters[i],
+                                                 ArgumentMode.In);
+                parameterList.Add(paramData);
             }
-            typeManager.AddConstructor(type, constructor);
+            UserDefinedConstructorData constructorData =
+                typeManager.AddConstructor(type, constructor);
             typeManager.AddParameters(constructor, parameters);
+            constructorData.Parameters = parameterList;
             return constructor;
         }
     }

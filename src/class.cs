@@ -197,13 +197,6 @@ namespace Babel.Compiler {
         }
     }
 
-    public interface MethodSignature
-    {
-        string Name { get; }
-        TypedNodeList Arguments { get; }
-        TypeSpecifier ReturnType { get; }
-    }
-
     public class AbstractRoutineSignature : Node, MethodSignature {
         protected string name;
         protected TypedNodeList arguments;
@@ -244,6 +237,10 @@ namespace Babel.Compiler {
 
         public virtual TypeSpecifier ReturnType {
             get { return returnType; }
+        }
+
+        TypeData MethodSignature.ReturnType {
+            get { return returnType.NodeType; }
         }
 
         public virtual MethodBuilder MethodBuilder {
