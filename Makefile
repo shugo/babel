@@ -29,20 +29,26 @@ CORE_LIB_SRCS	= attribute.cs \
 		  int.cs \
 		  str.cs
 
-IO_LIB_SRCS	= out.sa
+BASE_LIB_SRCS	= lib/base/abstract.sa
+
+IO_LIB_SRCS	= lib/io/stream.sa \
+		  lib/io/out.sa
 
 COMPILER	= bsc.exe
 CORE_LIB	= sather-core.dll
+BASE_LIB	= sather-base.dll
 IO_LIB		= sather-io.dll
-BASE_LIBS	= $(IO_LIB)
+STD_LIBS	= $(BASE_LIB) \
+		  $(IO_LIB)
 
-all: $(COMPILER) $(BASE_LIBS)
+all: $(COMPILER) $(STD_LIBS)
 
 check: all
 	cd tests; $(MAKE) check
 
 clean:
 	rm -f $(COMPILER)
+	rm -f $(BASE_LIB)
 	rm -f $(CORE_LIB)
 	rm -f parser.cs
 	rm -f y.output
@@ -61,6 +67,12 @@ $(CORE_LIB): $(CORE_LIB_SRCS)
 	$(CS) $(CSFLAGS) -target:library \
 		-out:$(CORE_LIB) $(CORE_LIB_SRCS)
 
-$(IO_LIB): $(IO_LIB_SRCS)
+$(BASE_LIB): $(BASE_LIB_SRCS) $(COMPILER)
+	rm -f $(BASE_LIB)
+	./$(COMPILER) -target:library \
+		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
+
+$(IO_LIB): $(IO_LIB_SRCS) $(COMPILER)
+	rm -f $(IO_LIB)
 	./$(COMPILER) -target:library \
 		-out:$(IO_LIB) $(IO_LIB_SRCS)
