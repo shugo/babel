@@ -5,7 +5,7 @@ require "stringio"
 $error = StringIO.new
 $stdout.sync = true
 
-$compiler = "./bsc.exe"
+$compiler = "./babelc.exe"
 
 $mono = "%MONO%"
 

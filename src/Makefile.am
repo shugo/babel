@@ -1,6 +1,6 @@
-bin_PROGRAMS		= bsc.exe
+bin_PROGRAMS		= babelc.exe
 
-bsc_exe_SOURCES		= compiler.cs \
+babelc_exe_SOURCES		= compiler.cs \
 			  lexer.cs \
 			  parser.cs \
 			  node.cs \
@@ -31,28 +31,28 @@ bscore_dll_SRCS		= attribute.cs \
 
 EXTRA_DIST		= $(bscore_dll_SRCS) \
 			  parser.jay \
-			  bsc.exe \
+			  babelc.exe \
 			  bscore.dll
 
-CLEANFILES		= bsc.exe \
+CLEANFILES		= babelc.exe \
 			  bscore.dll \
 			  parser.cs \
 			  y.output
 
 ETAGS_ARGS		= $(bscore_dll_SRCS) \
-			  $(bsc_exe_SOURCES)
+			  $(babelc_exe_SOURCES)
 
 ETAGSFLAGS		= --c\#-kinds=-n --extra=+q
 
 CTAGS_ARGS		= $(bscore_dll_SRCS) \
-			  $(bsc_exe_SOURCES)
+			  $(babelc_exe_SOURCES)
 
 CTAGSFLAGS		= --c\#-kinds=-n --extra=+q
 
-bsc.exe: $(bsc_exe_SOURCES) bscore.dll
-	$(CS) $(CSFLAGS) -target:exe -out:bsc.exe \
+babelc.exe: $(babelc_exe_SOURCES) bscore.dll
+	$(CS) $(CSFLAGS) -target:exe -out:babelc.exe \
 		 -reference:bscore.dll \
-		$(bsc_exe_SOURCES)
+		$(babelc_exe_SOURCES)
 
 parser.cs: parser.jay
 	$(JAY) -ctv < $(SKELETON) $< > $@

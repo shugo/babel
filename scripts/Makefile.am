@@ -1,12 +1,12 @@
-bin_SCRIPTS	= bsc
+bin_SCRIPTS	= babelc
 
-EXTRA_DIST	= bsc.in
+EXTRA_DIST	= babelc.in
 
-CLEANFILES	= bsc
+CLEANFILES	= babelc
 
-bsc: bsc.in
+babelc: babelc.in
 	sed -e 's!%MONO%!$(MONO)!g' \
 	    -e 's!%bindir%!$(bindir)!g' \
-	    $(srcdir)/bsc.in > bsc
-	chmod +x bsc
-	chmod -w bsc
+	    $(srcdir)/babelc.in > babelc
+	chmod +x babelc
+	chmod -w babelc

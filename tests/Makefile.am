@@ -1,6 +1,6 @@
 check_SCRIPTS		= test.rb
 
-check_DATA		= bsc.exe \
+check_DATA		= babelc.exe \
 			  bscore.dll \
 			  bsbase.dll \
 			  bsio.dll
@@ -40,7 +40,7 @@ EXTRA_DIST		= test.rb.in \
 			  valuetype.sa
 
 CLEANFILES		= test.rb \
-			  bsc.exe \
+			  babelc.exe \
 			  bscore.dll \
 			  bsbase.dll \
 			  bsio.dll \
@@ -65,8 +65,8 @@ test.rb: test.rb.in
 	chmod +x test.rb
 	chmod -w test.rb
 
-bsc.exe: ../src/bsc.exe
-	cp ../src/bsc.exe bsc.exe
+babelc.exe: ../src/babelc.exe
+	cp ../src/babelc.exe babelc.exe
 
 bscore.dll: ../src/bscore.dll
 	cp ../src/bscore.dll bscore.dll

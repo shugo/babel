@@ -21,7 +21,7 @@ mono version 0.29 以降、あるいは、Microsoftの.NET Framework 1.1 以降
 
 Windows上で、手動でインストールする場合は、
 
-* src/bsc.exe
+* src/babelc.exe
 * src/bscore.dll
 * lib/base/bsbase.dll
 * lib/base/bsio.dll
@@ -38,7 +38,7 @@ Windows上で、手動でインストールする場合は、
       #OUT + "hello world!\n"
     end
   end
-  $ bsc -out:hello.exe hello.sa
+  $ babelc -out:hello.exe hello.sa
   $ mono hello.exe
   hello world!
 

@@ -179,7 +179,7 @@ namespace Babel.Compiler {
         protected virtual void PrintUsage()
         {
             Console.Write(
-"usage: bsc.exe [options] source-files\n" +
+"usage: babelc.exe [options] source-files\n" +
 "   -lib:PATH1,PATH2   Adds the paths to the assembly link path\n" +
 "   -nostdlib          Does not load core libraries\n" +
 "   -out:FNAME         Specifies output file\n" +

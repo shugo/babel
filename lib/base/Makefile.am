@@ -11,6 +11,6 @@ CLEANFILES		= bsbase.dll
 
 bsbase.dll: $(bsbase_dll_SRCS)
 	MONO_PATH=$(top_builddir)/src \
-		$(MONO) $(top_builddir)/src/bsc.exe \
+		$(MONO) $(top_builddir)/src/babelc.exe \
 		-nostdlib -target:library -out:bsbase.dll \
 		$(bsbase_dll_SRCS)
