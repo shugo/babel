@@ -768,7 +768,7 @@ namespace Babel.Compiler {
                                                moveNextArguments,
                                                iter.Location);
             iter.MoveNext.Accept(this);
-            if (iter.NodeType != typeManager.VoidType) {
+            if (!iter.NodeType.IsVoid) {
                 LocalExpression getCurrentReceiver =
                     new LocalExpression(iter.Local.Name, iter.Location);
                 iter.GetCurrent = new CallExpression(getCurrentReceiver,
