@@ -11,18 +11,29 @@ using System.Text;
 
 namespace Babel.Compiler {
     public class SourceFile : CompositeNode {
+        protected string _namespace;
         protected ArrayList importedNamespaces;
 
         public SourceFile() : base()
         {
+            _namespace = null;
             importedNamespaces = new ArrayList();
+        }
+
+        public virtual string Namespace {
+            get { return _namespace; }
+
+            set {
+                _namespace = value;
+                ImportNamespace(value);
+            }
         }
 
         public virtual ArrayList ImportedNamespaces {
             get { return importedNamespaces; }
         }
 
-        public virtual void AddNamespace(string ns)
+        public virtual void ImportNamespace(string ns)
         {
             importedNamespaces.Add(ns);
         }

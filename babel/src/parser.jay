@@ -69,6 +69,7 @@ namespace Babel.Compiler {
 %token ITER
 %token LOCK
 %token LOOP
+%token NAMESPACE
 %token NEAR
 %token NEW
 %token ONCE
@@ -151,6 +152,7 @@ source_file
         : {
               sourceFile = new SourceFile();
           }
+          opt_namespace_directive
           opt_import_directives
           class_def_list
           opt_EOF
@@ -163,6 +165,18 @@ opt_EOF
         : /* empty */
         | EOF
         ;
+
+opt_namespace_directive
+	: /* empty */
+	| namespace_directive
+	;
+
+namespace_directive
+	: NAMESPACE namespace_name SEMI
+          {
+              sourceFile.Namespace = (string) $2;
+          }
+	;
 
 opt_import_directives
 	: /* empty */
@@ -177,7 +191,7 @@ import_directives
 import_directive
 	: IMPORT namespace_name SEMI
           {
-              sourceFile.AddNamespace((string) $2);
+              sourceFile.ImportNamespace((string) $2);
           }
 	;
 
@@ -203,7 +217,13 @@ abstract_class_definition
           subtyping_clause
           supertyping_clause
           {
-              currentClass = new ClassDefinition((string) $3,
+              string name;
+
+              if (sourceFile.Namespace == null)
+                  name = (string) $3;
+              else
+                  name = sourceFile.Namespace + Type.Delimiter + (string) $3;
+              currentClass = new ClassDefinition(name,
                                                  ClassKind.Abstract,
                                                  (TypedNodeList) $4,
                                                  (TypedNodeList) $5,
@@ -493,7 +513,13 @@ class_definition
           IDENTIFIER
           subtyping_clause
           {
-              currentClass = new ClassDefinition((string) $2,
+              string name;
+
+              if (sourceFile.Namespace == null)
+                  name = (string) $2;
+              else
+                  name = sourceFile.Namespace + Type.Delimiter + (string) $2;
+              currentClass = new ClassDefinition(name,
                                                  ClassKind.Reference,
                                                  (TypedNodeList) $3,
                                                  lexer.Location);
