@@ -303,11 +303,6 @@ namespace Babel.Compiler {
         public virtual UserDefinedMethodData
             AddMethod(Type type, MethodBuilder method)
         {
-            ArrayList methods = (ArrayList) methodsTable[type];
-            if (methods == null)
-                methodsTable[type] = methods = new ArrayList();
-            methods.Add(method);
-
             TypeData typeData = GetTypeData(type);
             UserDefinedMethodData methodData =
                 new UserDefinedMethodData(this, method);
@@ -315,34 +310,9 @@ namespace Babel.Compiler {
             return methodData;
         }
 
-        public virtual MethodInfo[] GetMethods(TypeData typeData)
-        {
-            Type type = typeData.RawType;
-
-            if (type is TypeBuilder) {
-                ArrayList methods = (ArrayList) methodsTable[type];
-                if (methods == null)
-                    return new MethodInfo[0];
-                MethodInfo[] result = new MethodInfo[methods.Count];
-                methods.CopyTo(result);
-                return result;
-            }
-            else {
-                return type.GetMethods(BindingFlags.Instance |
-                                       BindingFlags.Static |
-                                       BindingFlags.Public |
-                                       BindingFlags.NonPublic);
-            }
-        }
-
         public virtual UserDefinedConstructorData
             AddConstructor(Type type, ConstructorBuilder constructor)
         {
-            ArrayList constructors = (ArrayList) constructorsTable[type];
-            if (constructors == null)
-                constructorsTable[type] = constructors = new ArrayList();
-            constructors.Add(constructor);
-
             TypeData typeData = GetTypeData(type);
             UserDefinedConstructorData constructorData =
                 new UserDefinedConstructorData(this, constructor);
@@ -590,17 +560,6 @@ namespace Babel.Compiler {
             if (!returnType.IsVoid)
                 methodInfo += ":" + returnType.Name;
             return methodInfo;
-        }
-
-        public virtual ArrayList GetAncestorMethods(TypeData type)
-        {
-            ArrayList ancestors = type.Ancestors;
-            ArrayList result = new ArrayList();
-            foreach (TypeData ancestor in ancestors) {
-                MethodInfo[] methods = GetMethods(ancestor);
-                result.AddRange(methods);
-            }
-            return result;
         }
     }
 }
