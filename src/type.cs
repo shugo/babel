@@ -137,6 +137,38 @@ namespace Babel.Compiler {
             }
         }
 
+        public virtual ArrayList GetGenericArguments()
+        {
+            ArrayList args = new ArrayList();
+            foreach (Type type in RawType.GetGenericArguments()) {
+                args.Add(typeManager.GetTypeData(type));
+            }
+            return args;
+        }
+
+        public virtual bool ContainsGenericParameters {
+            get {
+                return rawType.ContainsGenericParameters;
+            }
+        }
+
+        public virtual bool IsGenericTypeDefinition {
+            get {
+                return rawType.IsGenericTypeDefinition;
+            }
+        }
+
+        public virtual TypeData GetGenericTypeDefinition()
+        {
+            return typeManager.GetTypeData(rawType.GetGenericTypeDefinition());
+        }
+
+        public virtual bool IsGenericInstance {
+            get {
+                return rawType.IsGenericInstance;
+            }
+        }
+
         public virtual bool IsTypeParameter {
             get {
                 return false;

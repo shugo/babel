@@ -247,7 +247,7 @@ parameterization
           }
 	| LBRACE parameter_declaration_list RBRACE
 	  {
-              $$ = new TypedNodeList((Node) $2);
+              $$ = new TypedNodeList((TypedNode) $2);
 	  }
 	;
 
@@ -288,7 +288,7 @@ subtyping_clause
           }
         | IS_LT type_specifier_list
           {
-              $$ = new TypedNodeList((Node) $2);
+              $$ = new TypedNodeList((TypedNode) $2);
           }
         ;
 
@@ -303,15 +303,15 @@ type_specifier_list
         ;
 
 type_specifier
-        : class_name
+        : class_name type_parameters
           {
               $$ = new TypeSpecifier((string) $1, TypeKind.Normal,
-                                     lexer.Location);
+				     (TypedNodeList) $2, lexer.Location);
           }
-        | abstract_class_name
+        | abstract_class_name type_parameters
           {
               $$ = new TypeSpecifier((string) $1, TypeKind.Normal,
-                                     lexer.Location);
+                                     (TypedNodeList) $2, lexer.Location);
           }
         | SAME
           {
@@ -320,6 +320,17 @@ type_specifier
           }
         ;
 
+type_parameters
+	: /* empty */
+	  {
+	      $$ = new TypedNodeList();
+	  }
+	| LBRACE type_specifier_list RBRACE
+	  {
+	      $$ = new TypedNodeList((TypedNode) $3);
+	  }
+	;
+
 supertyping_clause
         : /* empty */
           {
@@ -327,7 +338,7 @@ supertyping_clause
           }
         | IS_GT type_specifier_list
           {
-              $$ = new TypedNodeList((Node) $2);
+              $$ = new TypedNodeList((TypedNode) $2);
           }
         ;
 
@@ -383,7 +394,7 @@ opt_routine_argument_list
           }
         | LPAREN routine_argument_list RPAREN
           {
-              $$ = new TypedNodeList((Node) $2);
+              $$ = new TypedNodeList((TypedNode) $2);
           }
         ;
 
@@ -391,8 +402,8 @@ routine_argument_list
         : routine_argument
         | routine_argument_list COMMA routine_argument
           {
-              Node args = (Node) $1;
-              args.Append((Node) $3);
+              TypedNode args = (TypedNode) $1;
+              args.Append((TypedNode) $3);
               $$ = args;
           }
         ;
@@ -490,7 +501,7 @@ opt_iter_argument_list
           }
         | LPAREN iter_argument_list RPAREN
           {
-              $$ = new TypedNodeList((Node) $2);
+              $$ = new TypedNodeList((TypedNode) $2);
           }
         ;
 
@@ -498,8 +509,8 @@ iter_argument_list
         : iter_argument
         | iter_argument_list COMMA iter_argument
           {
-              Node args = (Node) $1;
-              args.Append((Node) $3);
+              TypedNode args = (TypedNode) $1;
+              args.Append((TypedNode) $3);
               $$ = args;
           }
         ;
@@ -1479,11 +1490,11 @@ opt_mode_expr_list
 mode_expr_list
         : mode_expr
           {
-              $$ = new TypedNodeList((Node) $1);
+              $$ = new TypedNodeList((TypedNode) $1);
           }
         | mode_expr_list COMMA mode_expr
           {
-              ((TypedNodeList) $1).Append((Node) $3);
+              ((TypedNodeList) $1).Append((TypedNode) $3);
               $$ = $1;
           }
         ;

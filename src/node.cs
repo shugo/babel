@@ -250,7 +250,7 @@ namespace Babel.Compiler {
 
     public class TypedNodeList : NodeList {
         public TypedNodeList() {}
-        public TypedNodeList(Node first) : base(first) {}
+        public TypedNodeList(TypedNode first) : base(first) {}
 
         public virtual Type[] NodeTypes
         {

@@ -19,6 +19,7 @@ namespace Babel.Compiler {
     public class TypeSpecifier : TypedNode {
         protected string name;
         protected TypeKind kind;
+        protected TypedNodeList typeParameters;
 
         public static TypeSpecifier Null;
 
@@ -27,11 +28,18 @@ namespace Babel.Compiler {
             Null = new NullTypeSpecifier();
         }
 
-        public TypeSpecifier(string name, TypeKind kind, Location location)
+        public TypeSpecifier(string name, TypeKind kind,
+                             TypedNodeList typeParameters, Location location)
             : base(location)
         {
             this.name = name;
             this.kind = kind;
+            this.typeParameters = typeParameters;
+        }
+
+        public TypeSpecifier(string name, TypeKind kind, Location location)
+            : this(name, kind, new TypedNodeList(), location)
+        {
         }
 
         public override string ToString()
@@ -45,6 +53,10 @@ namespace Babel.Compiler {
 
         public virtual TypeKind Kind {
             get { return kind; }
+        }
+
+        public virtual TypedNodeList TypeParameters {
+            get { return typeParameters; }
         }
 
         public virtual bool IsNull {

@@ -1,6 +1,6 @@
 class FOO{T} is
   print(o: T) is
-  --  #OUT + o.ToString;
+    #OUT + o.ToString;
   end;
 end;
 
