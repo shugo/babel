@@ -113,23 +113,23 @@ namespace Babel.Compiler {
             string[] typeParamNames =
                 new string[cls.TypeParameters.Length];
             int i = 0;
-            foreach (TypeParameter tp in cls.TypeParameters) {
-                typeParamNames[i++] = tp.Name;
+            foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                typeParamNames[i++] = pd.Name;
             }
             GenericTypeParameterBuilder[] typeParameters =
                 cls.TypeBuilder.DefineGenericParameters(typeParamNames);
             i = 0;
-            foreach (TypeParameter tp in cls.TypeParameters) {
-                tp.Builder = typeParameters[i++];
-                if (tp.ConstrainingType.NodeType.IsAbstract) {
+            foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                pd.Builder = typeParameters[i++];
+                if (pd.ConstrainingType.NodeType.IsAbstract) {
                     Type[] ifaces = new Type[] {
-                        tp.ConstrainingType.RawType
+                        pd.ConstrainingType.RawType
                     };
-                    tp.Builder.SetInterfaceConstraints(ifaces);
+                    pd.Builder.SetInterfaceConstraints(ifaces);
                 }
                 else {
-                    Type baseType = tp.ConstrainingType.RawType;
-                    tp.Builder.SetBaseTypeConstraint(baseType);
+                    Type baseType = pd.ConstrainingType.RawType;
+                    pd.Builder.SetBaseTypeConstraint(baseType);
                 }
             }
         }
@@ -181,9 +181,10 @@ namespace Babel.Compiler {
             }
         }
 
-        public override void VisitTypeParameter(TypeParameter typeParam)
+        public override void
+            VisitParameterDeclaration(ParameterDeclaration paramDecl)
         {
-            typeParam.ConstrainingType.Accept(this);
+            paramDecl.ConstrainingType.Accept(this);
         }
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)

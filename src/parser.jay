@@ -264,9 +264,9 @@ parameter_declaration_list
 parameter_declaration
 	: IDENTIFIER type_constraint_clause
 	  {
-	      $$ = new TypeParameter((string) $1,
-				     (TypeSpecifier) $2,
-				     lexer.Location);
+	      $$ = new ParameterDeclaration((string) $1,
+	                                    (TypeSpecifier) $2,
+					    lexer.Location);
 	  }
 	;
 
