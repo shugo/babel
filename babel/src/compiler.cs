@@ -13,7 +13,7 @@ using System.Reflection;
 
 namespace Babel.Compiler {
     public class Compiler {
-        public const string VERSION = "0.0.0";
+        public const string VERSION = "0.0.1";
 
         protected Program program;
         protected Report report;
