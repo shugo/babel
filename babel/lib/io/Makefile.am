@@ -10,7 +10,8 @@ EXTRA_DIST		= $(bsio_dll_SRCS)
 CLEANFILES		= bsio.dll
 
 bsio.dll: $(bsio_dll_SRCS)
-	MONO_PATH=$(top_builddir)/src:$(top_builddir)/lib/base \
+	MONO_PATH=$(top_builddir)/src \
 		$(MONO) $(top_builddir)/src/bsc.exe \
-		-target:library \
-		-out:bsio.dll $(bsio_dll_SRCS)
+		-nostdlib -lib:$(top_builddir)/lib/base -reference:bsbase.dll \
+                -target:library -out:bsio.dll \
+		$(bsio_dll_SRCS)
