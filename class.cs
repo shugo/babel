@@ -656,6 +656,7 @@ namespace Babel.Sather.Compiler
         public virtual TypeSpecifier TypeSpecifier
         {
             get { return typeSpecifier; }
+            set { typeSpecifier = value; }
         }
 
         public override void Accept(NodeVisitor visitor)

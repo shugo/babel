@@ -302,20 +302,30 @@ routine_argument_list
         ;
 
 routine_argument
-        : opt_routine_mode identifier_list COLON type_specifier
+        : rout_mode_ident_list COLON type_specifier
           {
-              ArrayList identifierList = (ArrayList) $2;
-              Node args = null;
-              foreach (string identifier in identifierList) {
-                  Argument arg = new Argument((ArgumentMode) $1,
-                                              identifier, (TypeSpecifier) $4,
-                                              lexer.Location);
-                  if (args == null)
-                      args = arg;
-                  else
-                      args.Append(arg);
+              Argument args = (Argument) $1;
+              foreach (Argument arg in args) {
+                  arg.TypeSpecifier = (TypeSpecifier) $3;
               }
               $$ = args;
+          }
+        ;
+
+rout_mode_ident_list
+        : rout_mode_ident
+        | rout_mode_ident_list COMMA rout_mode_ident
+          {
+              ((Node) $1).Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+rout_mode_ident
+        : opt_routine_mode IDENTIFIER
+          {
+              $$ = new Argument((ArgumentMode) $1, (string) $2, null,
+                                lexer.Location);
           }
         ;
 
@@ -393,20 +403,30 @@ iter_argument_list
         ;
 
 iter_argument
-        : opt_iter_mode identifier_list COLON type_specifier
+        : iter_mode_ident_list COLON type_specifier
           {
-              ArrayList identifierList = (ArrayList) $2;
-              Node args = null;
-              foreach (string identifier in identifierList) {
-                  Argument arg = new Argument((ArgumentMode) $1,
-                                              identifier, (TypeSpecifier) $4,
-                                              lexer.Location);
-                  if (args == null)
-                      args = arg;
-                  else
-                      args.Append(arg);
+              Argument args = (Argument) $1;
+              foreach (Argument arg in args) {
+                  arg.TypeSpecifier = (TypeSpecifier) $3;
               }
               $$ = args;
+          }
+        ;
+
+iter_mode_ident_list
+        : iter_mode_ident
+        | iter_mode_ident_list COMMA iter_mode_ident
+          {
+              ((Node) $1).Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+iter_mode_ident
+        : opt_iter_mode IDENTIFIER
+          {
+              $$ = new Argument((ArgumentMode) $1, (string) $2, null,
+                                lexer.Location);
           }
         ;
 
