@@ -147,16 +147,18 @@ namespace Babel.Sather.Compiler
 
         public virtual Type[] ExtractAncestors(Type[] parents)
         {
-            Hashtable tbl = new Hashtable();
+            ArrayList ancestors = new ArrayList();
             foreach (Type parent in parents) {
-                tbl[parent] = parent;
                 foreach (Type anc in GetAncestors(parent)) {
-                    tbl[anc] = anc;
+                    if (!ancestors.Contains(anc))
+                        ancestors.Add(anc);
                 }
+                if (!ancestors.Contains(parent))
+                    ancestors.Add(parent);
             }
-            Type[] ancestors = new Type[tbl.Count];
-            tbl.Values.CopyTo(ancestors, 0);
-            return ancestors;
+            Type[] result = new Type[ancestors.Count];
+            ancestors.CopyTo(result, 0);
+            return result;
         }
 
         public virtual bool IsSubtype(Type type, Type supertype)
