@@ -1,11 +1,15 @@
+#!%RUBY%
+
 require "stringio"
 
 $error = StringIO.new
 $stdout.sync = true
 
-$topdir = File.expand_path("..", File.dirname(__FILE__))
-ENV["MONO_PATH"] = $topdir
-$compiler = File.expand_path("bsc.exe", $topdir)
+$topdir = "%top_builddir%"
+ENV["MONO_PATH"] = "#{$topdir}/src:#{$topdir}/lib/base:#{$topdir}/lib/io"
+$compiler = File.expand_path("src/bsc.exe", $topdir)
+
+$mono = "%MONO%"
 
 def test(source)
   error_file = source.sub(/\.sa$/, ".err")
@@ -22,7 +26,7 @@ def test(source)
     return "E"
   end
 
-  actual_error = `mono #{$compiler} -lib:#{$topdir} #{source} 2>&1`
+  actual_error = `#{$mono} #{$compiler} -lib:#{$topdir}/src,#{$topdir}/lib/base,#{$topdir}/lib/io #{source} 2>&1`
   if expected_error
     if $?.exitstatus == 0
       $error.printf("%s: compilation succeeded unexpectedly\n",
@@ -55,7 +59,7 @@ def test(source)
   end
 
   program = source.sub(/\.sa$/, ".exe")
-  actual_output = `mono #{program}`
+  actual_output = `#{$mono} #{program}`
   if actual_output == expected_output
     return "."
   else

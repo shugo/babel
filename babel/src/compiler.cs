@@ -29,8 +29,8 @@ namespace Babel.Sather.Compiler {
             references = new ArrayList();
             linkPaths = new ArrayList();
             softReferences = new ArrayList();
-            softReferences.Add("sather-base");
-            softReferences.Add("sather-io");
+            softReferences.Add("bsbase");
+            softReferences.Add("bsio");
             target = Target.Exe;
         }
 
