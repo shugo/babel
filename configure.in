@@ -17,9 +17,6 @@ AC_ARG_WITH(cs,
 ], [
     AC_PATH_PROG(CS, mcs, no)
 ])
-if test "$CS" = "no"; then
-    AC_MSG_ERROR(cs is required)
-fi
 
 AC_MSG_CHECKING(flags for cs)
 AC_ARG_WITH(csflags,
@@ -38,7 +35,7 @@ AC_ARG_WITH(jay,
     AC_MSG_RESULT(using $withval for jay)
     JAY="$withval"
 ], [
-    AC_PATH_PROG(JAY, jay, "")
+    AC_PATH_PROG(JAY, jay, no)
 ])
 
 AC_ARG_WITH(mono,
@@ -56,7 +53,7 @@ AC_ARG_WITH(ruby,
     AC_MSG_RESULT(using $withval for ruby)
     RUBY="$withval"
 ], [
-    AC_PATH_PROG(RUBY, ruby, "")
+    AC_PATH_PROG(RUBY, ruby, no)
 ])
 
 AC_OUTPUT([Makefile
