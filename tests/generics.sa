@@ -1,10 +1,29 @@
-class FOO{T} is
-  print(o: T) is
-    #OUT + o.ToString;
+class VALUE_HOLDER{T} is
+  private attr value: T;
+
+(*
+  create(value: T): VALUE_HOLDER{T} is
+    res ::= new VALUE_HOLDER{T};
+    res.value := value;
+    return res;
+  end;
+  *)
+
+  get: T is
+    return value;
+  end;
+
+  set(value: T) is
+    self.value := value;
   end;
 end;
 
 class MAIN is
   main is
+    x: VALUE_HOLDER{STR};
+    -- x := #VALUE_HOLDER{STR}("foo");
+    x := new VALUE_HOLDER{STR};
+    x.set("hello");
+    #OUT + x.get + "\n";
   end
 end

@@ -726,6 +726,8 @@ namespace Babel.Compiler {
             if (sourceType.IsValueType &&
                 !destinationType.IsValueType)
                 ilGenerator.Emit(OpCodes.Box, sourceType);
+            if (destinationType.IsGenericParameter)
+                ilGenerator.Emit(OpCodes.Box, sourceType);
         }
 
         protected virtual void UnboxIfNecessary(Type sourceType,

@@ -327,7 +327,7 @@ type_parameters
 	  }
 	| LBRACE type_specifier_list RBRACE
 	  {
-	      $$ = new TypedNodeList((TypedNode) $3);
+	      $$ = new TypedNodeList((TypedNode) $2);
 	  }
 	;
 
@@ -1554,12 +1554,10 @@ new_expression
           {
               $$ = new NewExpression(lexer.Location);
           }
-        | NEW class_name opt_mode_expr_list
+        | NEW type_specifier opt_mode_expr_list
           {
-              TypeSpecifier typeSpecifier =
-                  new TypeSpecifier((string) $2, TypeKind.Normal,
-                                    lexer.Location);
-              $$ = new NewExpression(typeSpecifier, (TypedNodeList) $3,
+              $$ = new NewExpression((TypeSpecifier) $2,
+				     (TypedNodeList) $3,
                                      lexer.Location);
           }
         ;

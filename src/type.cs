@@ -40,7 +40,7 @@ namespace Babel.Compiler {
 
         public override string ToString()
         {
-            return Name;
+            return FullName;
         }
 
         public virtual bool IsVoid {
@@ -173,6 +173,12 @@ namespace Babel.Compiler {
             get {
                 return false;
             }
+        }
+
+        public virtual TypeData BindGenericParameters(TypedNodeList parameters)
+        {
+            Type type = RawType.BindGenericParameters(parameters.NodeTypes);
+            return typeManager.GetTypeData(type);
         }
 
         public virtual TypeData ElementType {
@@ -383,9 +389,9 @@ namespace Babel.Compiler {
         protected TypeData constrainingType;
 
         public TypeParameterData(TypeManager typeManager,
-                                 GenericTypeParameterBuilder typeBuilder,
+                                 Type rawType,
                                  TypeData constrainingType)
-            : base(typeManager, typeBuilder)
+            : base(typeManager, rawType)
         {
             this.constrainingType = constrainingType;
         }

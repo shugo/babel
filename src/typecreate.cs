@@ -109,6 +109,8 @@ namespace Babel.Compiler {
 
         protected void DefineTypeParameters(ClassDefinition cls)
         {
+            if (cls.TypeParameters.Length == 0)
+                return;
             cls.TypeParameters.Accept(this);
             string[] typeParamNames =
                 new string[cls.TypeParameters.Length];
@@ -134,6 +136,7 @@ namespace Babel.Compiler {
                 pd.NodeType =
                     new TypeParameterData(typeManager, pd.Builder,
                                           pd.ConstrainingType.NodeType);
+                typeManager.AddType(pd.NodeType);
                 pd.NodeType.Parents = new ArrayList();
                 pd.NodeType.Parents.Add(pd.ConstrainingType.NodeType);
             }
@@ -194,13 +197,14 @@ namespace Babel.Compiler {
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
+            typeSpecifier.TypeParameters.Accept(this);
             if (typeSpecifier.Kind == TypeKind.Same) {
                 report.Error(typeSpecifier.Location,
                              "SAME cannot appear in subtyping clause");
                 return;
             }
             TypeData type =
-                typeManager.GetType(typeSpecifier.Name,
+                typeManager.GetType(typeSpecifier,
                                     currentSouceFile.ImportedNamespaces);
             if (type != null) {
                 typeSpecifier.NodeType = type;
@@ -219,7 +223,9 @@ namespace Babel.Compiler {
                 return;
             }
             VisitClass(cls);
-            typeSpecifier.NodeType = typeManager.GetTypeData(cls.TypeBuilder);
+            typeSpecifier.NodeType =
+                typeManager.GetType(typeSpecifier,
+                                    currentSouceFile.ImportedNamespaces);
         }
     }
 }

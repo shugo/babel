@@ -86,15 +86,15 @@ namespace Babel.Compiler {
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
+            typeSpecifier.TypeParameters.Accept(this);
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType =
-                    typeManager.GetTypeData(currentClass.TypeBuilder);
+                typeSpecifier.NodeType = currentClass.TypeData;
             }
             else {
                 TypeData type =
                     currentClass.GetTypeParameter(typeSpecifier.Name);
                 if (type == null) {
-                    type = typeManager.GetType(typeSpecifier.Name,
+                    type = typeManager.GetType(typeSpecifier,
                                         currentSouceFile.ImportedNamespaces);
                 }
                 if (type == null) {
@@ -205,7 +205,8 @@ namespace Babel.Compiler {
                 if (!assign.Value.NodeType.IsSubtypeOf(lhsType)) {
                     report.Error(assign.Location,
                                  "{0} is not a subtype of {1}",
-                                 assign.Value.NodeType, lhsType);
+                                 assign.Value.NodeType.FullName,
+                                 lhsType.FullName);
                     return;
                 }
             }
@@ -258,7 +259,7 @@ namespace Babel.Compiler {
                         report.Error(ret.Location,
                                      "the type of the destination: {0} is " +
                                      "not a supertype of {1}",
-                                     expectedType.Name,
+                                     expectedType.FullName,
                                      ret.Value.NodeType.FullName);
                         return;
                     }
@@ -725,14 +726,15 @@ namespace Babel.Compiler {
         }
 
         protected virtual ConstructorInfo
-        LookupConstructor(TypeData type,
-                          TypedNodeList arguments)
+            LookupConstructor(TypeData type,
+                              TypedNodeList arguments)
         {
             ConstructorInfo[] constructors =
                 typeManager.GetConstructors(type.RawType);
             ArrayList candidates = new ArrayList();
             foreach (ConstructorInfo constructor in constructors) {
-                if (CheckConstructor(constructor, arguments))
+                if (constructor.DeclaringType != typeof(object) &&
+                    CheckConstructor(constructor, arguments))
                     candidates.Add(constructor);
             }
             if (candidates.Count == 0)

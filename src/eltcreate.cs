@@ -531,15 +531,15 @@ namespace Babel.Compiler {
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
+            typeSpecifier.TypeParameters.Accept(this);
             if (typeSpecifier.Kind == TypeKind.Same) {
-                typeSpecifier.NodeType =
-                    typeManager.GetTypeData(currentClass.TypeBuilder);
+                typeSpecifier.NodeType = currentClass.TypeData;
             }
             else {
                 TypeData type =
                     currentClass.GetTypeParameter(typeSpecifier.Name);
                 if (type == null) {
-                    type = typeManager.GetType(typeSpecifier.Name,
+                    type = typeManager.GetType(typeSpecifier,
                                         currentSouceFile.ImportedNamespaces);
                 }
                 if (type == null) {
@@ -553,10 +553,10 @@ namespace Babel.Compiler {
         }
 
         protected virtual void
-        CheckMethodConfliction(TypeData type,
-                               string name,
-                               TypeData returnType,
-                               TypedNodeList arguments)
+            CheckMethodConfliction(TypeData type,
+                                   string name,
+                                   TypeData returnType,
+                                   TypedNodeList arguments)
         {
             MethodSignature sig =
                 new MethodSignature(type, name, returnType, arguments);
@@ -571,11 +571,11 @@ namespace Babel.Compiler {
         }
 
         protected virtual ArrayList
-        CheckMethodConformance(TypeData type,
-                               string name,
-                               TypeData returnType,
-                               TypedNodeList arguments,
-                               ArrayList ancestorMethods)
+            CheckMethodConformance(TypeData type,
+                                   string name,
+                                   TypeData returnType,
+                                   TypedNodeList arguments,
+                                   ArrayList ancestorMethods)
         {
             MethodSignature sig =
                 new MethodSignature(type, name, returnType, arguments);
@@ -591,8 +591,8 @@ namespace Babel.Compiler {
         }
 
         protected virtual ArrayList
-        CheckMethodConformance(MethodData method,
-                               ArrayList ancestorMethods)
+            CheckMethodConformance(MethodData method,
+                                   ArrayList ancestorMethods)
         {
             ArrayList conformableMethods = new ArrayList();
             foreach (MethodData m in ancestorMethods) {
@@ -606,11 +606,11 @@ namespace Babel.Compiler {
         }
 
         protected virtual MethodBuilder
-        DefineMethod(TypeBuilder type,
-                     string name,
-                     MethodAttributes attributes,
-                     TypeData returnType,
-                     TypedNodeList arguments)
+            DefineMethod(TypeBuilder type,
+                         string name,
+                         MethodAttributes attributes,
+                         TypeData returnType,
+                         TypedNodeList arguments)
         {
             MethodBuilder method =
                 type.DefineMethod(name,
@@ -659,10 +659,10 @@ namespace Babel.Compiler {
         }
 
         protected virtual MethodBuilder
-        DefineReader(TypeBuilder type,
-                     string name,
-                     MethodAttributes attributes,
-                     TypeSpecifier attrType)
+            DefineReader(TypeBuilder type,
+                         string name,
+                         MethodAttributes attributes,
+                         TypeSpecifier attrType)
         {
             CheckMethodConfliction(typeManager.GetTypeData(type),
                                    name,
@@ -673,10 +673,10 @@ namespace Babel.Compiler {
         }
 
         protected virtual MethodBuilder
-        DefineWriter(TypeBuilder type,
-                     string name,
-                     MethodAttributes attributes,
-                     TypeSpecifier attrType)
+            DefineWriter(TypeBuilder type,
+                         string name,
+                         MethodAttributes attributes,
+                         TypeSpecifier attrType)
         {
             Argument arg = new Argument(ArgumentMode.In, "value",
                                         attrType, Location.Null);
@@ -692,10 +692,10 @@ namespace Babel.Compiler {
         }
 
         protected virtual ConstructorBuilder
-        DefineConstructor(TypeBuilder type,
-                          MethodAttributes attributes,
-                          CallingConventions callingConventions,
-                          Type[] paramTypes)
+            DefineConstructor(TypeBuilder type,
+                              MethodAttributes attributes,
+                              CallingConventions callingConventions,
+                              Type[] paramTypes)
         {
             ConstructorBuilder constructor =
                 type.DefineConstructor(attributes,

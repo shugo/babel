@@ -195,6 +195,30 @@ namespace Babel.Compiler {
             return null;
         }
 
+        public virtual TypeData GetType(TypeSpecifier typeSpecifier,
+                                        ArrayList namespaces)
+        {
+            TypeData typeData = GetType(typeSpecifier.Name);
+            if (typeData == null) {
+                foreach (string ns in namespaces) {
+                    typeData = GetType(ns + Type.Delimiter +
+                                       typeSpecifier.Name);
+                    if (typeData != null)
+                        break;
+                }
+            }
+            if (typeData == null)
+                return null;
+            TypedNodeList typeParameters = typeSpecifier.TypeParameters;
+            if (typeParameters.Length == 0) {
+                return typeData;
+            }
+            else {
+                TypeData genericTypeDef = typeData.GetGenericTypeDefinition();
+                return genericTypeDef.BindGenericParameters(typeParameters);
+            }
+        }
+
         public virtual void AddAssembly(Assembly assembly)
         {
             assemblies.Add(assembly);
@@ -384,6 +408,12 @@ namespace Babel.Compiler {
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
+                if (provider is Type &&
+                    ((Type) provider).IsGenericInstance)
+                    return null;
+                if (provider is MethodBase &&
+                    ((MethodBase) provider).DeclaringType.IsGenericInstance)
+                    return null;
                 try {
                     return provider.GetCustomAttributes(type, false);
                 }
@@ -479,8 +509,9 @@ namespace Babel.Compiler {
             CustomAttributeBuilder attrBuilder =
                 new CustomAttributeBuilder(constructor, parameters);
             typeBuilder.SetCustomAttribute(attrBuilder);
-            Attribute attr = new SupertypingAdapterAttribute(adapteeType.RawType,
-                                                         adapterType);
+            Attribute attr =
+                new SupertypingAdapterAttribute(adapteeType.RawType,
+                                                adapterType);
             AddCustomAttribute(typeBuilder, attr);
         }
 
