@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public abstract class Statement : Node {
         public Statement() : base() {}
         public Statement(Location location) : base(location) {}

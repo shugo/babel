@@ -11,9 +11,9 @@ using System.Reflection.Emit;
 using System.Collections;
 using System.Text;
 
-using Babel.Sather.Base;
+using Babel.Base;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public enum ClassKind {
         Reference,
         Abstract

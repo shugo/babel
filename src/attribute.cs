@@ -10,7 +10,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base {
+namespace Babel.Base {
     public class SatherNameAttribute : Attribute {
         protected string name;
 

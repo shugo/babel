@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babel.Sather.Base;
+using Babel.Base;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public class TypeManager {
         protected ArrayList assemblies;
         protected ArrayList modules;
@@ -90,13 +90,13 @@ namespace Babel.Sather.Compiler {
         {
             obType = AddBuiltinType("$OB", typeof(object));
             boolType = AddBuiltinType("BOOL", typeof(bool),
-                                      typeof(Babel.Sather.Base.BOOL));
+                                      typeof(Babel.Base.BOOL));
             intType = AddBuiltinType("INT", typeof(int),
-                                     typeof(Babel.Sather.Base.INT));
+                                     typeof(Babel.Base.INT));
             fltType = AddBuiltinType("FLT", typeof(float));
             charType = AddBuiltinType("CHAR", typeof(char));
             strType = AddBuiltinType("STR", typeof(string),
-                                     typeof(Babel.Sather.Base.STR));
+                                     typeof(Babel.Base.STR));
             voidType = new TypeData(this, typeof(void));
             exceptionType = new TypeData(this, typeof(System.Exception));
         }

@@ -7,7 +7,7 @@
 
 using System;
 
-namespace Babel.Sather.Compiler {
+namespace Babel.Compiler {
     public class Report {
         protected int errors;
         protected int warnings;
