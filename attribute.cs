@@ -35,18 +35,18 @@ namespace Babel.Sather.Base
         }
     }
 
-    public class IterReturnTypeAttribute : Attribute
+    public class IterTypeAttribute : Attribute
     {
-        Type type;
+        Type iterType;
 
-        public IterReturnTypeAttribute(Type type)
+        public IterTypeAttribute(Type iterType)
         {
-            this.type = type;
+            this.iterType = iterType;
         }
 
-        public Type Type
+        public Type IterType
         {
-            get { return type; }
+            get { return iterType; }
         }
     }
 }
