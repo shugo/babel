@@ -104,6 +104,11 @@ namespace Babel.Sather.Base
         {
             return self;
         }
+
+        public static string str(int self)
+        {
+            return self.ToString();
+        }
         
         public static int from_int(int self, int i)
         {

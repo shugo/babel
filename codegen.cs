@@ -160,8 +160,19 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ret);
 
             ilGenerator = iter.MethodBuilder.GetILGenerator();
-            EmitVoid(iter.MethodBuilder.ReturnType);
-            ilGenerator.Emit(OpCodes.Ret); 
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            foreach (Argument arg in iter.Arguments) {
+                if (arg.Mode == ArgumentMode.Once) {
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                }
+            }
+            ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
+            ilGenerator.Emit(OpCodes.Ret);
+
+            foreach (MethodBuilder adapter in iter.Adapters) {
+                ilGenerator = adapter.GetILGenerator();
+                ilGenerator.Emit(OpCodes.Jmp, iter.MethodBuilder);
+            }
 
             ilGenerator = iter.MoveNext.GetILGenerator();
             returnLabel = ilGenerator.DefineLabel();

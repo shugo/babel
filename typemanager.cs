@@ -287,7 +287,8 @@ namespace Babel.Sather.Compiler
                 GetCustomAttributes(provider, typeof(SatherNameAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
-            return ((SatherNameAttribute) attrs[0]).Name;
+            else
+                return ((SatherNameAttribute) attrs[0]).Name;
         }
 
         public virtual Type GetIterReturnType(ICustomAttributeProvider provider)
@@ -297,7 +298,8 @@ namespace Babel.Sather.Compiler
                                     typeof(IterReturnTypeAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
-            return ((IterReturnTypeAttribute) attrs[0]).ReturnType;
+            else
+                return ((IterReturnTypeAttribute) attrs[0]).ReturnType;
         }
 
         public virtual ArgumentMode
@@ -308,7 +310,26 @@ namespace Babel.Sather.Compiler
                                     typeof(ArgumentModeAttribute));
             if (attrs == null || attrs.Length == 0)
                 return ArgumentMode.In;
-            return ((ArgumentModeAttribute) attrs[0]).Mode;
+            else
+                return ((ArgumentModeAttribute) attrs[0]).Mode;
+        }
+
+        public virtual string GetMethodName(MethodInfo method)
+        {
+            string name = GetSatherName(method);
+            if (name == null)
+                return method.Name;
+            else 
+                return name;
+        }
+
+        public virtual Type GetReturnType(MethodInfo method)
+        {
+            Type returnType = GetIterReturnType(method);
+            if (returnType == null)
+                return method.ReturnType;
+            else 
+                return returnType;
         }
 
         public virtual string GetMethodInfo(Type receiverType,
@@ -352,9 +373,21 @@ namespace Babel.Sather.Compiler
                 }
                 methodInfo += ")";
             }
-            if (method.ReturnType != typeof(void))
-                methodInfo += ":" + GetTypeName(method.ReturnType);
+            Type returnType = GetReturnType(method);
+            if (returnType != typeof(void))
+                methodInfo += ":" + GetTypeName(returnType);
             return methodInfo;
+        }
+
+        public virtual ArrayList GetAncestorMethods(Type type)
+        {
+            Type[] ancestors = GetAncestors(type);
+            ArrayList result = new ArrayList();
+            foreach (Type ancestor in ancestors) {
+                MethodInfo[] methods = GetMethods(ancestor);
+                result.AddRange(methods);
+            }
+            return result;
         }
     }
 }

@@ -724,9 +724,7 @@ namespace Babel.Sather.Compiler
                                            TypedNodeList arguments,
                                            bool hasReturnValue)
         {
-            string methodName = typeManager.GetSatherName(method);
-            if (methodName == null)
-                methodName = method.Name;
+            string methodName = typeManager.GetMethodName(method);
             if (methodName != name)
                 return false;
             Type returnType = typeManager.GetIterReturnType(method);

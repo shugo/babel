@@ -34,12 +34,16 @@ BASE_LIB	= sacorlib.dll
 
 all: $(COMPILER)
 
+check: all
+	cd tests; $(MAKE) check
+
 clean:
 	rm -f $(COMPILER)
 	rm -f $(BASE_LIB)
 	rm -f parser.cs
 	rm -f y.output
 	rm -f *~
+	cd tests; $(MAKE) clean
 
 bsc.exe: $(COMPILER_SRCS) $(BASE_LIB)
 	$(CS) $(CSFLAGS) -target:exe -out:bsc.exe \
