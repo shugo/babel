@@ -70,12 +70,12 @@ namespace Babel.Sather.Base
         }
     }
 
-    public class SubtypeAdapterAttribute : Attribute
+    public class SupertypingAdapterAttribute : Attribute
     {
         protected Type adapteeType;
         protected Type adapterType;
 
-        public SubtypeAdapterAttribute(Type adapteeType, Type adapterType)
+        public SupertypingAdapterAttribute(Type adapteeType, Type adapterType)
         {
             this.adapteeType = adapteeType;
             this.adapterType = adapterType;

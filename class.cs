@@ -28,6 +28,7 @@ namespace Babel.Sather.Compiler
         protected TypedNodeList supertypes;
         protected TypedNodeList subtypes;
         protected TypeBuilder typeBuilder;
+        protected TypeData typeData;
         protected ConstructorBuilder constructor;
         protected ConstructorBuilder staticConstructor;
         protected ILGenerator staticConstructorIL;
@@ -44,6 +45,7 @@ namespace Babel.Sather.Compiler
             this.supertypes = supertypes;
             this.subtypes = subtypes;
             typeBuilder = null;
+            typeData = null;
             constructor = null;
             staticConstructor = null;
             staticConstructorIL = null;
@@ -80,6 +82,12 @@ namespace Babel.Sather.Compiler
         {
             get { return typeBuilder; }
             set { typeBuilder = value; }
+        }
+
+        public virtual TypeData TypeData
+        {
+            get { return typeData; }
+            set { typeData = value; }
         }
 
         public virtual ConstructorBuilder Constructor
@@ -129,24 +137,26 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class SubtypeAdapter
+    public class SupertypingAdapter
     {
-        Type adapteeType;
-        TypeBuilder typeBuilder;
-        FieldBuilder adapteeField;
-        ConstructorBuilder constructor;
-        ArrayList methods;
+        protected TypeData adapteeType;
+        protected TypeBuilder typeBuilder;
+        protected TypeData typeData;
+        protected FieldBuilder adapteeField;
+        protected ConstructorBuilder constructor;
+        protected ArrayList methods;
 
-        public SubtypeAdapter(Type adapteeType)
+        public SupertypingAdapter(TypeData adapteeType)
         {
             this.adapteeType = adapteeType;
             this.typeBuilder = null;
+            this.typeData = null;
             this.adapteeField = null;
             this.constructor = null;
             this.methods = new ArrayList();
         }
 
-        public virtual Type AdapteeType
+        public virtual TypeData AdapteeType
         {
             get { return adapteeType; }
         }
@@ -155,6 +165,12 @@ namespace Babel.Sather.Compiler
         {
             get { return typeBuilder; }
             set { typeBuilder = value; }
+        }
+
+        public virtual TypeData TypeData
+        {
+            get { return typeData; }
+            set { typeData = value; }
         }
 
         public virtual FieldBuilder AdapteeField
@@ -175,13 +191,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class SubtypeAdapterMethod
+    public class SupertypingAdapterMethod
     {
         MethodBuilder methodBuilder;
         MethodInfo adapteeMethod;
         int parameterCount;
 
-        public SubtypeAdapterMethod(MethodBuilder methodBuilder,
+        public SupertypingAdapterMethod(MethodBuilder methodBuilder,
                                     MethodInfo adapteeMethod,
                                     int parameterCount)
         {
