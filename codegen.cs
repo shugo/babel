@@ -353,7 +353,7 @@ namespace Babel.Sather.Compiler
         public override void VisitCall(CallExpression call)
         {
             MethodInfo method = call.Method;
-            ParameterInfo[] parameters = method.GetParameters();
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
             int i = call.IsBuiltin ? 1 : 0;
             if (call.Flip) {
                 ModalExpression arg = (ModalExpression) call.Arguments.First;

@@ -177,8 +177,9 @@ namespace Babel.Sather.Compiler
                     assign.Call.Accept(this);
                     if (assign.Call.NodeType == null)
                         return;
-                    lhsType =
-                        assign.Call.Method.GetParameters()[0].ParameterType;
+                    ParameterInfo[] parameters =
+                        typeManager.GetParameters(assign.Call.Method);
+                    lhsType = parameters[0].ParameterType;
                 }
             }
             if (assign.Value is VoidExpression) {
@@ -564,7 +565,7 @@ namespace Babel.Sather.Compiler
         {
             if (method.Name != name)
                 return false;
-            ParameterInfo[] parameters = method.GetParameters();
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
             if (parameters.Length != arguments.Length) {
                 return false;
             }
@@ -621,9 +622,10 @@ namespace Babel.Sather.Compiler
                 else {
                     ArrayList currentPosWinners = new ArrayList();
                     Type bestType =
-                        firstMethod.GetParameters()[pos].ParameterType;
+                        typeManager.GetParameters(firstMethod)[pos].ParameterType;
                     foreach (MethodInfo method in candidates) {
-                        ParameterInfo param = method.GetParameters()[pos];
+                        ParameterInfo param =
+                            typeManager.GetParameters(method)[pos];
                         switch (arg.Mode) {
                         case ArgumentMode.In:
                             if (IsSubtype(param.ParameterType, bestType)) {
@@ -686,7 +688,7 @@ namespace Babel.Sather.Compiler
 
             call.Method = method;
             call.NodeType = method.ReturnType;
-            ParameterInfo[] parameters = method.GetParameters();
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
             int i = 0;
             foreach (ModalExpression arg in call.Arguments) {
                 ParameterInfo param = parameters[i++];
