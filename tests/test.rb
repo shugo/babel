@@ -22,7 +22,7 @@ def test(source)
     return "E"
   end
 
-  actual_error = `#{$compiler} -lib:#{$topdir} #{source} 2>&1`
+  actual_error = `mono #{$compiler} -lib:#{$topdir} #{source} 2>&1`
   if expected_error
     if $?.exitstatus == 0
       $error.printf("%s: compilation succeeded unexpectedly\n",
@@ -55,7 +55,7 @@ def test(source)
   end
 
   program = source.sub(/\.sa$/, ".exe")
-  actual_output = `./#{program}`
+  actual_output = `mono #{program}`
   if actual_output == expected_output
     return "."
   else
