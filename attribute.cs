@@ -12,6 +12,21 @@ using System.Collections;
 
 namespace Babel.Sather.Base
 {
+    public class SatherNameAttribute : Attribute
+    {
+        protected string name;
+
+        public SatherNameAttribute(string name)
+        {
+            this.name = name;
+        }
+
+        public virtual string Name
+        {
+            get { return name; }
+        }
+    }
+
     public enum ArgumentMode
     {
         In,
