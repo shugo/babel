@@ -252,7 +252,7 @@ namespace Babel.Sather.Compiler
             else {
                 if (currentRoutine.ReturnType.IsNull) {
                     report.Error(ret.Location,
-                                 "no return value should be provided");
+                                 "return value should not be provided");
                     return;
                 }
                 ret.Value.Accept(this);
