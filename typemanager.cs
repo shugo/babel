@@ -248,6 +248,7 @@ namespace Babel.Sather.Compiler
             else {
                 object[] newAttrs = new object[attrs.Length + 1];
                 Array.Copy(attrs, newAttrs, attrs.Length);
+                newAttrs[attrs.Length] = attribute;
                 customAttributesTable[provider] = newAttrs;
             }
         }
@@ -271,14 +272,14 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public Type GetIterReturnType(ICustomAttributeProvider provider)
+        public Type GetIterType(ICustomAttributeProvider provider)
         {
             object[] attrs =
                 GetCustomAttributes(provider,
-                                    typeof(IterReturnTypeAttribute));
+                                    typeof(IterTypeAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
-            return ((IterReturnTypeAttribute) attrs[0]).Type;
+            return ((IterTypeAttribute) attrs[0]).IterType;
         }
 
         public ArgumentMode GetArgumentMode(ICustomAttributeProvider provider)
