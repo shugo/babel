@@ -611,8 +611,9 @@ namespace Babel.Sather.Compiler
                     if (!(param.ParameterType.IsByRef &&
                           !param.IsIn && param.IsOut))
                         return false;
-                    if (!IsSubtype(param.ParameterType.GetElementType(),
-                                   arg.NodeType))
+                    Type paramType = param.ParameterType.GetElementType();
+                    if (!IsSubtype(paramType, arg.NodeType) ||
+                        paramType.IsValueType && !arg.NodeType.IsValueType)
                         return false;
                     break;
                 case ArgumentMode.InOut:
