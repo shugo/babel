@@ -346,7 +346,7 @@ namespace Babel.Compiler {
             TypeData typeData = GetTypeData(type);
             UserDefinedConstructorData constructorData =
                 new UserDefinedConstructorData(this, constructor);
-            // typeData.Constructors.Add(constructorData);
+            typeData.Constructors.Add(constructorData);
             return constructorData;
         }
 

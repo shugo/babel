@@ -194,6 +194,10 @@ namespace Babel.Compiler {
             }
         }
 
+        public abstract ArrayList Constructors {
+            get;
+        }
+
         public abstract ArrayList Methods {
             get;
         }
@@ -207,6 +211,22 @@ namespace Babel.Compiler {
                 }
                 return result;
             }
+        }
+
+        public virtual ConstructorData
+            LookupConstructor(TypedNodeList arguments)
+        {
+            ArrayList candidates = new ArrayList();
+            foreach (ConstructorData constructor in Constructors) {
+                if (constructor.DeclaringType != typeManager.ObType &&
+                    constructor.Match(arguments))
+                    candidates.Add(constructor);
+            }
+            if (candidates.Count == 0)
+                throw new LookupMethodException("no match");
+            if (candidates.Count == 1)
+                return (ConstructorData) candidates[0];
+            return (ConstructorData) SelectBestOverload(candidates, arguments);
         }
 
         public virtual MethodData LookupMethod(string name,
@@ -300,12 +320,32 @@ namespace Babel.Compiler {
     }
 
     public class PredefinedTypeData : TypeData {
+        protected ArrayList constructors;
         protected ArrayList methods;
 
         public PredefinedTypeData(TypeManager typeManager, Type rawType)
             : base(typeManager, rawType)
         {
+            constructors = null;
             methods = null;
+        }
+
+        public override ArrayList Constructors {
+            get {
+                if (constructors == null) {
+                    ConstructorInfo[] constructorInfos =
+                        rawType.GetConstructors(BindingFlags.Instance |
+                                                BindingFlags.Public |
+                                                BindingFlags.NonPublic);
+                    constructors = new ArrayList();
+                    foreach (ConstructorInfo c in constructorInfos) {
+                        PredefinedConstructorData pcd =
+                            new PredefinedConstructorData(typeManager, c);
+                        constructors.Add(pcd);
+                    }
+                }
+                return constructors;
+            }
         }
 
         public override ArrayList Methods {
@@ -327,13 +367,19 @@ namespace Babel.Compiler {
     }
 
     public class UserDefinedTypeData : TypeData {
+        protected ArrayList constructors;
         protected ArrayList methods;
 
         public UserDefinedTypeData(TypeManager typeManager,
                                    TypeBuilder typeBuilder)
             : base(typeManager, typeBuilder)
         {
+            constructors = new ArrayList();
             methods = new ArrayList();
+        }
+
+        public override ArrayList Constructors {
+            get { return constructors; }
         }
 
         public override ArrayList Methods {
@@ -400,6 +446,12 @@ namespace Babel.Compiler {
             get { return Name; }
         }
 
+        public override ArrayList Constructors {
+            get {
+                return constrainingType.Constructors;
+            }
+        }
+
         public override ArrayList Methods {
             get {
                 return constrainingType.Methods;
@@ -411,5 +463,9 @@ namespace Babel.Compiler {
                 return true;
             }
         }
+    }
+
+    public class LookupMethodException : Exception {
+        public LookupMethodException(string message) : base(message) {}
     }
 }
