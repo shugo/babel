@@ -22,7 +22,7 @@ def test(source)
     return "E"
   end
 
-  actual_error = `#{$compiler} #{source} #{$topdir}/out.sa 2>&1`
+  actual_error = `#{$compiler} -lib:#{$topdir} #{source} 2>&1`
   if expected_error
     if $?.exitstatus == 0
       $error.printf("%s: compilation succeeded unexpectedly\n",

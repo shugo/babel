@@ -24,35 +24,43 @@ COMPILER_SRCS	= compiler.cs \
 		  typecheck.cs \
 		  codegen.cs
 
-BASE_LIB_SRCS	= attribute.cs \
+CORE_LIB_SRCS	= attribute.cs \
 		  bool.cs \
 		  int.cs \
 		  str.cs
 
-COMPILER	= bsc.exe
-BASE_LIB	= sacorlib.dll
+IO_LIB_SRCS	= out.sa
 
-all: $(COMPILER)
+COMPILER	= bsc.exe
+CORE_LIB	= sather-core.dll
+IO_LIB		= sather-io.dll
+BASE_LIBS	= $(IO_LIB)
+
+all: $(COMPILER) $(BASE_LIBS)
 
 check: all
 	cd tests; $(MAKE) check
 
 clean:
 	rm -f $(COMPILER)
-	rm -f $(BASE_LIB)
+	rm -f $(CORE_LIB)
 	rm -f parser.cs
 	rm -f y.output
 	rm -f *~
 	cd tests; $(MAKE) clean
 
-bsc.exe: $(COMPILER_SRCS) $(BASE_LIB)
+bsc.exe: $(COMPILER_SRCS) $(CORE_LIB)
 	$(CS) $(CSFLAGS) -target:exe -out:bsc.exe \
-		 -reference:$(BASE_LIB) \
+		 -reference:$(CORE_LIB) \
 		$(COMPILER_SRCS)
 
 parser.cs: parser.jay skeleton.cs
 	$(JAY) -ctv < skeleton.cs $< > $@
 
-$(BASE_LIB): $(BASE_LIB_SRCS)
+$(CORE_LIB): $(CORE_LIB_SRCS)
 	$(CS) $(CSFLAGS) -target:library \
-		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
+		-out:$(CORE_LIB) $(CORE_LIB_SRCS)
+
+$(IO_LIB): $(IO_LIB_SRCS)
+	./$(COMPILER) -target:library \
+		-out:$(IO_LIB) $(IO_LIB_SRCS)
