@@ -594,19 +594,13 @@ namespace Babel.Compiler {
                                TypeData returnType,
                                TypedNodeList arguments)
         {
-            MethodSignature msig =
-                new MethodSignatureData(name, returnType, arguments);
+            MethodSignature sig =
+                new MethodSignature(type, name, returnType, arguments);
 
             foreach (MethodData m in type.Methods) {
-                if (m.ConflictWith(msig)) {
-                    string minfo1 = typeManager.GetMethodInfo(type,
-                                                              name,
-                                                              arguments,
-                                                              returnType);
-                    string minfo2 = m.ToString();
-                    string msg = "The signature: " + minfo1 +
-                        " conflicts with the earlier feature signature: " +
-                        minfo2;
+                if (m.ConflictWith(sig)) {
+                    string msg = "The signature: " + sig +
+                        " conflicts with the earlier feature signature: " + m;
                     throw new MethodConflictionException(msg);
                 }
             }
