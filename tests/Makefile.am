@@ -30,8 +30,6 @@ EXTRA_DIST		= test.rb.in \
 			  iterconflict.sa \
 			  new.out \
 			  new.sa \
-			  newline.out \
-			  newline.sa \
 			  outarg.out \
 			  outarg.sa \
 			  subtype.out \
@@ -51,7 +49,6 @@ CLEANFILES		= test.rb \
 			  if.exe \
 			  iter.exe \
 			  new.exe \
-			  newline.exe \
 			  outarg.exe \
 			  subtype.exe \
 			  valuetype.exe

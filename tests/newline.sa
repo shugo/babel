@@ -1,6 +1,0 @@
-class MAIN is
-  main is
-    #OUT + "hello world\n"
-    #OUT + "goodbye world\n"
-  end
-end

@@ -113,7 +113,6 @@ namespace Babel.Compiler {
 %token COMMA ","
 %token DOT "."
 %token SEMI ";"
-%token NL "\n"
 %token COLON ":"
 %token UNDER "_"
 %token PLUS "+"
@@ -1561,7 +1560,6 @@ parenthesized_expression
 
 sep
         : SEMI
-        | NL
         ;
 
 opt_EOF

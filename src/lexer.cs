@@ -435,10 +435,9 @@ namespace Babel.Compiler {
                 case '\b':
                 case '\r':
                 case '\f':
+                case '\n':
                     whitespace = true;
                     break;
-                case '\n':
-		    return Token.NL;
                 case '(':
                     if (NextChar() == '*') {
                         GetChar();
