@@ -277,7 +277,7 @@ namespace Babel.Sather.Compiler
                 }
                 iter.MethodBuilder =
                     DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                                 iter.ReturnType.NodeType, iter.Arguments);
+                                 iter.TypeBuilder, iter.Arguments);
 
                 Type[] satherNameParams = new Type[] { typeof(string) };
                 ConstructorInfo satherNameConstructor =
@@ -290,17 +290,20 @@ namespace Babel.Sather.Compiler
                 typeManager.AddCustomAttribute(iter.MethodBuilder,
                                                satherNameAttr);
 
-                Type[] iterTypeParams = new Type[] { typeof(Type) };
-                ConstructorInfo iterTypeConstructor =
-                    typeof(IterTypeAttribute).GetConstructor(iterTypeParams);
-                CustomAttributeBuilder iterTypeAttrBuilder =
-                    new CustomAttributeBuilder(iterTypeConstructor,
-                                               new object[] {iter.TypeBuilder});
-                iter.MethodBuilder.SetCustomAttribute(iterTypeAttrBuilder);
-                Attribute iterTypeAttr =
-                    new IterTypeAttribute(iter.TypeBuilder);
+                Type iterRetType = typeof(IterReturnTypeAttribute);
+                Type[] iterRetParamTypes = new Type[] { typeof(Type) };
+                ConstructorInfo iterRetConstructor =
+                    iterRetType.GetConstructor(iterRetParamTypes);
+                object[] iterRetParams =
+                    new object[] { iter.ReturnType.NodeType };
+                CustomAttributeBuilder iterRetAttrBuilder =
+                    new CustomAttributeBuilder(iterRetConstructor,
+                                               iterRetParams);
+                iter.MethodBuilder.SetCustomAttribute(iterRetAttrBuilder);
+                Attribute iterRetAttr =
+                    new IterReturnTypeAttribute(iter.ReturnType.NodeType);
                 typeManager.AddCustomAttribute(iter.MethodBuilder,
-                                               iterTypeAttr);
+                                               iterRetAttr);
             }
             catch (MethodConflictionException e) {
                 report.Error(iter.Location, e.Message);

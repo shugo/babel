@@ -290,14 +290,14 @@ namespace Babel.Sather.Compiler
             return ((SatherNameAttribute) attrs[0]).Name;
         }
 
-        public virtual Type GetIterType(ICustomAttributeProvider provider)
+        public virtual Type GetIterReturnType(ICustomAttributeProvider provider)
         {
             object[] attrs =
                 GetCustomAttributes(provider,
-                                    typeof(IterTypeAttribute));
+                                    typeof(IterReturnTypeAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
-            return ((IterTypeAttribute) attrs[0]).IterType;
+            return ((IterReturnTypeAttribute) attrs[0]).ReturnType;
         }
 
         public virtual ArgumentMode

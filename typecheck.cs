@@ -731,7 +731,10 @@ namespace Babel.Sather.Compiler
                 methodName = method.Name;
             if (methodName != name)
                 return false;
-            if (hasReturnValue != (method.ReturnType != typeof(void)))
+            Type returnType = typeManager.GetIterReturnType(method);
+            if (returnType == null)
+                returnType = method.ReturnType;
+            if (hasReturnValue != (returnType != typeof(void)))
                 return false;
             ParameterInfo[] parameters = typeManager.GetParameters(method);
             if (parameters.Length != arguments.Length)
@@ -968,14 +971,14 @@ namespace Babel.Sather.Compiler
             }
 
             iter.Method = method;
-            iter.NodeType = method.ReturnType;
+            iter.NodeType = typeManager.GetIterReturnType(method);
             if (iter.Receiver == null &&
                 (iter.IsBuiltin || !method.IsStatic)) {
                 iter.Receiver = new VoidExpression(iter.Location);
                 iter.Receiver.NodeType = receiverType;
             }
 
-            Type iterType = typeManager.GetIterType(method);
+            Type iterType = method.ReturnType;
 
             string localName = getTemporallyName();
             iter.Local = localVariableStack.AddLocal(localName,

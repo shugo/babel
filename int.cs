@@ -238,10 +238,10 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("up!")]
-        [IterTypeAttribute(typeof(__itertype_up))]
-        public static int __iter_up_int(int self)
+        [IterReturnTypeAttribute(typeof(int))]
+        public static __itertype_up __iter_up_int(int self)
         {
-            return 0;
+            return new __itertype_up(self);
         }
 
         public class __itertype_up
@@ -266,12 +266,12 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("upto!")]
-        [IterTypeAttribute(typeof(__itertype_upto))]
-        public static int __iter_upto(int self,
-                                      [ArgumentModeAttribute(ArgumentMode.Once)]
-                                      int i)
+        [IterReturnTypeAttribute(typeof(int))]
+        public static __itertype_upto
+        __iter_upto(int self,
+                    [ArgumentModeAttribute(ArgumentMode.Once)] int i)
         {
-            return 0;
+            return new __itertype_upto(self, i);
         }
 
         public class __itertype_upto
@@ -298,13 +298,14 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("times!")]
-        [IterTypeAttribute(typeof(__itertype_times))]
-        public static void __iter_times(int self)
+        [IterReturnTypeAttribute(typeof(void))]
+        public static __itertype_times __iter_times(int self)
         {
+            return new __itertype_times(self);
         }
 
         [SatherNameAttribute("times!")]
-        [IterTypeAttribute(typeof(__itertype_times))]
+        [IterReturnTypeAttribute(typeof(__itertype_times))]
         public static int __iter_times_int(int self)
         {
             return 0;
@@ -317,7 +318,7 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("for!")]
-        [IterTypeAttribute(typeof(__itertype_for))]
+        [IterReturnTypeAttribute(typeof(__itertype_for))]
         public static int __iter_for(int self,
                                      [ArgumentModeAttribute(ArgumentMode.Once)]
                                      int i)
