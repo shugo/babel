@@ -544,10 +544,7 @@ namespace Babel.Sather.Compiler
                                           TypedNodeList arguments,
                                           bool hasReturnValue)
         {
-            MethodInfo[] methods = type.GetMethods(BindingFlags.Instance |
-                                                   BindingFlags.Static |
-                                                   BindingFlags.Public |
-                                                   BindingFlags.NonPublic);
+            MethodInfo[] methods = typeManager.GetMethods(type);
             ArrayList candidates = new ArrayList();
             foreach (MethodInfo method in methods) {
                 if (ConfirmMethod(method, name, arguments, hasReturnValue))
