@@ -97,7 +97,7 @@ namespace Babel.Sather.Compiler
                              "SAME cannot appear in subtyping clause");
                 return;
             }
-            Type type = typeManager.GetPredefinedType(typeSpecifier.Name);
+            Type type = typeManager.GetType(typeSpecifier.Name);
             if (type != null) {
                 typeSpecifier.NodeType = type;
                 return;
@@ -108,15 +108,13 @@ namespace Babel.Sather.Compiler
                              "there is no class named {0}", typeSpecifier.Name);
                 return;
             }
-            if (cls.TypeBuilder == null) {
-                if (visitingClasses.ContainsKey(cls)) {
-                    report.Error(cls.Location,
-                                 "subtype cycle detected involving {0}",
-                                 cls.Name);
-                    return;
-                }
-                VisitClass(cls);
+            if (visitingClasses.ContainsKey(cls)) {
+                report.Error(cls.Location,
+                             "subtype cycle detected involving {0}",
+                             cls.Name);
+                return;
             }
+            VisitClass(cls);
             typeSpecifier.NodeType = cls.TypeBuilder;
         }
     }

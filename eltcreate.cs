@@ -182,7 +182,7 @@ namespace Babel.Sather.Compiler
             arg.NodeType = arg.TypeSpecifier.NodeType;
             if (arg.Mode == ArgumentMode.Out ||
                 arg.Mode == ArgumentMode.InOut) {
-                // FIXME
+                arg.NodeType = typeManager.GetReferenceType(arg.NodeType);
             }
         }
 
@@ -225,18 +225,13 @@ namespace Babel.Sather.Compiler
                 typeSpecifier.NodeType = currentClass.TypeBuilder;
                 return;
             }
-            Type type = typeManager.GetPredefinedType(typeSpecifier.Name);
-            if (type != null) {
-                typeSpecifier.NodeType = type;
-                return;
-            }
-            ClassDefinition cls = typeManager.GetClass(typeSpecifier.Name);
-            if (cls == null) {
+            Type type = typeManager.GetType(typeSpecifier.Name);
+            if (type == null) {
                 report.Error(typeSpecifier.Location,
                              "there is no class named {0}", typeSpecifier.Name);
                 return;
             }
-            typeSpecifier.NodeType = cls.TypeBuilder;
+            typeSpecifier.NodeType = type;
         }
 
         protected MethodBuilder DefineMethod(TypeBuilder type,
