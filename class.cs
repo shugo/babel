@@ -127,7 +127,7 @@ namespace Babel.Sather.Compiler
             InitArguments();
         }
 
-        protected void InitArguments()
+        protected virtual void InitArguments()
         {
             int index = 1;
             argumentTable = new Hashtable();
@@ -482,10 +482,17 @@ namespace Babel.Sather.Compiler
 
     public class IterDefinition : RoutineDefinition, ClassElement
     {
-        TypeBuilder typeBuilder;
+        TypeBuilder enumerator;
+        FieldBuilder self;
+        FieldBuilder current;
+        FieldBuilder currentPosition;
         ConstructorBuilder constructor;
         MethodBuilder moveNext;
         MethodBuilder getCurrent;
+        Hashtable localVariables;
+        ArrayList resumePoints;
+        TypedNodeList creatorArguments;
+        TypedNodeList moveNextArguments;
 
         public IterDefinition(string name,
                               TypedNodeList arguments,
@@ -494,12 +501,66 @@ namespace Babel.Sather.Compiler
                               RoutineModifier modifier,
                               Location location)
             : base(name, arguments, returnType,
-                   statementList, modifier, location) {}
-
-        public TypeBuilder TypeBuilder
+                   statementList, modifier, location)
         {
-            get { return typeBuilder; }
-            set { typeBuilder = value; }
+            enumerator = null;
+            self = null;
+            current = null;
+            currentPosition = null;
+            constructor = null;
+            moveNext = null;
+            getCurrent = null;
+            resumePoints = new ArrayList();
+            resumePoints.Add(new ResumePoint());
+            localVariables = new Hashtable();
+            InitArguments();
+        }
+
+        protected override void InitArguments()
+        {
+            int index = 1;
+            int creatorPos = 1, moveNextPos = 1;
+            creatorArguments = new TypedNodeList();
+            moveNextArguments = new TypedNodeList();
+            argumentTable = new Hashtable();
+            foreach (Argument arg in Arguments) {
+                arg.Index = index++;
+                if (arg.Mode == ArgumentMode.Once) {
+                    Argument ca = (Argument) arg.Clone();
+                    ca.Index = creatorPos++;
+                    creatorArguments.Append(ca);
+                }
+                else {
+                    Argument ma = (Argument) arg.Clone();
+                    ma.Index = moveNextPos++;
+                    moveNextArguments.Append(ma);
+                    argumentTable.Add(ma.Name, ma);
+                }
+            }
+        }
+
+        public TypeBuilder Enumerator
+        {
+            get { return enumerator; }
+            set { enumerator = value; }
+        }
+
+        public FieldBuilder Self
+        {
+            get { return self; }
+            set { self = value; }
+        }
+
+        public FieldBuilder Current
+        {
+            get { return current; }
+            set { current = value; }
+        }
+
+        public FieldBuilder CurrentPosition
+        {
+            get { return currentPosition; }
+            set { currentPosition = value; }
         }
 
         public ConstructorBuilder Constructor
@@ -520,9 +581,52 @@ namespace Babel.Sather.Compiler
             set { getCurrent = value; }
         }
 
+        public ArrayList ResumePoints
+        {
+            get { return resumePoints; }
+        }
+
+        public Hashtable LocalVariables
+        {
+            get { return localVariables; }
+        }
+
+        public TypedNodeList CreatorArguments
+        {
+            get { return creatorArguments; }
+        }
+
+        public TypedNodeList MoveNextArguments
+        {
+            get { return moveNextArguments; }
+        }
+
         public override void Accept(NodeVisitor visitor)
         {
             visitor.VisitIter(this);
+        }
+    }
+
+    public class ResumePoint
+    {
+        int index;
+        Label label;
+
+        public ResumePoint()
+        {
+            index = 0;
+        }
+
+        public int Index
+        {
+            get { return index; }
+            set { index = value; }
+        }
+
+        public Label Label
+        {
+            get { return label; }
+            set { label = value; }
         }
     }
 

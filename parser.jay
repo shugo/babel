@@ -382,7 +382,7 @@ opt_iter_argument_list
 
 iter_argument_list
         : iter_argument
-        | iter_argument_list COMMA routine_argument
+        | iter_argument_list COMMA iter_argument
           {
               Node args = (Node) $1;
               args.Append((Node) $3);
@@ -737,6 +737,8 @@ statement
         | case_statement
         | typecase_statement
         | loop_statement
+        | yield_statement
+        | quit_statement
         | protect_statement
         | raise_statement
         | expression_statement
@@ -870,13 +872,13 @@ opt_else
         ;
 
 return_statement
-        : RETURN opt_return_value
+        : RETURN opt_expression
           {
               $$ = new ReturnStatement((Expression) $2, lexer.Location);
           }
         ;
 
-opt_return_value
+opt_expression
         : /* Empty */
         | expression
         ;
@@ -957,6 +959,20 @@ loop_statement
         : LOOP statement_list END
           {
               $$ = new LoopStatement((StatementList) $2, lexer.Location);
+          }
+        ;
+
+yield_statement
+        : YIELD opt_expression
+          {
+              $$ = new YieldStatement((Expression) $2, lexer.Location);
+          }
+        ;
+
+quit_statement
+        : QUIT
+          {
+              $$ = new QuitStatement(lexer.Location);
           }
         ;
 

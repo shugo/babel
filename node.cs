@@ -305,6 +305,8 @@ namespace Babel.Sather.Compiler
         void VisitCase(CaseStatement caseStmt);
         void VisitTypecase(TypecaseStatement typecase);
         void VisitLoop(LoopStatement loop);
+        void VisitYield(YieldStatement yield);
+        void VisitQuit(QuitStatement quit);
         void VisitProtect(ProtectStatement protect);
         void VisitRaise(RaiseStatement raise);
         void VisitExpressionStatement(ExpressionStatement exprstmt);
@@ -347,6 +349,8 @@ namespace Babel.Sather.Compiler
         public virtual void VisitCase(CaseStatement caseStmt) {}
         public virtual void VisitTypecase(TypecaseStatement typecase) {}
         public virtual void VisitLoop(LoopStatement loop) {}
+        public virtual void VisitYield(YieldStatement yield) {}
+        public virtual void VisitQuit(QuitStatement quit) {}
         public virtual void VisitProtect(ProtectStatement protect) {}
         public virtual void VisitRaise(RaiseStatement raise) {}
         public virtual void VisitExpressionStatement(ExpressionStatement exprstmt) {}

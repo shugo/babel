@@ -179,38 +179,56 @@ namespace Babel.Sather.Compiler
         public override void VisitIter(IterDefinition iter)
         {
             iter.Arguments.Accept(this);
+            iter.MoveNextArguments.Accept(this);
+            iter.CreatorArguments.Accept(this);
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
-            iter.TypeBuilder =
-                typeBuilder.DefineNestedType("ITER_" + iter.Name,
+            iter.Enumerator =
+                typeBuilder.DefineNestedType("Enumerator_" + iter.Name,
                                              TypeAttributes.Public,
                                              typeof(object));
 
-            TypedNodeList creatorArguments = new TypedNodeList();
-            TypedNodeList moveNextArguments = new TypedNodeList();
-            int creatorPos = 1, moveNextPos = 1;
             ArrayList list = new ArrayList();
             list.Add(typeBuilder);
-            foreach (Argument arg in iter.Arguments) {
-                if (arg.Mode == ArgumentMode.Once) {
-                    list.Add(arg.NodeType);
-                    Argument ca = (Argument) arg.Clone();
-                    ca.Index = creatorPos++;
-                    creatorArguments.Append(ca);
-                }
-                else {
-                    Argument ma = (Argument) arg.Clone();
-                    ma.Index = moveNextPos++;
-                    moveNextArguments.Append(ma);
-                }
+            foreach (Argument arg in iter.CreatorArguments) {
+                list.Add(arg.NodeType);
             }
             Type[] constructorParams = new Type[list.Count];
             list.CopyTo(constructorParams);
 
             iter.Constructor =
-                iter.TypeBuilder.DefineConstructor(MethodAttributes.Public,
-                                                   CallingConventions.Standard,
-                                                   constructorParams);
+                iter.Enumerator.DefineConstructor(MethodAttributes.Public,
+                                                  CallingConventions.Standard,
+                                                  constructorParams);
+            iter.Self =
+                iter.Enumerator.DefineField("_self",
+                                            typeBuilder,
+                                            FieldAttributes.Private);
+            iter.CurrentPosition =
+                iter.Enumerator.DefineField("_currentPosition",
+                                            typeof(int),
+                                            FieldAttributes.Private);
+
+            iter.MoveNext =
+                DefineMethod(iter.Enumerator, "MoveNext",
+                             MethodAttributes.Virtual |
+                             MethodAttributes.HideBySig |
+                             MethodAttributes.Public,
+                             typeof(bool),
+                             iter.MoveNextArguments);
+            if (!iter.ReturnType.IsNull()) {
+                iter.Current =
+                    iter.Enumerator.DefineField("_current",
+                                                iter.ReturnType.NodeType,
+                                                FieldAttributes.Private);
+                iter.GetCurrent =
+                    DefineMethod(iter.Enumerator, "GetCurrent",
+                                 MethodAttributes.Virtual |
+                                 MethodAttributes.HideBySig |
+                                 MethodAttributes.Public,
+                                 iter.ReturnType.NodeType,
+                                 new TypedNodeList());
+            }
 
             MethodAttributes attributes =
                 MethodAttributes.Virtual | MethodAttributes.HideBySig;
@@ -224,23 +242,7 @@ namespace Babel.Sather.Compiler
             }
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, iter.Name, attributes,
-                             iter.TypeBuilder, creatorArguments);
-            iter.MoveNext =
-                DefineMethod(iter.TypeBuilder, "MoveNext",
-                             MethodAttributes.Virtual |
-                             MethodAttributes.HideBySig |
-                             MethodAttributes.Public,
-                             typeof(bool),
-                             moveNextArguments);
-            if (iter.ReturnType.IsNull()) {
-                iter.GetCurrent =
-                    DefineMethod(iter.TypeBuilder, "GetCurrent",
-                                 MethodAttributes.Virtual |
-                                 MethodAttributes.HideBySig |
-                                 MethodAttributes.Public,
-                                 iter.ReturnType.NodeType,
-                                 new TypedNodeList());
-            }
+                             iter.Enumerator, iter.CreatorArguments);
         }
 
         public override void VisitArgument(Argument arg)

@@ -20,6 +20,7 @@ namespace Babel.Sather.Compiler
         ClassDefinition currentClass;
         TypeBuilder currentType;
         RoutineDefinition currentRoutine;
+        IterDefinition currentIter;
         ILGenerator ilGenerator;
         Label returnLabel;
         LocalVariableStack localVariableStack;
@@ -99,11 +100,11 @@ namespace Babel.Sather.Compiler
 
         public override void VisitRoutine(RoutineDefinition routine)
         {
+            currentRoutine = routine;
             MethodBuilder methodBuilder = routine.MethodBuilder;
             ilGenerator = methodBuilder.GetILGenerator();
             returnLabel = ilGenerator.DefineLabel();
-            currentRoutine = routine;
-            localVariableStack = new LocalVariableStack();
+            localVariableStack = new RoutineLocalVariableStack();
             foreach (Argument arg in routine.Arguments) {
                 if (arg.Mode == ArgumentMode.Out) {
                     ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
@@ -129,25 +130,74 @@ namespace Babel.Sather.Compiler
                 program.Assembly.SetEntryPoint(main,
                                                PEFileKinds.ConsoleApplication);
             }
+            currentRoutine = null;
         }
 
         public override void VisitIter(IterDefinition iter)
         {
+            currentRoutine = currentIter = iter;
+
             ilGenerator = iter.Constructor.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldarg_1);
+            ilGenerator.Emit(OpCodes.Stfld, iter.Self);
+            foreach (Argument arg in iter.CreatorArguments) {
+                LocalVariable local =
+                    (LocalVariable) iter.LocalVariables[arg.Name];
+                local.Declare(ilGenerator);
+                local.EmitStorePrefix(ilGenerator);
+                ilGenerator.Emit(OpCodes.Ldarg, arg.Index + 1);
+                local.EmitStore(ilGenerator);
+            }
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldc_I4_0);
+            ilGenerator.Emit(OpCodes.Stfld, iter.CurrentPosition);
             ilGenerator.Emit(OpCodes.Ret);
 
             ilGenerator = iter.MethodBuilder.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            foreach (Argument arg in iter.CreatorArguments) {
+                ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+            }
+            ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
             ilGenerator.Emit(OpCodes.Ret); 
 
             ilGenerator = iter.MoveNext.GetILGenerator();
-            ilGenerator.Emit(OpCodes.Ret); 
+            returnLabel = ilGenerator.DefineLabel();
+            localVariableStack = new IterLocalVariableStack(iter.Enumerator);
+            localVariableStack.Push(iter.LocalVariables);
+            foreach (Argument arg in iter.MoveNextArguments) {
+                if (arg.Mode == ArgumentMode.Out) {
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                    Type argType = arg.NodeType.GetElementType();
+                    EmitVoid(argType);
+                    EmitStind(argType);
+                }
+            }
+            Label[] resumePoints = new Label[iter.ResumePoints.Count];
+            int i = 0;
+            foreach (ResumePoint resumePoint in iter.ResumePoints) {
+                resumePoint.Label = ilGenerator.DefineLabel();
+                resumePoints[i++] = resumePoint.Label;
+            }
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldfld, iter.CurrentPosition);
+            ilGenerator.Emit(OpCodes.Switch, resumePoints);
+            ilGenerator.MarkLabel(resumePoints[0]);
+            iter.StatementList.Accept(this);
+            ilGenerator.Emit(OpCodes.Ldc_I4_0);
+            ilGenerator.MarkLabel(returnLabel);
+            ilGenerator.Emit(OpCodes.Ret);
 
             if (iter.GetCurrent != null) {
                 ilGenerator = iter.GetCurrent.GetILGenerator();
+                ilGenerator.Emit(OpCodes.Ldarg_0);
+                ilGenerator.Emit(OpCodes.Ldfld, iter.Current);
                 ilGenerator.Emit(OpCodes.Ret);
             }
 
-            iter.TypeBuilder.CreateType();
+            iter.Enumerator.CreateType();
+            currentRoutine = currentIter = null;
        }
 
         public override void VisitStatementList(StatementList statementList)
@@ -161,8 +211,8 @@ namespace Babel.Sather.Compiler
 
         public override void VisitDeclaration(DeclarationStatement decl)
         {
-            LocalVariable local = localVariableStack.Get(decl.Name);
-            local.LocalBuilder = ilGenerator.DeclareLocal(local.LocalType);
+            LocalVariable local = localVariableStack.GetLocal(decl.Name);
+            local.Declare(ilGenerator);
         }
 
         public override void VisitAssign(AssignStatement assign)
@@ -184,10 +234,11 @@ namespace Babel.Sather.Compiler
                 }
             }
             else {
-                LocalVariable local = localVariableStack.Get(assign.Name);
+                LocalVariable local = localVariableStack.GetLocal(assign.Name);
+                local.EmitStorePrefix(ilGenerator);
                 assign.Value.Accept(this);
                 BoxIfNecessary(assign.Value.NodeType, local.LocalType);
-                ilGenerator.Emit(OpCodes.Stloc, local.LocalBuilder);
+                local.EmitStore(ilGenerator);
             }
         }
 
@@ -227,11 +278,12 @@ namespace Babel.Sather.Compiler
 
         public override void VisitCase(CaseStatement caseStmt)
         {
-            LocalVariable test = localVariableStack.Get(caseStmt.TestName);
-            test.LocalBuilder = ilGenerator.DeclareLocal(test.LocalType);
+            LocalVariable test = localVariableStack.GetLocal(caseStmt.TestName);
+            test.Declare(ilGenerator);
+            test.EmitStorePrefix(ilGenerator);
             caseStmt.Test.Accept(this);
             BoxIfNecessary(caseStmt.Test.NodeType, test.LocalType);
-            ilGenerator.Emit(OpCodes.Stloc, test.LocalBuilder);
+            test.EmitStore(ilGenerator);
 
             Label endLabel = ilGenerator.DefineLabel();
             foreach (CaseWhen when in caseStmt.WhenPartList) {
@@ -260,21 +312,15 @@ namespace Babel.Sather.Compiler
                 typecase.Variable.Accept(this);
                 ilGenerator.Emit(OpCodes.Isinst, when.TypeSpecifier.NodeType);
                 ilGenerator.Emit(OpCodes.Brfalse, nextLabel);
-                if (typeManager.IsSubtype(typecase.Variable.NodeType,
-                                          when.TypeSpecifier.NodeType)) {
-                    when.LocalVariable.LocalBuilder =
-                        ilGenerator.DeclareLocal(typecase.Variable.NodeType);
-                    typecase.Variable.Accept(this);
-                }
-                else {
-                    when.LocalVariable.LocalBuilder =
-                        ilGenerator.DeclareLocal(when.TypeSpecifier.NodeType);
-                    typecase.Variable.Accept(this);
+                when.LocalVariable.Declare(ilGenerator);
+                when.LocalVariable.EmitStorePrefix(ilGenerator);
+                typecase.Variable.Accept(this);
+                if (!typeManager.IsSubtype(typecase.Variable.NodeType,
+                                           when.TypeSpecifier.NodeType)) {
                     UnboxIfNecessary(typecase.Variable.NodeType,
                                      when.TypeSpecifier.NodeType);
                 }
-                ilGenerator.Emit(OpCodes.Stloc,
-                                 when.LocalVariable.LocalBuilder);
+                when.LocalVariable.EmitStore(ilGenerator);
                 when.ThenPart.Accept(this);
                 ilGenerator.Emit(OpCodes.Br, endLabel);
                 ilGenerator.MarkLabel(nextLabel);
@@ -295,6 +341,40 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Br, beginLabel);
             ilGenerator.MarkLabel(loop.EndLabel);
             currentLoop = prevLoop;
+        }
+
+        public override void VisitYield(YieldStatement yield)
+        {
+            if (exceptionLevel > 0) {
+                report.Error(yield.Location,
+                             "`yield' statements may not appear " +
+                             "in `protect' statements.");
+                return;
+            }
+            if (yield.Value != null) {
+                yield.Value.Accept(this);
+                BoxIfNecessary(yield.Value.NodeType,
+                               currentIter.Current.FieldType);
+                ilGenerator.Emit(OpCodes.Stfld, currentIter.Current);
+            }
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldc_I4, yield.ResumePoint.Index);
+            ilGenerator.Emit(OpCodes.Stfld, currentIter.CurrentPosition);
+            ilGenerator.Emit(OpCodes.Ldc_I4_1);
+            ilGenerator.Emit(OpCodes.Br, returnLabel);
+            ilGenerator.MarkLabel(yield.ResumePoint.Label);
+        }
+
+        public override void VisitQuit(QuitStatement quit)
+        {
+            if (exceptionLevel > 0) {
+                report.Error(quit.Location,
+                             "`quit' statements may not appear " +
+                             "in `protect' statements.");
+                return;
+            }
+            ilGenerator.Emit(OpCodes.Ldc_I4_0);
+            ilGenerator.Emit(OpCodes.Br, returnLabel);
         }
 
         public override void VisitProtect(ProtectStatement protect)
@@ -371,8 +451,12 @@ namespace Babel.Sather.Compiler
             if (inSharedContext) {
                 EmitVoid(self.NodeType);
             }
+            else if (currentIter == null) {
+                ilGenerator.Emit(OpCodes.Ldarg_0);
+            }
             else {
                 ilGenerator.Emit(OpCodes.Ldarg_0);
+                ilGenerator.Emit(OpCodes.Ldfld, currentIter.Self);
             }
         }
 
@@ -385,8 +469,8 @@ namespace Babel.Sather.Compiler
                     EmitLdind(arg.NodeType.GetElementType());
                 return;
             }
-            LocalVariable local = localVariableStack.Get(localExpr.Name);
-            ilGenerator.Emit(OpCodes.Ldloc, local.LocalBuilder);
+            LocalVariable local = localVariableStack.GetLocal(localExpr.Name);
+            local.EmitLoad(ilGenerator);
         }
 
         public override void VisitCall(CallExpression call)
@@ -431,8 +515,9 @@ namespace Babel.Sather.Compiler
                     ilGenerator.Emit(OpCodes.Ldarga, arg.Index);
                     return;
                 }
-                LocalVariable local = localVariableStack.Get(localExpr.Name);
-                ilGenerator.Emit(OpCodes.Ldloca, local.LocalBuilder);
+                LocalVariable local =
+                    localVariableStack.GetLocal(localExpr.Name);
+                local.EmitLoadAddress(ilGenerator);
             }
             else {
                 modalExpr.Expression.Accept(this);

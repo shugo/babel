@@ -20,12 +20,13 @@ namespace Babel.Sather.Compiler
         Hashtable builtinRoutineContainers;
         ClassDefinition currentClass;
         RoutineDefinition currentRoutine;
+        IterDefinition currentIter;
         LocalVariableStack localVariableStack;
         int temporallyCount;
         Type currentExceptionType;
         bool inSharedContext;
 
-        const string temporallyPrefix = "_$temp$_";
+        const string temporallyPrefix = "__temp_";
 
         public TypeCheckingVisitor(Report report)
         {
@@ -75,9 +76,23 @@ namespace Babel.Sather.Compiler
         public override void VisitRoutine(RoutineDefinition routine)
         {
             currentRoutine = routine;
-            localVariableStack = new LocalVariableStack();
+            localVariableStack = new RoutineLocalVariableStack();
             temporallyCount = 0;
             routine.StatementList.Accept(this);
+            currentRoutine = null;
+        }
+
+        public override void VisitIter(IterDefinition iter)
+        {
+            currentRoutine = currentIter = iter;
+            localVariableStack = new IterLocalVariableStack(iter.Enumerator);
+            localVariableStack.Push(iter.LocalVariables);
+            foreach (Argument arg in iter.CreatorArguments) {
+                localVariableStack.AddLocal(arg.Name, arg.NodeType);
+            }
+            temporallyCount = 0;
+            iter.StatementList.Accept(this);
+            currentRoutine = currentIter = null;
         }
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
@@ -112,7 +127,7 @@ namespace Babel.Sather.Compiler
                              arg.Name, arg.NodeType);
                 return;
             }
-            LocalVariable local = localVariableStack.Get(decl.Name);
+            LocalVariable local = localVariableStack.GetLocal(decl.Name);
             if (local != null) {
                 report.Error(decl.Location,
                              "this local variable declaration is " +
@@ -139,7 +154,7 @@ namespace Babel.Sather.Compiler
                 assign.Value.Accept(this);
                 type = assign.Value.NodeType;
             }
-            localVariableStack.Add(decl.Name, type);
+            localVariableStack.AddLocal(decl.Name, type);
         }
 
         public override void VisitAssign(AssignStatement assign)
@@ -153,7 +168,7 @@ namespace Babel.Sather.Compiler
                     lhsType = arg.NodeType;
             }
             else {
-                LocalVariable local = localVariableStack.Get(assign.Name);
+                LocalVariable local = localVariableStack.GetLocal(assign.Name);
                 if (local != null) {
                     if (local.IsTypecaseVariable) {
                         report.Error(assign.Location,
@@ -210,6 +225,16 @@ namespace Babel.Sather.Compiler
 
         public override void VisitReturn(ReturnStatement ret)
         {
+            if (currentIter != null) {
+                report.Error(ret.Location,
+                             "`return' statements may not appear in iters.");
+                return;
+            }
+            CheckReturnValue(ret);
+        }
+
+        protected virtual void CheckReturnValue(ReturnStatement ret)
+        {
             if (ret.Value == null) {
                 if (!currentRoutine.ReturnType.IsNull()) {
                     report.Error(ret.Location,
@@ -248,7 +273,8 @@ namespace Babel.Sather.Compiler
         {
             caseStmt.Test.Accept(this);
             caseStmt.TestName = getTemporallyName();
-            localVariableStack.Add(caseStmt.TestName, caseStmt.Test.NodeType);
+            localVariableStack.AddLocal(caseStmt.TestName,
+                                        caseStmt.Test.NodeType);
             foreach (CaseWhen when in caseStmt.WhenPartList) {
                 foreach (Expression value in when.ValueList) {
                     LocalExpression test =
@@ -296,19 +322,18 @@ namespace Babel.Sather.Compiler
                 when.TypeSpecifier.Accept(this);
                 if (when.TypeSpecifier.NodeType == null)
                     continue;
+                Type localType;
                 if (IsSubtype(typecase.Variable.NodeType,
                                when.TypeSpecifier.NodeType)) {
-                    when.LocalVariable =
-                        new LocalVariable(typecase.Variable.Name,
-                                          typecase.Variable.NodeType,
-                                          true);
+                    localType = typecase.Variable.NodeType;
                 }
                 else {
-                    when.LocalVariable =
-                        new LocalVariable(typecase.Variable.Name,
-                                          when.TypeSpecifier.NodeType,
-                                          true);
+                    localType = when.TypeSpecifier.NodeType;
                 }
+                when.LocalVariable =
+                    localVariableStack.CreateLocal(typecase.Variable.Name,
+                                                   localType,
+                                                   true);
                 when.ThenPart.LocalVariables.Add(typecase.Variable.Name,
                                                  when.LocalVariable);
                 when.ThenPart.Accept(this);
@@ -320,6 +345,18 @@ namespace Babel.Sather.Compiler
         public override void VisitLoop(LoopStatement loop)
         {
             loop.StatementList.Accept(this);
+        }
+
+        public override void VisitYield(YieldStatement yield)
+        {
+            if (currentIter == null) {
+                report.Error(yield.Location,
+                             "`yield' statements may not appear in routines.");
+                return;
+            }
+            CheckReturnValue(yield);
+            yield.ResumePoint.Index = currentIter.ResumePoints.Count;
+            currentIter.ResumePoints.Add(yield.ResumePoint);
         }
 
         public override void VisitProtect(ProtectStatement protect)
@@ -400,7 +437,8 @@ namespace Babel.Sather.Compiler
                         localExpr.NodeType = arg.NodeType;
                     return;
                 }
-                LocalVariable local = localVariableStack.Get(localExpr.Name);
+                LocalVariable local =
+                    localVariableStack.GetLocal(localExpr.Name);
                 if (local != null) {
                     localExpr.NodeType = local.LocalType;
                     return;

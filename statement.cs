@@ -460,6 +460,37 @@ namespace Babel.Sather.Compiler
         }
     }
 
+    public class YieldStatement : ReturnStatement
+    {
+        ResumePoint resumePoint;
+
+        public YieldStatement(Expression value, Location location)
+            : base(value, location) {
+            resumePoint = new ResumePoint();
+        }
+
+        public ResumePoint ResumePoint
+        {
+            get { return resumePoint; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitYield(this);
+        }
+    }
+
+    public class QuitStatement : Statement
+    {
+        public QuitStatement(Location location)
+            : base(location) {}
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitQuit(this);
+        }
+    }
+
     public class ProtectStatement : Statement
     {
         StatementList statementList;

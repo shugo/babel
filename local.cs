@@ -12,12 +12,11 @@ using System.Collections;
 
 namespace Babel.Sather.Compiler
 {
-    public class LocalVariable
+    public abstract class LocalVariable
     {
-        string name;
-        Type localType;
-        bool isTypecaseVariable;
-        LocalBuilder localBuilder;
+        protected string name;
+        protected Type localType;
+        protected bool isTypecaseVariable;
 
         public LocalVariable(string name, Type localType,
                              bool isTypecaseVariable)
@@ -25,11 +24,7 @@ namespace Babel.Sather.Compiler
             this.name = name;
             this.localType = localType;
             this.isTypecaseVariable = isTypecaseVariable;
-            localBuilder = null;
         }
-
-        public LocalVariable(string name, Type localType)
-            : this(name, localType, false) {}
 
         public string Name
         {
@@ -47,16 +42,16 @@ namespace Babel.Sather.Compiler
             set { isTypecaseVariable = value; }
         }
 
-        public LocalBuilder LocalBuilder
-        {
-            get { return localBuilder; }
-            set { localBuilder = value; }
-        }
+        public abstract void Declare(ILGenerator ilGenerator);
+        public abstract void EmitStorePrefix(ILGenerator ilGenerator);
+        public abstract void EmitStore(ILGenerator ilGenerator);
+        public abstract void EmitLoad(ILGenerator ilGenerator);
+        public abstract void EmitLoadAddress(ILGenerator ilGenerator);
     }
 
-    public class LocalVariableStack : Stack
+    public abstract class LocalVariableStack : Stack
     {
-        public LocalVariable Get(string name)
+        public LocalVariable GetLocal(string name)
         {
             foreach (Hashtable tbl in this) {
                 LocalVariable local = (LocalVariable) tbl[name];
@@ -67,12 +62,135 @@ namespace Babel.Sather.Compiler
             return null;
         }
 
-        public LocalVariable Add(string name, Type type)
+        public abstract LocalVariable CreateLocal(string name, Type type,
+                                                  bool isTypecaseVariable);
+
+        public virtual LocalVariable AddLocal(string name, Type type,
+                                              bool isTypecaseVariable)
         {
             Hashtable tbl = (Hashtable) Peek();
-            LocalVariable local = new LocalVariable(name, type);
+            LocalVariable local = CreateLocal(name, type, isTypecaseVariable);
             tbl.Add(name, local);
             return local;
+        }
+
+        public virtual LocalVariable AddLocal(string name, Type type)
+        {
+            return AddLocal(name, type, false);
+        }
+    }
+
+    public class RoutineLocalVariable : LocalVariable
+    {
+        protected LocalBuilder localBuilder;
+
+        public RoutineLocalVariable(string name, Type localType,
+                                    bool isTypecaseVariable)
+            : base(name, localType, isTypecaseVariable)
+        {
+            localBuilder = null;
+        }
+
+        public RoutineLocalVariable(string name, Type localType)
+            : this(name, localType, false) {}
+
+        public override void Declare(ILGenerator ilGenerator)
+        {
+            localBuilder = ilGenerator.DeclareLocal(LocalType);
+        }
+
+        public override void EmitStorePrefix(ILGenerator ilGenerator)
+        {
+        }
+
+        public override void EmitStore(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Stloc, localBuilder);
+        }
+
+        public override void EmitLoad(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Ldloc, localBuilder);
+        }
+
+        public override void EmitLoadAddress(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Ldloca, localBuilder);
+        }
+    }
+
+    public class RoutineLocalVariableStack : LocalVariableStack
+    {
+        public override LocalVariable CreateLocal(string name, Type type,
+                                                  bool isTypecaseVariable)
+        {
+            return new RoutineLocalVariable(name, type, isTypecaseVariable);
+        }
+    }
+
+    public class IterLocalVariable : LocalVariable
+    {
+        protected TypeBuilder enumerator;
+        protected int index;
+        protected FieldBuilder fieldBuilder;
+
+        public IterLocalVariable(string name, Type localType,
+                                 bool isTypecaseVariable,
+                                 TypeBuilder enumerator,
+                                 int index)
+            : base(name, localType, isTypecaseVariable)
+        {
+            this.enumerator = enumerator;
+            this.index = index;
+            fieldBuilder = null;
+        }
+
+        public override void Declare(ILGenerator ilGenerator)
+        {
+            fieldBuilder =
+                enumerator.DefineField("__local" + index + "_" + Name,
+                                       LocalType, FieldAttributes.Private);
+        }
+
+        public override void EmitStorePrefix(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+        }
+
+        public override void EmitStore(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Stfld, fieldBuilder);
+        }
+
+        public override void EmitLoad(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldfld, fieldBuilder);
+        }
+
+        public override void EmitLoadAddress(ILGenerator ilGenerator)
+        {
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldflda, fieldBuilder);
+        }
+    }
+
+    public class IterLocalVariableStack : LocalVariableStack
+    {
+        TypeBuilder enumerator;
+        int count;
+
+        public IterLocalVariableStack(TypeBuilder enumerator)
+        {
+            this.enumerator = enumerator;
+            count = 0;
+        }
+
+        public override LocalVariable CreateLocal(string name, Type type,
+                                                  bool isTypecaseVariable)
+        {
+            return new IterLocalVariable(name, type, isTypecaseVariable,
+                                         enumerator, count++);
         }
     }
 }
