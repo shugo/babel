@@ -83,6 +83,7 @@ namespace Babel.Compiler {
             keywords.Add("ITER", Token.ITER);
             keywords.Add("lock", Token.LOCK);
             keywords.Add("loop", Token.LOOP);
+            keywords.Add("namespace", Token.NAMESPACE);
             keywords.Add("near", Token.NEAR);
             keywords.Add("new", Token.NEW);
             keywords.Add("once", Token.ONCE);
