@@ -74,6 +74,7 @@ namespace Babel.Sather.Compiler
                     foreach (ParameterInfo param in parameters) {
                         ilGenerator.Emit(OpCodes.Ldarg, param.Position + 1);
                     }
+                    ilGenerator.Emit(OpCodes.Tailcall);
                     if (adapter.AdapteeType.IsInterface)
                         ilGenerator.EmitCall(OpCodes.Callvirt,
                                              method.AdapteeMethod,
