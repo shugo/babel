@@ -1,8 +1,9 @@
 CS	= mcs
+MONO	= mono
+JAY	= jay
+SACOMP	= $(MONO) $(COMPILER)
 
 CSFLAGS	= -g
-
-JAY	= jay
 
 COMPILER_SRCS	= compiler.cs \
 		  lexer.cs \
@@ -41,6 +42,8 @@ IO_LIB		= sather-io.dll
 STD_LIBS	= $(BASE_LIB) \
 		  $(IO_LIB)
 
+SKELETON	= `$(JAY) -p`/skeleton.cs
+
 all: $(COMPILER) $(STD_LIBS)
 
 check: all
@@ -60,8 +63,8 @@ bsc.exe: $(COMPILER_SRCS) $(CORE_LIB)
 		 -reference:$(CORE_LIB) \
 		$(COMPILER_SRCS)
 
-parser.cs: parser.jay skeleton.cs
-	$(JAY) -ctv < skeleton.cs $< > $@
+parser.cs: parser.jay
+	$(JAY) -ctv < $(SKELETON) $< > $@
 
 $(CORE_LIB): $(CORE_LIB_SRCS)
 	$(CS) $(CSFLAGS) -target:library \
@@ -69,10 +72,10 @@ $(CORE_LIB): $(CORE_LIB_SRCS)
 
 $(BASE_LIB): $(BASE_LIB_SRCS) $(COMPILER)
 	rm -f $(BASE_LIB) $(IO_LIB)
-	./$(COMPILER) -target:library \
+	$(SACOMP) -target:library \
 		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
 
 $(IO_LIB): $(IO_LIB_SRCS) $(BASE_LIB) $(COMPILER)
 	rm -f $(IO_LIB)
-	./$(COMPILER) -target:library \
+	$(SACOMP) -target:library \
 		-out:$(IO_LIB) $(IO_LIB_SRCS)
