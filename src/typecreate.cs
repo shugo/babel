@@ -54,95 +54,120 @@ namespace Babel.Compiler {
             try {
                 cls.Supertypes.Accept(this);
                 cls.TypeData = new UserDefinedTypeData(typeManager, null);
-                cls.TypeData.Parents = new ArrayList();
-                foreach (TypeSpecifier supertype in cls.Supertypes) {
-                    TypeData anc = supertype.NodeType;
-                    if (anc == null)
-                        return;
-                    if (!anc.IsAbstract) {
-                        report.Error(supertype.Location,
-                                     "supertype {0} is not abstract",
-                                     supertype.Name);
-                        return;
-                    }
-                    cls.TypeData.Parents.Add(anc);
-                }
-                TypeAttributes attrs = TypeAttributes.Public;
-                Type parent;
-                if (cls.Kind == ClassKind.Abstract) {
-                    attrs |= TypeAttributes.Abstract;
-                    attrs |= TypeAttributes.Interface;
-                    parent = null;
-                }
-                else {
-                    attrs |= TypeAttributes.Class;
-                    parent = typeof(object);
-                }
-                cls.TypeBuilder =
-                    program.Module.DefineType(cls.Name, attrs,
-                                              parent,
-                                              cls.TypeData.AncestorRawTypes);
-                cls.TypeData.RawType = cls.TypeBuilder;
+                cls.TypeData.Parents = GetParents(cls);
+                if (cls.TypeData.Parents == null)
+                    return;
+                cls.TypeData.RawType = cls.TypeBuilder = DefineType(cls);
                 typeManager.AddType(cls.TypeData);
-                cls.TypeParameters.Accept(this);
-                string[] typeParamNames =
-                    new string[cls.TypeParameters.Length];
-                int i = 0;
-                foreach (ParameterDeclaration pd in cls.TypeParameters) {
-                    typeParamNames[i++] = pd.Name;
-                }
-                GenericTypeParameterBuilder[] typeParameters =
-                    cls.TypeBuilder.DefineGenericParameters(typeParamNames);
-                i = 0;
-                foreach (ParameterDeclaration pd in cls.TypeParameters) {
-                    pd.Builder = typeParameters[i++];
-                }
+                DefineTypeParameters(cls);
                 if (cls.Kind == ClassKind.Reference) {
-                    cls.Constructor = 
-                        cls.TypeBuilder.
-                        DefineDefaultConstructor(MethodAttributes.Public);
-                    UserDefinedConstructorData constructorData =
-                        typeManager.AddConstructor(cls.TypeBuilder,
-                                                   cls.Constructor);
-                    typeManager.AddParameters(cls.Constructor,
-                                              new ParameterInfo[0]);
-                    constructorData.Parameters = new ArrayList();
-                    cls.StaticConstructor = 
-                        cls.TypeBuilder.
-                        DefineConstructor(MethodAttributes.Static,
-                                          CallingConventions.Standard,
-                                          Type.EmptyTypes);
+                    DefineConstructors(cls);
                 }
                 if (cls.Subtypes != null) {
-                    cls.Subtypes.Accept(this);
-                    foreach (TypeSpecifier subtype in cls.Subtypes) {
-                        if (subtype.NodeType == null)
-                            return;
-                        SupertypingAdapter adapter =
-                            new SupertypingAdapter(subtype.NodeType);
-                        adapter.TypeData =
-                            new UserDefinedTypeData(typeManager, null);
-                        adapter.TypeData.Parents = new ArrayList();
-                        adapter.TypeData.Parents.Add(cls.TypeData);
-                        adapter.TypeBuilder =
-                            program.Module.
-                            DefineType("__adapter" + adapterCount,
-                                       TypeAttributes.Class |
-                                       TypeAttributes.Public,
-                                       typeof(object),
-                                       adapter.TypeData.AncestorRawTypes);
-                        adapter.TypeData.RawType = adapter.TypeBuilder;
-                        typeManager.AddType(adapter.TypeData);
-                        cls.Adapters.Add(adapter);
-                        typeManager.AddSupertypingAdapter(cls.TypeBuilder,
-                                                      adapter.AdapteeType,
-                                                      adapter.TypeBuilder);
-                        adapterCount++;
-                    }
+                    DefineSupertypingAdapters(cls);
                 }
             }
             finally {
                 visitingClasses.Remove(cls);
+            }
+        }
+
+        protected ArrayList GetParents(ClassDefinition cls)
+        {
+            ArrayList parents = new ArrayList();
+            foreach (TypeSpecifier supertype in cls.Supertypes) {
+                TypeData anc = supertype.NodeType;
+                if (anc == null)
+                    return null;
+                if (!anc.IsAbstract) {
+                    report.Error(supertype.Location,
+                                 "supertype {0} is not abstract",
+                                 supertype.Name);
+                    return null;
+                }
+                parents.Add(anc);
+            }
+            return parents;
+        }
+
+        protected TypeBuilder DefineType(ClassDefinition cls)
+        {
+            TypeAttributes attrs = TypeAttributes.Public;
+            Type parent;
+            if (cls.Kind == ClassKind.Abstract) {
+                attrs |= TypeAttributes.Abstract;
+                attrs |= TypeAttributes.Interface;
+                parent = null;
+            }
+            else {
+                attrs |= TypeAttributes.Class;
+                parent = typeof(object);
+            }
+            return program.Module.DefineType(cls.Name, attrs, parent,
+                                             cls.TypeData.AncestorRawTypes);
+        }
+
+        protected void DefineTypeParameters(ClassDefinition cls)
+        {
+            cls.TypeParameters.Accept(this);
+            string[] typeParamNames =
+                new string[cls.TypeParameters.Length];
+            int i = 0;
+            foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                typeParamNames[i++] = pd.Name;
+            }
+            GenericTypeParameterBuilder[] typeParameters =
+                cls.TypeBuilder.DefineGenericParameters(typeParamNames);
+            i = 0;
+            foreach (ParameterDeclaration pd in cls.TypeParameters) {
+                pd.Builder = typeParameters[i++];
+            }
+        }
+
+        protected void DefineConstructors(ClassDefinition cls)
+        {
+            cls.Constructor = 
+                cls.TypeBuilder.
+                DefineDefaultConstructor(MethodAttributes.Public);
+            UserDefinedConstructorData constructorData =
+                typeManager.AddConstructor(cls.TypeBuilder,
+                                           cls.Constructor);
+            typeManager.AddParameters(cls.Constructor,
+                                      new ParameterInfo[0]);
+            constructorData.Parameters = new ArrayList();
+            cls.StaticConstructor = 
+                cls.TypeBuilder.
+                DefineConstructor(MethodAttributes.Static,
+                                  CallingConventions.Standard,
+                                  Type.EmptyTypes);
+        }
+
+        protected void DefineSupertypingAdapters(ClassDefinition cls)
+        {
+            cls.Subtypes.Accept(this);
+            foreach (TypeSpecifier subtype in cls.Subtypes) {
+                if (subtype.NodeType == null)
+                    return;
+                SupertypingAdapter adapter =
+                    new SupertypingAdapter(subtype.NodeType);
+                adapter.TypeData =
+                    new UserDefinedTypeData(typeManager, null);
+                adapter.TypeData.Parents = new ArrayList();
+                adapter.TypeData.Parents.Add(cls.TypeData);
+                adapter.TypeBuilder =
+                    program.Module.
+                    DefineType("__adapter" + adapterCount,
+                               TypeAttributes.Class |
+                               TypeAttributes.Public,
+                               typeof(object),
+                               adapter.TypeData.AncestorRawTypes);
+                adapter.TypeData.RawType = adapter.TypeBuilder;
+                typeManager.AddType(adapter.TypeData);
+                cls.Adapters.Add(adapter);
+                typeManager.AddSupertypingAdapter(cls.TypeBuilder,
+                                                  adapter.AdapteeType,
+                                                  adapter.TypeBuilder);
+                adapterCount++;
             }
         }
 
