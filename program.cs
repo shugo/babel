@@ -13,13 +13,19 @@ using System.Text;
 
 namespace Babel.Sather.Compiler
 {
+    public enum Target
+    {
+        Exe, WinExe, Library, Module
+    }
+
     public class Program : CompositeNode
     {
         protected AssemblyBuilder assembly;
         protected ModuleBuilder module;
         protected TypeManager typeManager;
+        protected Target target;
 
-        public Program(string name)
+        public Program(string name, Target target)
         {
             AppDomain domain = AppDomain.CurrentDomain;
             AssemblyName assemblyName = new AssemblyName();
@@ -30,6 +36,7 @@ namespace Babel.Sather.Compiler
             module = assembly.DefineDynamicModule(name);
             typeManager = new TypeManager();
             typeManager.AddModule(module);
+            this.target = target;
         }
 
         public virtual AssemblyBuilder Assembly
@@ -45,6 +52,11 @@ namespace Babel.Sather.Compiler
         public virtual TypeManager TypeManager
         {
             get { return typeManager; }
+        }
+
+        public virtual Target Target
+        {
+            get { return target; }
         }
 
         public override void Accept(NodeVisitor visitor)

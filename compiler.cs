@@ -20,7 +20,9 @@ namespace Babel.Sather.Compiler
         protected ArrayList inputFiles;
         protected ArrayList references;
         protected ArrayList linkPaths;
-        protected string baseName;
+        protected ArrayList softReferences;
+        protected string outputFileName;
+        protected Target target;
 
         public Compiler()
         {
@@ -28,6 +30,9 @@ namespace Babel.Sather.Compiler
             inputFiles = new ArrayList();
             references = new ArrayList();
             linkPaths = new ArrayList();
+            softReferences = new ArrayList();
+            softReferences.Add("sather-io.dll");
+            target = Target.Exe;
         }
 
         public void ParseArguments(string[] args)
@@ -53,13 +58,38 @@ namespace Babel.Sather.Compiler
                             linkPaths.Add(value);
                         }
                         break;
+                    case "-target":
+                    case "-t":
+                        switch (value) {
+                        case "exe":
+                            target = Target.Exe;
+                            break;
+                        case "winexe":
+                            target = Target.WinExe;
+                            break;
+                        case "library":
+                            target = Target.Library;
+                            break;
+                        case "module":
+                            target = Target.Module;
+                            break;
+                        default:
+                            Console.Error.WriteLine("unknown target: `{0}'",
+                                                    value);
+                            Environment.Exit(1);
+                            break;
+                        }
+                        break;
+                    case "-out":
+                        outputFileName = value;
+                        break;
                     case "-help":
                     case "-h":
                         Usage();
                         Environment.Exit(0);
                         break;
                     default:
-                        Console.Error.WriteLine("unkown option: `{0}'", name);
+                        Console.Error.WriteLine("unknown option: `{0}'", name);
                         Environment.Exit(1);
                         break;
                     }
@@ -70,12 +100,37 @@ namespace Babel.Sather.Compiler
             }
             if (inputFiles.Count == 0) {
                 Console.Error.WriteLine("no input files");
+                Usage();
                 Environment.Exit(1);
             }
-            string fileName = Path.GetFileName((string) inputFiles[0]);
-            baseName = Path.GetFileNameWithoutExtension(fileName);
-            program = new Program(baseName);
+            if (outputFileName == null) {
+                string firstInputFile = (string) inputFiles[0];
+                string ext = "";
+                switch (target) {
+                case Target.Exe:
+                case Target.WinExe:
+                    ext = ".exe";
+                    break;
+                case Target.Library:
+                case Target.Module:
+                    ext = ".dll";
+                    break;
+                }
+                if (firstInputFile.LastIndexOf(".") > 0) {
+                    outputFileName =
+                        Path.GetFileNameWithoutExtension(firstInputFile) + ext;
+                }
+                else {
+                    outputFileName = firstInputFile + ext;
+                }
+            }
+            string fileName = Path.GetFileName(outputFileName);
+            string baseName = Path.GetFileNameWithoutExtension(fileName);
+            program = new Program(baseName, target);
             foreach (string reference in references) {
+                LoadAssembly(reference, false);
+            }
+            foreach (string reference in softReferences) {
                 LoadAssembly(reference, true);
             }
         }
@@ -101,7 +156,7 @@ namespace Babel.Sather.Compiler
                     Environment.Exit(1);
             }
 
-            program.Assembly.Save(baseName + ".exe");
+            program.Assembly.Save(outputFileName);
         }
 
         protected virtual void Usage()
@@ -109,7 +164,10 @@ namespace Babel.Sather.Compiler
             Console.Write(
 "usage: bsc [options] source-files\n" +
 "   -lib:PATH1,PATH2   Adds the paths to the assembly link path\n" +
+"   -out:FNAME         Specifies output file\n" +
 "   -reference:ASS     References the specified assembly (-r:ASS)\n" +
+"   -target:KIND       Specifies the target (KIND is one of: exe, winexe,\n" +
+"                      library, module), (short: -t:)\n" +
 "   -help              Print this message\n");
         }
 

@@ -118,19 +118,25 @@ namespace Babel.Sather.Compiler
             routine.StatementList.Accept(this);
             ilGenerator.MarkLabel(returnLabel);
             ilGenerator.Emit(OpCodes.Ret);
-            if (currentType.Name == "MAIN" &&
+            if ((program.Target == Target.Exe ||
+                 program.Target == Target.WinExe) &&
+                currentType.Name == "MAIN" &&
                 methodBuilder.Name == "main") {
-                MethodBuilder main =
+                MethodBuilder entryPoint =
                     currentType.DefineMethod("Main",
                                              MethodAttributes.Public |
                                              MethodAttributes.Static,
                                              null, Type.EmptyTypes);
-                ILGenerator il = main.GetILGenerator();
+                ILGenerator il = entryPoint.GetILGenerator();
                 il.Emit(OpCodes.Newobj, currentClass.Constructor);
                 il.EmitCall(OpCodes.Call, methodBuilder, null);
                 il.Emit(OpCodes.Ret);
-                program.Assembly.SetEntryPoint(main,
-                                               PEFileKinds.ConsoleApplication);
+                PEFileKinds kind;
+                if (program.Target == Target.Exe)
+                    kind = PEFileKinds.ConsoleApplication;
+                else
+                    kind = PEFileKinds.WindowApplication;
+                program.Assembly.SetEntryPoint(entryPoint, kind);
             }
             currentRoutine = null;
         }
