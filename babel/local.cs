@@ -1,7 +1,7 @@
 /*
  * local.cs: local variables
  *
- * Copyright (C) 2003 Shugo Maeda
+ * Copyright (C) 2003-2004 Shugo Maeda
  * Licensed under the terms of the GNU GPL
  */
 
