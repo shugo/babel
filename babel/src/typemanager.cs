@@ -262,12 +262,19 @@ namespace Babel.Compiler {
             return type.Name;
         }
 
-        public virtual void AddMethod(Type type, MethodInfo method)
+        public virtual UserDefinedMethodData
+        AddMethod(Type type, MethodBuilder method)
         {
             ArrayList methods = (ArrayList) methodsTable[type];
             if (methods == null)
                 methodsTable[type] = methods = new ArrayList();
             methods.Add(method);
+
+            TypeData typeData = GetTypeData(type);
+            UserDefinedMethodData methodData =
+                new UserDefinedMethodData(this, method);
+            typeData.Methods.Add(methodData);
+            return methodData;
         }
 
         public virtual MethodInfo[] GetMethods(TypeData typeData)
@@ -290,13 +297,19 @@ namespace Babel.Compiler {
             }
         }
 
-        public virtual void AddConstructor(Type type,
-                                           ConstructorInfo constructor)
+        public virtual UserDefinedConstructorData
+        AddConstructor(Type type, ConstructorBuilder constructor)
         {
             ArrayList constructors = (ArrayList) constructorsTable[type];
             if (constructors == null)
                 constructorsTable[type] = constructors = new ArrayList();
             constructors.Add(constructor);
+
+            TypeData typeData = GetTypeData(type);
+            UserDefinedConstructorData constructorData =
+                new UserDefinedConstructorData(this, constructor);
+            // typeData.Constructors.Add(constructorData);
+            return constructorData;
         }
 
         public virtual ConstructorInfo[] GetConstructors(Type type)

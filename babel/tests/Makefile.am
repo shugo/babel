@@ -12,6 +12,8 @@ EXTRA_DIST		= test.rb.in \
 			  absiter.sa \
 			  abstract.err \
 			  abstract.sa \
+			  conflict.err \
+			  conflict.sa \
 			  fact.out \
 			  fact.sa \
 			  hello.out \
