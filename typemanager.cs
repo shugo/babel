@@ -20,6 +20,7 @@ namespace Babel.Sather.Compiler
         Hashtable parentsTable;
         Hashtable ancestorsTable;
         Hashtable methodsTable;
+        Hashtable parametersTable;
 
         public TypeManager()
         {
@@ -29,6 +30,7 @@ namespace Babel.Sather.Compiler
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
             methodsTable = new Hashtable();
+            parametersTable = new Hashtable();
             InitBuiltinTypes();
         }
 
@@ -148,6 +150,23 @@ namespace Babel.Sather.Compiler
                                        BindingFlags.Public |
                                        BindingFlags.NonPublic);
             }
+        }
+
+        public void AddParameters(MethodInfo method, ParameterInfo[] parameters)
+        {
+            parametersTable[method] = parameters;
+        }
+
+        public ParameterInfo[] GetParameters(MethodInfo method)
+        {
+            ParameterInfo[] parameters =
+                (ParameterInfo[]) parametersTable[method];
+            if (parameters == null) {
+                if (method is MethodBuilder)
+                    return new Parameter[0];
+                parametersTable[method] = parameters = method.GetParameters();
+            }
+            return parameters;
         }
     }
 }
