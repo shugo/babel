@@ -65,8 +65,7 @@ namespace Babel.Compiler {
             kind = TypeKind.Normal;
         }
 
-        public override bool IsNull
-        {
+        public override bool IsNull {
             get { return true; }
         }
     }

@@ -220,15 +220,13 @@ namespace Babel.Compiler {
             this.builtinMethodContainer = null;
         }
         
-        public override string Name
-        {
+        public override string Name {
             get {
                 return name;
             }
         }
         
-        public override string FullName
-        {
+        public override string FullName {
             get {
                 return name;
             }
