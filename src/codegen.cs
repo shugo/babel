@@ -212,7 +212,9 @@ namespace Babel.Compiler {
                     ilGenerator.Emit(OpCodes.Ldarg, index++);
                 }
             }
-            ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
+            ConstructorData constructor =
+                (ConstructorData) iter.BoundType.Constructors[0];
+            ilGenerator.Emit(OpCodes.Newobj, constructor.ConstructorInfo);
             ilGenerator.Emit(OpCodes.Ret);
 
             ilGenerator = iter.MethodBuilder.GetILGenerator();

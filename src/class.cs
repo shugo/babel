@@ -154,7 +154,7 @@ namespace Babel.Compiler {
         }
     }
 
-    public class ParameterDeclaration : TypedNode {
+    public class ParameterDeclaration : TypedNode, ICloneable {
         protected string name;
         protected TypeSpecifier constrainingType;
         protected GenericTypeParameterBuilder builder;
@@ -185,6 +185,13 @@ namespace Babel.Compiler {
         public override void Accept(NodeVisitor visitor)
         {
             visitor.VisitParameterDeclaration(this);
+        }
+
+        public override object Clone()
+        {
+            ParameterDeclaration pd = (ParameterDeclaration) base.Clone();
+            pd.builder = null;
+            return pd;
         }
     }
 
@@ -686,6 +693,8 @@ namespace Babel.Compiler {
 
     public class IterDefinition : RoutineDefinition, ClassElement {
         protected TypeBuilder typeBuilder;
+        protected TypedNodeList typeParameters;
+        protected TypeData boundType;
         protected FieldBuilder self;
         protected FieldBuilder current;
         protected FieldBuilder currentPosition;
@@ -708,6 +717,8 @@ namespace Babel.Compiler {
                    statementList, modifier, location)
         {
             typeBuilder = null;
+            typeParameters = null;
+            boundType = null;
             self = null;
             current = null;
             currentPosition = null;
@@ -742,6 +753,16 @@ namespace Babel.Compiler {
         public virtual TypeBuilder TypeBuilder {
             get { return typeBuilder; }
             set { typeBuilder = value; }
+        }
+
+        public virtual TypedNodeList TypeParameters {
+            get { return typeParameters; }
+            set { typeParameters = value; }
+        }
+
+        public virtual TypeData BoundType {
+            get { return boundType; }
+            set { boundType = value; }
         }
 
         public virtual FieldBuilder Self {

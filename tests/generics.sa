@@ -26,10 +26,8 @@ class MAIN is
       #OUT + x.get + "\n";
       x.set("bar");
       #OUT + x.get + "\n";
-      (*
       loop
          #OUT + x.elt! + "\n";
       end;
-      *)
    end
 end

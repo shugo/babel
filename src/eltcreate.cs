@@ -442,9 +442,26 @@ namespace Babel.Compiler {
                                              typeof(object),
                                              iterTypeAncestors);
             DefineIterTypeParameters(iter);
+            TypeData iterType = typeManager.GetTypeData(iter.TypeBuilder);
+            if (currentClass.TypeParameters.Length > 0) {
+                TypeData td = iterType.GetGenericTypeDefinition();
+                iter.BoundType =
+                    td.BindGenericParameters(currentClass.TypeParameters);
+            }
+            else
+                iter.BoundType = iterType;
+            TypeData boundReceiverType;
+            if (iter.TypeParameters.Length > 0) {
+                TypeData td = currentClass.TypeData;
+                boundReceiverType =
+                    td.BindGenericParameters(iter.TypeParameters);
+            }
+            else {
+                boundReceiverType = currentClass.TypeData;
+            }
             
             ArrayList list = new ArrayList();
-            list.Add(typeBuilder);
+            list.Add(boundReceiverType.RawType);
             foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once)
                     list.Add(arg.RawType);
@@ -457,10 +474,17 @@ namespace Babel.Compiler {
                                   MethodAttributes.Public,
                                   CallingConventions.Standard,
                                   constructorParams);
+#if false
+            iter.Self =
+                iter.TypeBuilder.DefineField("__self",
+                                             boundReceiverType.RawType,
+                                             FieldAttributes.Private);
+#else
             iter.Self =
                 iter.TypeBuilder.DefineField("__self",
                                              typeBuilder,
                                              FieldAttributes.Private);
+#endif
             iter.CurrentPosition =
                 iter.TypeBuilder.DefineField("__currentPosition",
                                              typeof(int),
@@ -498,20 +522,11 @@ namespace Babel.Compiler {
                 break;
             }
 
-            TypeData iterType = typeManager.GetTypeData(iter.TypeBuilder);
-            TypeData boundIterType;
-            if (currentClass.TypeParameters.Length > 0) {
-                TypeData td = iterType.GetGenericTypeDefinition();
-                boundIterType =
-                    td.BindGenericParameters(currentClass.TypeParameters);
-            }
-            else
-                boundIterType = iterType;
             TypedNodeList creatorArguments =
                 GetIterCreatorArguments(iter.Arguments);
             iter.Creator =
                 DefineMethod(typeBuilder, creatorName, attributes,
-                             boundIterType, creatorArguments);
+                             iter.BoundType, creatorArguments);
             typeManager.AddIterCreator(iter.Creator);
 
             iter.MethodBuilder =
@@ -540,17 +555,19 @@ namespace Babel.Compiler {
 
         protected virtual void DefineIterTypeParameters(IterDefinition iter)
         {
-            if (currentClass.TypeParameters.Length > 0) {
+            iter.TypeParameters =
+                (TypedNodeList) currentClass.TypeParameters.Clone();
+            if (iter.TypeParameters.Length > 0) {
                 string[] typeParamNames =
-                    new string[currentClass.TypeParameters.Length];
+                    new string[iter.TypeParameters.Length];
                 int i = 0;
-                foreach (ParameterDeclaration pd in currentClass.TypeParameters) {
+                foreach (ParameterDeclaration pd in iter.TypeParameters) {
                     typeParamNames[i++] = pd.Name;
                 }
                 GenericTypeParameterBuilder[] typeParameters =
                     iter.TypeBuilder.DefineGenericParameters(typeParamNames);
                 i = 0;
-                foreach (ParameterDeclaration pd in currentClass.TypeParameters) {
+                foreach (ParameterDeclaration pd in iter.TypeParameters) {
                     GenericTypeParameterBuilder pb = typeParameters[i++];
                     if (pd.ConstrainingType.NodeType.IsAbstract) {
                         Type[] ifaces = new Type[] {
@@ -563,12 +580,12 @@ namespace Babel.Compiler {
                         if (baseType != typeof(object))
                             pb.SetBaseTypeConstraint(baseType);
                     }
-                    TypeData td =
+                    pd.NodeType =
                         new TypeParameterData(typeManager, pb,
                                               pd.ConstrainingType.NodeType);
-                    typeManager.AddType(td);
-                    td.Parents = new ArrayList();
-                    td.Parents.Add(pd.ConstrainingType.NodeType);
+                    typeManager.AddType(pd.NodeType);
+                    pd.NodeType.Parents = new ArrayList();
+                    pd.NodeType.Parents.Add(pd.ConstrainingType.NodeType);
                 }
             }
         }
