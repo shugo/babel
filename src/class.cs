@@ -337,6 +337,7 @@ namespace Babel.Compiler {
         protected MethodBuilder moveNext;
         protected MethodBuilder getCurrent;
         protected TypedNodeList moveNextArguments;
+        protected MethodBuilder creator;
 
         public AbstractIterSignature(string name,
                                      TypedNodeList arguments,
@@ -348,6 +349,8 @@ namespace Babel.Compiler {
             constructor = null;
             moveNext = null;
             getCurrent = null;
+            moveNextArguments = null;
+            creator = null;
             InitArguments();
         }
 
@@ -390,6 +393,11 @@ namespace Babel.Compiler {
 
         public virtual TypedNodeList MoveNextArguments {
             get { return moveNextArguments; }
+        }
+
+        public virtual MethodBuilder Creator {
+            get { return creator; }
+            set { creator = value; }
         }
 
         public override void Accept(NodeVisitor visitor)
@@ -687,6 +695,7 @@ namespace Babel.Compiler {
         protected Hashtable localVariables;
         protected ArrayList resumePoints;
         protected TypedNodeList moveNextArguments;
+        protected MethodBuilder creator;
         protected ArrayList bridgeMethods;
 
         public IterDefinition(string name,
@@ -705,6 +714,7 @@ namespace Babel.Compiler {
             constructor = null;
             moveNext = null;
             getCurrent = null;
+            creator = null;
             localVariables = new Hashtable();
             resumePoints = new ArrayList();
             resumePoints.Add(new ResumePoint());
@@ -776,6 +786,11 @@ namespace Babel.Compiler {
             get { return moveNextArguments; }
         }
 
+        public virtual MethodBuilder Creator {
+            get { return creator; }
+            set { creator = value; }
+        }
+
         public virtual ArrayList BridgeMethods {
             get { return bridgeMethods; }
         }
@@ -824,6 +839,7 @@ namespace Babel.Compiler {
 
         public virtual ArgumentMode Mode {
             get { return mode; }
+            set { mode = value; }
         }
 
         public virtual string Name {

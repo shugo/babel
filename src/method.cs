@@ -246,6 +246,26 @@ namespace Babel.Compiler {
             }
         }
 
+        public virtual MethodData IterCreator {
+            get {
+                string creatorName =
+                    typeManager.GetIterCreatorName(MethodInfo);
+                return DeclaringType.LookupMethod(creatorName);
+            }
+        }
+
+        public virtual TypeData IterType {
+            get {
+                return IterCreator.ReturnType;
+            }
+        }
+
+        public virtual bool IsIterCreator {
+            get {
+                return typeManager.IsIterCreator(MethodInfo);
+            }
+        }
+
         public override string ToString()
         {
             string s = base.ToString();

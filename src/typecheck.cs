@@ -521,8 +521,7 @@ namespace Babel.Compiler {
                 MethodData method = receiverType.LookupMethod(iter.Name,
                                                               iter.Arguments,
                                                               iter.HasValue);
-                iter.IsBuiltin = method.IsBuiltin;
-                SetupIter(iter, method.MethodInfo, receiverType);
+                SetupIter(iter, method, receiverType);
             }
             catch (LookupMethodException e) {
                 string iterInfo = receiverType.FullName +
@@ -705,10 +704,10 @@ namespace Babel.Compiler {
         }
 
         protected virtual void SetupIter(IterCallExpression iter,
-                                         MethodInfo method,
+                                         MethodData method,
                                          TypeData receiverType)
         {
-            if (!method.IsPublic &&
+            if (!method.MethodInfo.IsPublic &&
                 currentClass.TypeData != receiverType) {
                 report.Error(iter.Location,
                              "cannot call private iterator {0}",
@@ -716,26 +715,33 @@ namespace Babel.Compiler {
                 return;
             }
 
-            iter.Method = method;
-            iter.NodeType = typeManager.GetReturnType(method);
+            iter.IsBuiltin = method.IsBuiltin;
+            string createName =
+                typeManager.GetIterCreatorName(method.MethodInfo);
+            MethodData creator = receiverType.LookupMethod(createName);
+
+            iter.Method = creator.MethodInfo;
+            iter.NodeType = method.ReturnType;
             if (iter.Receiver == null &&
-                (iter.IsBuiltin || !method.IsStatic)) {
+                (iter.IsBuiltin || !method.MethodInfo.IsStatic)) {
                 iter.Receiver = new VoidExpression(iter.Location);
                 iter.Receiver.NodeType = receiverType;
             }
 
-            TypeData iterType = typeManager.GetTypeData(method.ReturnType);
+            TypeData iterType = creator.ReturnType;
 
             string localName = getTemporallyName();
             iter.Local = localVariableStack.AddLocal(localName,
                                                      iterType);
 
+            iter.CreatorArguments = new TypedNodeList();
             TypedNodeList moveNextArguments = new TypedNodeList();
             ModalExpression receiver =
                 new ModalExpression(ArgumentMode.In,
                                     (Expression) iter.Receiver.Clone(),
                                     iter.Receiver.Location);
-            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            ParameterInfo[] parameters =
+                typeManager.GetParameters(method.MethodInfo);
             int i;
             if (iter.IsBuiltin)
                 i = 1;
@@ -746,7 +752,12 @@ namespace Babel.Compiler {
                 if (arg.NodeType == null) // void expression
                     arg.NodeType = typeManager.GetTypeData(param.ParameterType);
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
-                if (mode != ArgumentMode.Once) {
+                if (mode == ArgumentMode.Once) {
+                    ModalExpression me = (ModalExpression) arg.Clone();
+                    me.Mode = ArgumentMode.In;
+                    iter.CreatorArguments.Append(me);
+                }
+                else {
                     moveNextArguments.Append((ModalExpression) arg.Clone());
                 }
             }

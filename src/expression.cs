@@ -289,6 +289,7 @@ namespace Babel.Compiler {
         protected LocalVariable local;
         protected CallExpression moveNext;
         protected CallExpression getCurrent;
+        protected TypedNodeList creatorArguments;
 
         public IterCallExpression(Expression receiver,
                                   string name,
@@ -309,6 +310,11 @@ namespace Babel.Compiler {
         public virtual CallExpression GetCurrent {
             get { return getCurrent; }
             set { getCurrent = value; }
+        }
+
+        public virtual TypedNodeList CreatorArguments {
+            get { return creatorArguments; }
+            set { creatorArguments = value; }
         }
 
         public override void Accept(NodeVisitor visitor)

@@ -427,30 +427,48 @@ namespace Babel.Compiler {
                 return ((BabelNameAttribute) attrs[0]).Name;
         }
 
-        public void AddIterReturnType(MethodBuilder methodBuilder,
-                                      TypeData returnType)
+        public void AddIterCreatorName(MethodBuilder methodBuilder,
+                                       string name)
         {
-            Type[] paramTypes = new Type[] { typeof(Type) };
+            Type[] paramTypes = new Type[] { typeof(string) };
             ConstructorInfo constructor =
-                typeof(IterReturnTypeAttribute).GetConstructor(paramTypes);
+                typeof(IterCreatorNameAttribute).GetConstructor(paramTypes);
             CustomAttributeBuilder attrBuilder =
                 new CustomAttributeBuilder(constructor,
-                                           new object[] { returnType.RawType });
+                                           new object[] { name });
             methodBuilder.SetCustomAttribute(attrBuilder);
-            Attribute attr =
-                new IterReturnTypeAttribute(returnType.RawType);
+            Attribute attr = new IterCreatorNameAttribute(name);
             AddCustomAttribute(methodBuilder, attr);
         }
 
-        public virtual Type GetIterReturnType(ICustomAttributeProvider provider)
+        public virtual string
+            GetIterCreatorName(ICustomAttributeProvider provider)
         {
             object[] attrs =
-                GetCustomAttributes(provider,
-                                    typeof(IterReturnTypeAttribute));
+                GetCustomAttributes(provider, typeof(IterCreatorNameAttribute));
             if (attrs == null || attrs.Length == 0)
                 return null;
             else
-                return ((IterReturnTypeAttribute) attrs[0]).ReturnType;
+                return ((IterCreatorNameAttribute) attrs[0]).Name;
+        }
+
+        public void AddIterCreator(MethodBuilder methodBuilder)
+        {
+            Type[] paramTypes = Type.EmptyTypes;
+            ConstructorInfo constructor =
+                typeof(IterCreatorAttribute).GetConstructor(Type.EmptyTypes);
+            CustomAttributeBuilder attrBuilder =
+                new CustomAttributeBuilder(constructor, new object[] {});
+            methodBuilder.SetCustomAttribute(attrBuilder);
+            Attribute attr = new IterCreatorAttribute();
+            AddCustomAttribute(methodBuilder, attr);
+        }
+
+        public virtual bool IsIterCreator(ICustomAttributeProvider provider)
+        {
+            object[] attrs =
+                GetCustomAttributes(provider, typeof(IterCreatorAttribute));
+            return attrs != null && attrs.Length > 0;
         }
 
         public virtual ArgumentMode
@@ -466,8 +484,8 @@ namespace Babel.Compiler {
         }
 
         public void AddSupertypingAdapter(TypeBuilder typeBuilder,
-                                      TypeData adapteeType,
-                                      Type adapterType)
+                                          TypeData adapteeType,
+                                          Type adapterType)
         {
             Type[] paramTypes = new Type[] { typeof(Type), typeof(Type) };
             ConstructorInfo constructor =
@@ -509,11 +527,7 @@ namespace Babel.Compiler {
 
         public virtual TypeData GetReturnType(MethodInfo method)
         {
-            Type returnType = GetIterReturnType(method);
-            if (returnType == null)
-                return GetTypeData(method.ReturnType);
-            else 
-                return GetTypeData(returnType);
+            return GetTypeData(method.ReturnType);
         }
 
         public virtual string GetMethodInfo(TypeData receiverType,

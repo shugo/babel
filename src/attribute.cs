@@ -44,6 +44,23 @@ namespace Babel.Core {
         }
     }
 
+    public class IterCreatorNameAttribute : Attribute {
+        protected string name;
+
+        public IterCreatorNameAttribute(string name)
+        {
+            this.name = name;
+        }
+
+        public virtual string Name {
+            get { return name; }
+        }
+    }
+
+    public class IterCreatorAttribute : Attribute {
+        public IterCreatorAttribute() {}
+    }
+
     public class IterReturnTypeAttribute : Attribute {
         protected Type returnType;
 

@@ -204,19 +204,24 @@ namespace Babel.Compiler {
             ilGenerator.Emit(OpCodes.Stfld, iter.CurrentPosition);
             ilGenerator.Emit(OpCodes.Ret);
 
-            ilGenerator = iter.MethodBuilder.GetILGenerator();
+            ilGenerator = iter.Creator.GetILGenerator();
             ilGenerator.Emit(OpCodes.Ldarg_0);
+            index = 1;
             foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once) {
-                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                    ilGenerator.Emit(OpCodes.Ldarg, index++);
                 }
             }
             ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
             ilGenerator.Emit(OpCodes.Ret);
 
+            ilGenerator = iter.MethodBuilder.GetILGenerator();
+            EmitVoid(iter.ReturnType.RawType);
+            ilGenerator.Emit(OpCodes.Ret);
+
             foreach (MethodBuilder bridgeMethod in iter.BridgeMethods) {
                 ilGenerator = bridgeMethod.GetILGenerator();
-                ilGenerator.Emit(OpCodes.Jmp, iter.MethodBuilder);
+                ilGenerator.Emit(OpCodes.Jmp, iter.Creator);
             }
 
             ilGenerator = iter.MoveNext.GetILGenerator();
@@ -602,16 +607,11 @@ namespace Babel.Compiler {
             int i = iter.IsBuiltin ? 1 : 0;
             if (iter.Receiver != null)
                 iter.Receiver.Accept(this);
-            foreach (ModalExpression arg in iter.Arguments) {
+            foreach (ModalExpression arg in iter.CreatorArguments) {
                 ParameterInfo param = parameters[i++];
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
-                if (mode == ArgumentMode.Once) {
-                    arg.Accept(this);
-                    BoxIfNecessary(arg.RawType, param.ParameterType);
-                }
-                else {
-                    EmitVoid(param.ParameterType);
-                }
+                arg.Accept(this);
+                BoxIfNecessary(arg.RawType, param.ParameterType);
             }
             if (iter.Receiver != null &&
                 iter.Receiver.RawType.IsInterface)

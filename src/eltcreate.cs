@@ -51,7 +51,11 @@ namespace Babel.Compiler {
                 ancestorMethods = null;
             }
             else {
-                ancestorMethods = cls.TypeData.AncestorMethods;
+                ancestorMethods = new ArrayList();
+                foreach (MethodData m in cls.TypeData.AncestorMethods) {
+                    if (!m.IsIterCreator)
+                        ancestorMethods.Add(m);
+                }
             }
             cls.Children.Accept(this);
             if (cls.Kind != ClassKind.Abstract && ancestorMethods.Count > 0) {
@@ -170,6 +174,7 @@ namespace Babel.Compiler {
         public override void VisitAbstractIter(AbstractIterSignature iter)
         {
             string baseName = iter.Name.Substring(0, iter.Name.Length - 1);
+            string creatorName = "__itercreate" + iterCount + "_" + baseName;
 
             iter.Arguments.Accept(this);
             iter.MoveNextArguments.Accept(this);
@@ -211,23 +216,47 @@ namespace Babel.Compiler {
                                  new TypedNodeList());
             }
 
+            iter.Creator =
+                DefineMethod(typeBuilder, creatorName,
+                             MethodAttributes.Public |
+                             MethodAttributes.Virtual |
+                             MethodAttributes.Abstract |
+                             MethodAttributes.HideBySig,
+                             typeManager.GetTypeData(iter.TypeBuilder),
+                             GetIterCreatorArguments(iter.Arguments));
+            typeManager.AddIterCreator(iter.Creator);
+
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, "__iter_" + baseName,
                              MethodAttributes.Public |
                              MethodAttributes.Virtual |
                              MethodAttributes.Abstract |
                              MethodAttributes.HideBySig,
-                             typeManager.GetTypeData(iter.TypeBuilder),
+                             iter.ReturnType.NodeType,
                              iter.Arguments);
             
             typeManager.AddBabelName(iter.MethodBuilder, iter.Name);
-            typeManager.AddIterReturnType(iter.MethodBuilder,
-                                          iter.ReturnType.NodeType);
+            typeManager.AddIterCreatorName(iter.MethodBuilder, creatorName);
 
             iterCount++;
         }
 
-        public override void VisitConst(ConstDefinition constDef)
+        protected virtual TypedNodeList
+            GetIterCreatorArguments(TypedNodeList arguments)
+        {
+            TypedNodeList args = new TypedNodeList();
+            foreach (Argument arg in arguments) {
+                if (arg.Mode == ArgumentMode.Once) {
+                    Argument a = (Argument) arg.Clone();
+                    a.Mode = ArgumentMode.In;
+                    args.Append(a);
+                }
+            }
+            return args;
+        }
+
+        public override void 
+            VisitConst(ConstDefinition constDef)
         {
             constDef.TypeSpecifier.Accept(this);
             TypeData constType = constDef.TypeSpecifier.NodeType;
@@ -397,11 +426,12 @@ namespace Babel.Compiler {
                                        ancestorMethods);
 
             string baseName = iter.Name.Substring(0, iter.Name.Length - 1);
+            string creatorName = "__itercreate" + iterCount + "_" + baseName;
 
             Type[] iterTypeAncestors = new Type[conformableMethods.Count];
             int i = 0;
             foreach (MethodData m in conformableMethods) {
-                iterTypeAncestors[i++] = m.MethodInfo.ReturnType;
+                iterTypeAncestors[i++] = m.IterType.RawType;
             }
 
             iter.TypeBuilder =
@@ -466,20 +496,36 @@ namespace Babel.Compiler {
                 attributes |= MethodAttributes.Private;
                 break;
             }
+
+            TypedNodeList creatorArguments =
+                GetIterCreatorArguments(iter.Arguments);
+
+            iter.Creator =
+                DefineMethod(typeBuilder, creatorName, attributes,
+                             typeManager.GetTypeData(iter.TypeBuilder),
+                             creatorArguments);
+            typeManager.AddIterCreator(iter.Creator);
+
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                             typeManager.GetTypeData(iter.TypeBuilder),
+                             iter.ReturnType.NodeType,
                              iter.Arguments);
 
             typeManager.AddBabelName(iter.MethodBuilder, iter.Name);
-            typeManager.AddIterReturnType(iter.MethodBuilder,
-                                          iter.ReturnType.NodeType);
+            typeManager.AddIterCreatorName(iter.MethodBuilder, creatorName);
 
-            foreach (Type t in iterTypeAncestors) {
+            foreach (MethodData m in conformableMethods) {
+                MethodData abstractCreator = m.IterCreator;
+Console.WriteLine(m.DeclaringType.RawType.FullName);
                 MethodBuilder bridgeMethod =
-                    DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                                 typeManager.GetTypeData(t),
+                    DefineMethod(typeBuilder,
+                                 m.DeclaringType.RawType.FullName + "." +
+                                 abstractCreator.Name,
+                                 attributes,
+                                 abstractCreator.ReturnType,
                                  iter.Arguments);
+Console.WriteLine(bridgeMethod);
+                typeBuilder.DefineMethodOverride(bridgeMethod, m.MethodInfo);
                 iter.BridgeMethods.Add(bridgeMethod);
             }
 

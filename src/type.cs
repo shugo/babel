@@ -317,6 +317,20 @@ namespace Babel.Compiler {
             }
             return (MethodBaseData) winners[0];
         }
+
+        public virtual MethodData LookupMethod(string name)
+        {
+            ArrayList candidates = new ArrayList();
+            foreach (MethodData method in Methods) {
+                if (method.Name == name)
+                    candidates.Add(method);
+            }
+            if (candidates.Count == 0)
+                throw new LookupMethodException("no match");
+            if (candidates.Count > 1)
+                throw new LookupMethodException("multiple matches");
+            return (MethodData) candidates[0];
+        }
     }
 
     public class PredefinedTypeData : TypeData {
