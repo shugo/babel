@@ -237,32 +237,98 @@ namespace Babel.Sather.Base
             return self <= 0;
         }
 
-        [IterTypeAttribute(typeof(__itertype_times))]
-        public static void __iter_times(int self)
+        [SatherNameAttribute("up!")]
+        [IterTypeAttribute(typeof(__itertype_up))]
+        public static int __iter_up_int(int self)
         {
+            return 0;
         }
 
-        public class __itertype_times
+        public class __itertype_up
         {
-            protected int limit;
             protected int current;
 
-            public __itertype_times(int limit)
+            public __itertype_up(int self)
             {
-                this.limit = limit;
-                this.current = -1;
+                this.current = self - 1;
             }
 
             public virtual bool MoveNext()
             {
                 current++;
-                return current < limit;
+                return true;
             }
 
             public int GetCurrent()
             {
                 return current;
             }
+        }
+
+        [SatherNameAttribute("upto!")]
+        [IterTypeAttribute(typeof(__itertype_upto))]
+        public static int __iter_upto(int self,
+                                      [ArgumentModeAttribute(ArgumentMode.Once)]
+                                      int i)
+        {
+            return 0;
+        }
+
+        public class __itertype_upto
+        {
+            protected int limit;
+            protected int current;
+
+            public __itertype_upto(int self, int i)
+            {
+                this.limit = i;
+                this.current = self - 1;
+            }
+
+            public virtual bool MoveNext()
+            {
+                current++;
+                return current <= limit;
+            }
+
+            public int GetCurrent()
+            {
+                return current;
+            }
+        }
+
+        [SatherNameAttribute("times!")]
+        [IterTypeAttribute(typeof(__itertype_times))]
+        public static void __iter_times(int self)
+        {
+        }
+
+        [SatherNameAttribute("times!")]
+        [IterTypeAttribute(typeof(__itertype_times))]
+        public static int __iter_times_int(int self)
+        {
+            return 0;
+        }
+
+        public class __itertype_times : __itertype_upto
+        {
+            public __itertype_times(int self)
+                : base(0, self - 1) {}
+        }
+
+        [SatherNameAttribute("for!")]
+        [IterTypeAttribute(typeof(__itertype_for))]
+        public static int __iter_for(int self,
+                                     [ArgumentModeAttribute(ArgumentMode.Once)]
+                                     int i)
+        {
+            return 0;
+        }
+
+        public class __itertype_for : __itertype_upto
+        {
+            public __itertype_for(int self, int i)
+                : base(self, self + i - 1) {}
         }
     }
 }
