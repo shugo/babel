@@ -1,0 +1,1392 @@
+%{
+
+/*
+ * parser.jay: parser for Sather
+ *
+ * Copyright (C) 2003 Shugo Maeda
+ * Licensed under the terms of the GNU GPL
+ */
+
+using System;
+using System.Collections;
+using System.IO;
+using System.Text;
+
+namespace Babel.Sather.Compiler
+{
+    public class Parser
+    {
+        Program program;
+        LexicalAnalyzer lexer;
+        Report report;
+        SourceFile sourceFile;
+        ClassDefinition currentClass;
+
+        public Parser(Program program,
+                      TextReader reader, string fileName, Report report)
+        {
+            this.program = program;
+            lexer = new LexicalAnalyzer(reader, fileName, report);
+            this.report = report;
+        }
+%}
+
+%token EOF
+%token NONE
+%token ERROR
+
+/* keywords */
+%token ABSTRACT
+%token AND
+%token ANY
+%token ASSERT
+%token ATTR
+%token BIND
+%token BREAK_BANG
+%token BUILTIN
+%token CASE
+%token CLASS
+%token CLUSTERS
+%token CLUSTERS_BANG
+%token COHORT
+%token CONST
+%token ELSE
+%token ELSIF
+%token END
+%token EXCEPTION
+%token EXTERNAL
+%token FALSE
+%token FAR
+%token FORK
+%token GUARD
+%token IF
+%token IMMUTABLE
+%token INOUT
+%token INCLUDE
+%token INITIAL
+%token IS
+%token ITER
+%token LOCK
+%token LOOP
+%token NEAR
+%token NEW
+%token ONCE
+%token OR
+%token OUT
+%token PAR
+%token PARLOOP
+%token POST
+%token PRE
+%token PRIVATE
+%token PROTECT
+%token QUIT
+%token RAISE
+%token READONLY
+%token RESULT
+%token RETURN
+%token ROUT
+%token F_ROUT
+%token SAME
+%token SELF
+%token SHARED
+%token SYNC
+%token THEN
+%token TRUE
+%token TYPECASE
+%token UNLOCK
+%token UNTIL_BANG
+%token VOID
+%token WHEN
+%token WHILE_BANG
+%token WITH
+%token YIELD
+
+/* special symbols */
+%token LPAREN "("
+%token RPAREN ")"
+%token LBRACKET "["
+%token RBRACKET "]"
+%token LBRACE "{"
+%token RBRACE "}"
+%token COMMA ","
+%token DOT "."
+%token SEMI ";"
+%token COLON ":"
+%token UNDER "_"
+%token PLUS "+"
+%token MINUS "-"
+%token TIMES "*"
+%token QUOTIENT "/"
+%token IS_LT "<"
+%token IS_GT ">"
+%token SHARP "#"
+%token BANG "!"
+%token ITER_BANG "!"
+%token POW "^"
+%token MOD "%"
+%token VBAR "|"
+%token IS_NEQ "/="
+%token IS_LEQ "<="
+%token IS_GEQ ">="
+%token ASSIGN ":="
+%token TRANSFORM "->"
+%token IS_EQ "="
+%token NOT "~"
+%token DCOLON "::"
+
+%token CHAR_LITERAL
+%token STR_LITERAL
+%token INT_LITERAL
+%token FLOAT_LITERAL
+
+%token IDENTIFIER
+%token ABSTRACT_CLASS_NAME
+
+%start source_file
+
+%%
+
+source_file
+        : {
+              sourceFile = new SourceFile();
+          }
+          class_def_list
+          opt_EOF
+          {
+              program.AddChild(sourceFile);
+          }
+        ;
+
+opt_EOF
+        : /* empty */
+        | EOF
+        ;
+
+class_def_list
+	: class_def
+        | class_def_list SEMI class_def
+        ;
+
+class_def
+        : /*empty */
+        | abstract_class_definition
+        | class_definition
+        ;
+
+abstract_class_definition
+        : ABSTRACT
+          CLASS
+          ABSTRACT_CLASS_NAME
+          subtyping_clause
+          {
+              currentClass = new ClassDefinition((string) $3,
+                                                 ClassKind.Abstract,
+                                                 (TypedNodeList) $4,
+                                                 lexer.Location);
+	  }
+          IS
+          abstract_signature_list
+          END
+          {
+              AddClass(currentClass);
+              $$ = currentClass;
+	  }
+        ;
+
+subtyping_clause
+        : /* empty */
+          {
+              $$ = new TypedNodeList();
+          }
+        | IS_LT
+          type_specifier_list
+          {
+              $$ = new TypedNodeList((Node) $2);
+          }
+        ;
+
+type_specifier_list
+        : type_specifier
+        | type_specifier_list COMMA type_specifier
+          {
+              Node list = (Node) $1;
+              list.Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+type_specifier
+        : class_name
+          {
+              $$ = new TypeSpecifier((string) $1, TypeKind.Normal,
+                                     lexer.Location);
+          }
+        | abstract_class_name
+          {
+              $$ = new TypeSpecifier((string) $1, TypeKind.Normal,
+                                     lexer.Location);
+          }
+        | SAME
+          {
+              $$ = new TypeSpecifier((string) $1, TypeKind.Same,
+                                     lexer.Location);
+          }
+        ;
+
+class_name
+        : qualified_identifier
+        ;
+
+abstract_class_name
+        : ABSTRACT_CLASS_NAME
+        | qualified_identifier DCOLON ABSTRACT_CLASS_NAME
+          {
+              $$ = (string) $1 + Type.Delimiter + (string) $3;
+          }
+        ;
+
+qualified_identifier
+        : IDENTIFIER
+        | qualified_identifier DCOLON IDENTIFIER
+          {
+              $$ = (string) $1 + Type.Delimiter + (string) $3;
+          }
+        ;
+
+abstract_signature_list
+        : abstract_signature
+        | abstract_signature_list SEMI abstract_signature
+        ;
+
+abstract_signature
+        : /* empty */
+        | abstract_routine_signature
+        ;
+
+abstract_routine_signature
+        : IDENTIFIER
+          opt_routine_argument_list
+          opt_return_type
+          {
+              AbstractRoutineSignature signature =
+                  new AbstractRoutineSignature((string) $1,
+                                               (TypedNodeList) $2,
+                                               (TypeSpecifier) $3,
+                                               lexer.Location);
+              currentClass.AddChild(signature);
+          }
+        ;
+
+opt_routine_argument_list
+        : /* empty */
+          {
+              $$ = new TypedNodeList();
+          }
+        | LPAREN routine_argument_list RPAREN
+          {
+              $$ = new TypedNodeList((Node) $2);
+          }
+        ;
+
+routine_argument_list
+        : routine_argument
+        | routine_argument_list COMMA routine_argument
+          {
+              Node args = (Node) $1;
+              args.Append((Node) $3);
+              $$ = args;
+          }
+        ;
+
+routine_argument
+        : opt_mode identifier_list COLON type_specifier
+          {
+              ArrayList identifierList = (ArrayList) $2;
+              Node args = null;
+              foreach (string identifier in identifierList) {
+                  Argument arg = new Argument((ArgumentMode) $1,
+                                              identifier, (TypeSpecifier) $4,
+                                              lexer.Location);
+                  if (args == null)
+                      args = arg;
+                  else
+                      args.Append(arg);
+              }
+              $$ = args;
+          }
+        ;
+
+opt_mode
+        : /* empty */
+          {
+              $$ = ArgumentMode.In;
+          }
+        | OUT
+          {
+              $$ = ArgumentMode.Out;
+          }
+        | INOUT
+          {
+              $$ = ArgumentMode.InOut;
+          }
+        ;
+
+identifier_list
+        : IDENTIFIER
+          {
+              $$ = NewList($1);
+          }
+        | identifier_list COMMA IDENTIFIER
+          {
+              $$ = ListAppend($1, $3);
+          }
+        ;
+
+opt_return_type
+        : /* empty */
+          {
+              $$ = TypeSpecifier.Null;
+          }
+        | COLON type_specifier
+          {
+              $$ = $2;
+          }
+        ;
+
+class_definition
+        : CLASS
+          IDENTIFIER
+          subtyping_clause
+          {
+              currentClass = new ClassDefinition((string) $2,
+                                                 ClassKind.Reference,
+                                                 (TypedNodeList) $3,
+                                                 lexer.Location);
+	  }
+          IS
+          class_element_list
+          END
+          {
+              AddClass(currentClass);
+              $$ = currentClass;
+	  }
+        ;
+
+class_element_list
+        : class_element
+        | class_element_list SEMI class_element
+        ;
+
+class_element
+        : /* empty */
+        | const_definition
+        | shared_attr_definition
+        | attr_definition
+        | routine_definition
+        | include_clause
+        ;
+
+const_definition
+        : opt_const_modifier CONST IDENTIFIER
+          COLON type_specifier const_initializer
+          {
+              ConstDefinition constDef =
+                  new ConstDefinition((string) $3, (TypeSpecifier) $5,
+                                      ((LiteralExpression) $6).ValueAsObject,
+                                      (ConstModifier) $1, lexer.Location);
+              currentClass.AddChild(constDef);
+          }
+        | opt_const_modifier CONST IDENTIFIER
+          opt_int_const_initializer opt_successive_constant_list
+          {
+              int value = (int) $4;
+              TypeSpecifier type = new TypeSpecifier("INT", TypeKind.Normal,
+                                                     lexer.Location);
+              ConstDefinition constDef =
+                  new ConstDefinition((string) $3, type, value,
+                                      (ConstModifier) $1, lexer.Location);
+              currentClass.AddChild(constDef);
+              if ($5 != null) {
+                  ArrayList identifierList = (ArrayList) $5;
+                  foreach (string identifier in identifierList) {
+                      constDef =
+                          new ConstDefinition(identifier, type, ++value,
+                                              (ConstModifier) $1,
+                                              lexer.Location);
+                      currentClass.AddChild(constDef);
+                  }
+              }
+          }
+        ;
+
+opt_const_modifier
+        : /* empty */
+          {
+              $$ = ConstModifier.None;
+          }
+        | PRIVATE
+          {
+              $$ = ConstModifier.Private;
+          }
+        ;
+
+const_initializer
+        : ASSIGN literal_expression
+          {
+              $$ = $2;
+          }
+        ;
+
+opt_int_const_initializer
+        : /* empty */
+          {
+              $$ = 0;
+          }
+        | ASSIGN int_literal_expression
+          {
+              $$ = ((IntLiteralExpression) $2).Value;
+          }
+        ;
+
+opt_successive_constant_list
+        : /* empty */
+        | COMMA identifier_list
+          {
+              $$ = $2;
+          }
+        ;
+
+shared_attr_definition
+        : opt_attr_modifier SHARED ATTR
+          identifier_list COLON type_specifier opt_shared_attr_initializer
+          {
+              ArrayList identifierList = (ArrayList) $4;
+              if ($7 != null && identifierList.Count > 1) {
+                  report.Error(lexer.Location,
+                               "can't initialize multiple shared attrs");
+              }
+              foreach (string identifier in identifierList) {
+                  SharedAttrDefinition attr =
+                      new SharedAttrDefinition(identifier,
+                                               (TypeSpecifier) $6,
+                                               (Expression) $7,
+                                               (AttrModifier) $1,
+                                               lexer.Location);
+                  currentClass.AddChild(attr);
+              }
+          }
+        ;
+
+opt_shared_attr_initializer
+        : /* empty */
+        | ASSIGN expression
+          {
+              $$ = $2;
+          }
+        ;
+
+attr_definition
+        : opt_attr_modifier ATTR identifier_list COLON type_specifier
+          {
+              ArrayList identifierList = (ArrayList) $3;
+              foreach (string identifier in identifierList) {
+                  AttrDefinition attr = new AttrDefinition(identifier,
+                                                           (TypeSpecifier) $5,
+                                                           (AttrModifier) $1,
+                                                           lexer.Location);
+                  currentClass.AddChild(attr);
+              }
+          }
+        ;
+
+opt_attr_modifier
+        : /* empty */
+          {
+              $$ = AttrModifier.None;
+          }
+        | PRIVATE
+          {
+              $$ = AttrModifier.Private;
+          }
+        | READONLY
+          {
+              $$ = AttrModifier.Readonly;
+          }
+        ;
+
+routine_definition
+        : opt_routine_modifier
+          IDENTIFIER
+          opt_routine_argument_list
+          opt_return_type
+          IS
+          statement_list
+          END
+          {
+              RoutineDefinition routine =
+                  new RoutineDefinition((string) $2,
+                                        (TypedNodeList) $3,
+                                        (TypeSpecifier) $4,
+                                        (StatementList) $6,
+                                        (RoutineModifier) $1,
+                                        lexer.Location);
+              currentClass.AddChild(routine);
+          }
+        ;
+
+opt_routine_modifier
+        : /* empty */
+          {
+              $$ = RoutineModifier.None;
+          }
+        | PRIVATE
+          {
+              $$ = RoutineModifier.Private;
+          }
+        ;
+
+include_clause
+        : opt_include_modifier INCLUDE type_specifier opt_feature_modifier_list
+          {
+              IncludeClause include
+                  = new IncludeClause((TypeSpecifier) $3, (IncludeModifier) $1,
+                                      (NodeList) $4,
+                                      lexer.Location);
+              currentClass.AddChild(include);
+          }
+        ;
+
+opt_include_modifier
+        : /* empty */
+          {
+              $$ = IncludeModifier.NoChange;
+          }
+        | PRIVATE
+          {
+              $$ = IncludeModifier.Private;
+          }
+        ;
+
+opt_feature_modifier_list
+        : /* empty */
+          {
+              $$ = new NodeList();
+          }
+        | feature_modifier_list
+        ;
+
+feature_modifier_list
+        : feature_modifier
+          {
+              $$ = new NodeList((Node) $1);
+          }
+        | feature_modifier_list COMMA feature_modifier
+          {
+              ((NodeList) $1).Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+feature_modifier
+        : IDENTIFIER TRANSFORM opt_new_modifier IDENTIFIER
+          {
+              $$ = new FeatureModifier((string) $1,
+                                       (string) $4,
+                                       (IncludeModifier) $3,
+                                       lexer.Location);
+          }
+        | IDENTIFIER TRANSFORM
+          {
+              $$ = new FeatureModifier((string) $1,
+                                       (string) "",
+                                       IncludeModifier.None,
+                                       lexer.Location);
+          }
+        ;
+
+opt_new_modifier
+        : /* empty */
+          {
+              $$ = IncludeModifier.None;
+          }
+        | PRIVATE
+          {
+              $$ = IncludeModifier.Private;
+          }
+        | READONLY
+          {
+              $$ = IncludeModifier.Readonly;
+          }
+        ;
+
+statement_list
+        : statement
+          {
+              StatementList list = new StatementList(lexer.Location);
+              list.AddChild((Node) $1);
+              $$ = list;
+          }
+        | statement_list SEMI statement
+          {
+              ((StatementList) $1).AddChild((Statement) $3);
+              $$ = $1;
+          }
+        ;
+
+statement
+        : empty_statement
+        | declaration_statement
+        | assign_statement
+        | if_statement
+        | return_statement
+        | case_statement
+        | typecase_statement
+        | loop_statement
+        | protect_statement
+        | raise_statement
+        | expression_statement
+        ;
+
+empty_statement
+        : /* empty */
+          {
+              $$ = new EmptyStatement(lexer.Location);
+          }
+        ;
+
+declaration_statement
+        : identifier_list COLON opt_type_specifier opt_assign
+          {
+              ArrayList identifierList = (ArrayList) $1;
+              DeclarationStatement decls = null;
+              foreach (string identifier in identifierList) {
+                  DeclarationStatement decl =
+                      new DeclarationStatement(identifier,
+                                               (TypeSpecifier) $3,
+                                               lexer.Location);
+                  if (decls == null) {
+                      decls = decl;
+                  }
+                  else {
+                      decls.Append(decl);
+                  }
+              }
+              if ($3 == null && $4 == null)
+                  throw new yyParser.yyException("type expected");
+              if ($4 != null) {
+                  if (identifierList.Count > 1)
+                      throw new yyParser.yyException("can't initialize multiple variables");
+                  AssignStatement assign =
+                       new AssignStatement((string) identifierList[0],
+                                           (Expression) $4,
+                                           lexer.Location);
+                  decls.Append(assign);
+              }
+              $$ = decls;
+          }
+        ;
+
+opt_type_specifier
+        : /* empty */
+          {
+              $$ = TypeSpecifier.Null;
+          }
+        | type_specifier
+        ;
+
+opt_assign
+        : /* empty */
+        | ASSIGN expression
+          {
+              $$ = $2;
+          }
+        ;
+
+assign_statement
+        : IDENTIFIER ASSIGN expression
+          {
+              $$ = new AssignStatement((string) $1, (Expression) $3,
+                                       lexer.Location);
+          }
+        | primary_expression DOT IDENTIFIER ASSIGN expression
+          {
+              Expression expr = new CallExpression((Expression) $1,
+                                                   (string) $3,
+                                                   OneInArg((Expression) $5),
+                                                   lexer.Location);
+              $$ = new ExpressionStatement(expr, lexer.Location);
+          }
+        | type_call ASSIGN expression
+          {
+              ArrayList list = (ArrayList) $1;
+              string routineName = (string) list[list.Count - 1];
+              list.RemoveAt(list.Count - 1);
+              string typeName = "";
+              foreach (string s in list) {
+                  if (typeName.Length > 0)
+                      typeName += Type.Delimiter;
+                  typeName += s;
+              }
+              TypeSpecifier typeSpecifier =
+                  new TypeSpecifier(typeName, TypeKind.Normal,
+                                    lexer.Location);
+              Expression expr = new CallExpression(typeSpecifier,
+                                                   routineName,
+                                                   OneInArg((Expression) $3),
+                                                   lexer.Location);
+              $$ = new ExpressionStatement(expr, lexer.Location);
+          }
+        | primary_expression LBRACKET expr_list RBRACKET ASSIGN expression
+          {
+              TypedNodeList args = (TypedNodeList) $3;
+              args.Append(InArg((Expression) $6));
+              Expression expr = new CallExpression((Expression) $1,
+                                                   "aset", args,
+                                                   lexer.Location);
+              $$ = new ExpressionStatement(expr, expr.Location);
+          }
+        ;
+
+if_statement
+        : IF expression THEN statement_list
+          opt_elsif_or_else END
+          {
+              $$ = new IfStatement((Expression) $2, (Node) $4, (Node) $5,
+                                   lexer.Location);
+          }
+        ;
+
+opt_elsif_or_else
+        : opt_else
+        | ELSIF expression THEN statement_list
+          opt_elsif_or_else
+          {
+              $$ = new IfStatement((Expression) $2, (Node) $4, (Node) $5,
+                                   lexer.Location);
+          }
+        ;
+
+opt_else
+        : /* empty */
+        | ELSE statement_list
+          {
+              $$ = $2;
+          }
+        ;
+
+return_statement
+        : RETURN opt_return_value
+          {
+              $$ = new ReturnStatement((Expression) $2, lexer.Location);
+          }
+        ;
+
+opt_return_value
+        : /* Empty */
+        | expression
+        ;
+
+case_statement
+        : CASE expression case_when_list opt_else END
+          {
+              $$ = new CaseStatement((Expression) $2,
+                                     (NodeList) $3,
+                                     (StatementList) $4,
+                                     lexer.Location);
+          }
+        ;
+
+case_when_list
+        : case_when
+          {
+              $$ = new NodeList((Node) $1);
+          }
+        | case_when_list case_when
+          {
+              ((NodeList) $1).Append((Node) $2);
+              $$ = $1;
+          }
+        ;
+
+case_when
+        : WHEN expression_list THEN statement_list
+          {
+              $$ = new CaseWhen((TypedNodeList) $2, (StatementList) $4,
+                                lexer.Location);
+          }
+        ;
+
+typecase_statement
+        : TYPECASE local_expression typecase_when_list opt_else END
+          {
+              $$ = new TypecaseStatement((LocalExpression) $2,
+                                         (NodeList) $3,
+                                         (StatementList) $4,
+                                         lexer.Location);
+          }
+        ;
+
+typecase_when_list
+        : typecase_when
+          {
+              $$ = new NodeList((Node) $1);
+          }
+        | typecase_when_list typecase_when
+          {
+              ((NodeList) $1).Append((Node) $2);
+              $$ = $1;
+          }
+        ;
+
+typecase_when
+        : WHEN type_specifier THEN statement_list
+          {
+              $$ = new TypecaseWhen((TypeSpecifier) $2, (StatementList) $4,
+                                    lexer.Location);
+          }
+        ;
+
+expression_list
+        : expression
+          {
+              $$ = new TypedNodeList((TypedNode) $1);
+          }
+        | expression_list COMMA expression
+          {
+              ((TypedNodeList) $1).Append((TypedNode) $3);
+              $$ = $1;
+          }
+        ;
+
+loop_statement
+        : LOOP statement_list END
+          {
+              $$ = new LoopStatement((StatementList) $2, lexer.Location);
+          }
+        ;
+
+protect_statement
+        : PROTECT statement_list opt_protect_when_list opt_else END
+          {
+              $$ = new ProtectStatement((StatementList) $2,
+                                        (NodeList) $3,
+                                        (StatementList) $4,
+                                        lexer.Location);
+          }
+        ;
+
+raise_statement
+        : RAISE expression
+          {
+              $$ = new RaiseStatement((Expression) $2, lexer.Location);
+          }
+        ;
+
+opt_protect_when_list
+        : /* empty */
+          {
+              $$ = new NodeList();
+          }
+        | protect_when_list
+        ;
+
+protect_when_list
+        : protect_when
+          {
+              $$ = new NodeList((Node) $1);
+          }
+        | protect_when_list protect_when
+          {
+              ((NodeList) $1).Append((Node) $2);
+              $$ = $1;
+          }
+        ;
+
+protect_when
+        : WHEN type_specifier THEN statement_list
+          {
+              $$ = new ProtectWhen((TypeSpecifier) $2, (StatementList) $4,
+                                   lexer.Location);
+          }
+        ;
+
+expression_statement
+        : expression
+          {
+              Expression expr = (Expression) $1;
+              $$ = new ExpressionStatement(expr, expr.Location);
+          }
+        ;
+
+expression
+        : conditional_expression
+        ;
+
+conditional_expression
+        : relational_expression
+        | conditional_expression AND relational_expression
+          {
+              $$ = new AndExpression((Expression) $1, (Expression) $3,
+                                     lexer.Location);
+          }
+        | conditional_expression OR relational_expression
+          {
+              $$ = new OrExpression((Expression) $1, (Expression) $3,
+                                    lexer.Location);
+          }
+        ;
+
+relational_expression
+        : additive_expression
+        | relational_expression IS_EQ additive_expression
+          {
+              $$ = new CallExpression((Expression) $1, "is_eq",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        | relational_expression IS_NEQ additive_expression
+          {
+              Expression callIsEq =
+                  new CallExpression((Expression) $1, "is_eq",
+                                     OneInArg((Expression) $3),
+                                     lexer.Location);
+              $$ = new CallExpression(callIsEq, "not", new TypedNodeList(),
+                                      lexer.Location);
+          }
+        | relational_expression IS_LT additive_expression
+          {
+              $$ = new CallExpression((Expression) $1, "is_lt",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        | relational_expression IS_LEQ additive_expression
+          {
+              Expression callIsLt =
+                  new CallExpression((Expression) $3, "is_lt",
+                                     OneInArg((Expression) $1), true,
+                                     lexer.Location);
+              $$ = new CallExpression(callIsLt, "not", new TypedNodeList(),
+                                      lexer.Location);
+          }
+        | relational_expression IS_GT additive_expression
+          {
+              $$ = new CallExpression((Expression) $3, "is_lt",
+                                      OneInArg((Expression) $1), true,
+                                      lexer.Location);
+          }
+        | relational_expression IS_GEQ additive_expression
+          {
+              Expression callIsLt =
+                  new CallExpression((Expression) $1, "is_lt",
+                                     OneInArg((Expression) $3),
+                                     lexer.Location);
+              $$ = new CallExpression(callIsLt, "not", new TypedNodeList(),
+                                      lexer.Location);
+          }
+        ;
+
+additive_expression
+        : multiplicative_expression
+        | additive_expression PLUS multiplicative_expression
+          {
+              $$ = new CallExpression((Expression) $1, "plus",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        | additive_expression MINUS multiplicative_expression
+          {
+              $$ = new CallExpression((Expression) $1, "minus",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        ;
+
+multiplicative_expression
+        : unary_expression
+        | multiplicative_expression TIMES unary_expression
+          {
+              $$ = new CallExpression((Expression) $1, "times",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        | multiplicative_expression QUOTIENT unary_expression
+          {
+              $$ = new CallExpression((Expression) $1, "quotient",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        | multiplicative_expression MOD unary_expression
+          {
+              $$ = new CallExpression((Expression) $1, "mod",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        ;
+
+unary_expression
+        : pow_expression
+        | MINUS
+          {
+              $$ = ((LexicalAnalyzer) yyLex).lookahead() == Token.INT_LITERAL;
+          }
+          pow_expression
+          {
+              Expression expr = (Expression) $3;
+              if (expr is IntLiteralExpression) {
+                  IntLiteralExpression intLiteral =
+                      (IntLiteralExpression) expr;
+                  $$ = new IntLiteralExpression(-intLiteral.Value,
+                                                lexer.Location);
+              }
+              else {
+                  bool followedByLiteral = (bool) $2;
+                  if (followedByLiteral) {
+                      report.Error(lexer.Location,
+                                   "use parens to disambiguate unary minus " +
+                                   "from negative literals");
+                  }
+                  $$ = new CallExpression(expr, "negate",
+                                          new TypedNodeList(),
+                                          lexer.Location);
+              }
+          }
+        | NOT pow_expression
+          {
+              $$ = new CallExpression((Expression) $2, "not",
+                                      new TypedNodeList(),
+                                      lexer.Location);
+          }
+        ;
+
+pow_expression
+        : primary_expression
+        | pow_expression POW primary_expression
+          {
+              $$ = new CallExpression((Expression) $1, "pow",
+                                      OneInArg((Expression) $3),
+                                      lexer.Location);
+          }
+        ;
+
+primary_expression
+        : literal_expression
+        | self_expression
+        | local_expression
+        | call_expression
+        | void_expression
+        | void_test_expression
+        | new_expression
+        | create_expression
+        | type_call_expression
+        | break_expression
+        | while_expression
+        | until_expression
+        | exception_expression
+        | parenthesized_expression
+        ;
+
+literal_expression
+        : bool_literal_expression
+        | int_literal_expression
+        | char_literal_expression
+        | str_literal_expression
+        ;
+
+bool_literal_expression
+        : TRUE
+          {
+              $$ = new BoolLiteralExpression(true, lexer.Location);
+          }
+        | FALSE
+          {
+              $$ = new BoolLiteralExpression(false, lexer.Location);
+          }
+        ;
+
+int_literal_expression
+        : INT_LITERAL
+          {
+              $$ = new IntLiteralExpression((int) $1, lexer.Location);
+          }
+        ;
+
+char_literal_expression
+        : CHAR_LITERAL
+          {
+              $$ = new CharLiteralExpression((char) $1, lexer.Location);
+          }
+        ;
+
+str_literal_expression
+        : STR_LITERAL
+          {
+              $$ = new StrLiteralExpression((string) $1, lexer.Location);
+          }
+        | str_literal_expression STR_LITERAL
+          {
+              StrLiteralExpression expr = (StrLiteralExpression) $1;
+              expr.Value += (string) $2;
+              expr.Location = lexer.Location;
+              $$ = expr;
+          }
+        ;
+
+self_expression
+        : SELF
+          {
+              $$ = new SelfExpression(lexer.Location);
+          }
+        ;
+
+local_expression
+        : IDENTIFIER
+          {
+              $$ = new LocalExpression((string) $1, lexer.Location);
+          }
+        ;
+
+call_expression
+        : primary_expression DOT IDENTIFIER opt_mode_expr_list
+          {
+              $$ = new CallExpression((Expression) $1, (string) $3,
+                                      (TypedNodeList) $4,
+                                      lexer.Location);
+          }
+        | IDENTIFIER LPAREN mode_expr_list RPAREN
+          {
+              Expression self = new SelfExpression(lexer.Location);
+              $$ = new CallExpression(self, (string) $1, (TypedNodeList) $3,
+                                      lexer.Location);
+          }
+        | primary_expression LBRACKET expr_list RBRACKET
+          {
+              $$ = new CallExpression((Expression) $1, "aget",
+                                      (TypedNodeList) $3,
+                                      lexer.Location);
+          }
+        ;
+
+type_call_expression
+        : type_call opt_mode_expr_list
+          {
+              ArrayList list = (ArrayList) $1;
+              string routineName = (string) list[list.Count - 1];
+              list.RemoveAt(list.Count - 1);
+              string typeName = "";
+              foreach (string s in list) {
+                  if (typeName.Length > 0)
+                      typeName += Type.Delimiter;
+                  typeName += s;
+              }
+              TypeSpecifier typeSpecifier =
+                  new TypeSpecifier(typeName, TypeKind.Normal,
+                                    lexer.Location);
+              $$ = new CallExpression(typeSpecifier, routineName,
+                                      (TypedNodeList) $2,
+                                      lexer.Location);
+          }
+        ;
+
+opt_mode_expr_list
+        : /* empty */
+          {
+              $$ = new TypedNodeList();
+          }
+        | LPAREN mode_expr_list RPAREN
+          {
+              $$ = $2;
+          }
+        ;
+
+mode_expr_list
+        : mode_expr
+          {
+              $$ = new TypedNodeList((Node) $1);
+          }
+        | mode_expr_list COMMA mode_expr
+          {
+              ((TypedNodeList) $1).Append((Node) $3);
+              $$ = $1;
+          }
+        ;
+
+mode_expr
+        : opt_mode expression
+          {
+              $$ = new ModalExpression((ArgumentMode) $1,
+                                       (Expression) $2,
+                                       lexer.Location);
+          }
+        ;
+
+expr_list
+        : expression
+          {
+              $$ = new TypedNodeList(InArg((Expression) $1));
+          }
+        | expr_list COMMA expression
+          {
+              ((TypedNodeList) $1).Append(InArg((Expression) $3));
+              $$ = $1;
+          }
+        ;
+
+type_call
+        : IDENTIFIER DCOLON IDENTIFIER
+          {
+              ArrayList list = new ArrayList();
+              list.Add($1);
+              list.Add($3);
+              $$ = list;
+          }
+        | type_call DCOLON IDENTIFIER
+          {
+              ((ArrayList) $1).Add($3);
+              $$ = $1;
+          }
+        ;
+
+void_expression
+        : VOID
+          {
+              $$ = new VoidExpression(lexer.Location);
+          }
+        ;
+
+void_test_expression
+        : VOID LPAREN expression RPAREN
+          {
+              $$ = new VoidTestExpression((Expression) $3, lexer.Location);
+          }
+        ;
+
+new_expression
+        : NEW
+          {
+              $$ = new NewExpression(lexer.Location);
+          }
+        ;
+
+create_expression
+        : SHARP type_specifier opt_mode_expr_list
+          {
+              $$ = new CallExpression((TypeSpecifier) $2, "create",
+                                      (TypedNodeList) $3,
+                                      lexer.Location);
+          }
+        ;
+
+break_expression
+        : BREAK_BANG
+          {
+              $$ = new BreakExpression(lexer.Location);
+          }
+        ;
+
+while_expression
+        : WHILE_BANG LPAREN expression RPAREN
+          {
+              EmptyStatement empty = new EmptyStatement(lexer.Location);
+              BreakExpression breakExpr = new BreakExpression(lexer.Location);
+              $$ = new IfExpression((Expression) $3, empty, breakExpr,
+                                    lexer.Location);
+          }
+        ;
+
+until_expression
+        : UNTIL_BANG LPAREN expression RPAREN
+          {
+              EmptyStatement empty = new EmptyStatement(lexer.Location);
+              BreakExpression breakExpr = new BreakExpression(lexer.Location);
+              $$ = new IfExpression((Expression) $3, breakExpr, empty,
+                                    lexer.Location);
+          }
+        ;
+
+exception_expression
+        : EXCEPTION
+          {
+              $$ = new ExceptionExpression(lexer.Location);
+          }
+        ;
+
+parenthesized_expression
+        : LPAREN expression RPAREN
+          {
+              $$ = $2;
+          }
+        ;
+
+%%
+
+    public LexicalAnalyzer Lexer
+    {
+        get { return lexer; }
+    }
+
+    public void Parse()
+    {
+        try {
+            yyparse(lexer);
+        }
+        catch (Exception e) {
+            report.Error(lexer.Location, e.Message);
+            throw;
+        }
+    }
+
+    void AddClass(ClassDefinition cls)
+    {
+        sourceFile.AddChild(cls);
+        ClassDefinition c = program.TypeManager.GetClass(cls.Name);
+        if (c != null) {
+            report.Error(cls.Location,
+                         "redefinition of class {0}\n" +
+                         "\tthe previous definition is at:{1}:{2}:{3}",
+                         cls.Name,
+                         c.Location.FileName,
+                         c.Location.Line,
+                         c.Location.Column);
+            return;
+        }
+        program.TypeManager.AddClass(cls);
+    }
+
+    ArrayList NewList(Object obj)
+    {
+        if (obj is ArrayList)
+            return (ArrayList) obj;
+        ArrayList result = new ArrayList();
+        if (obj == null)
+            return result;
+        result.Add(obj);
+        return result;
+    }
+
+    ArrayList ListAppend(Object list, Object obj)
+    {
+        ArrayList result = (ArrayList) list;
+        if (result == null)
+            result = new ArrayList();
+        if (obj == null)
+            return result;
+        if (obj is ArrayList) {
+            result.AddRange((ArrayList) obj);
+        }
+        else {
+            result.Add(obj);
+        }
+        return result;
+    }
+
+    ModalExpression InArg(Expression expr)
+    {
+        return new ModalExpression(ArgumentMode.In, expr,
+                                   expr.Location);
+    }
+
+    TypedNodeList OneInArg(Expression expr)
+    {
+        return new TypedNodeList(InArg(expr));
+    }
+}
