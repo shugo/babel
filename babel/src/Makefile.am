@@ -30,7 +30,9 @@ bscore_dll_SRCS		= attribute.cs \
 			  str.cs
 
 EXTRA_DIST		= $(bscore_dll_SRCS) \
-			  parser.jay
+			  parser.jay \
+			  bsc.exe \
+			  bscore.dll
 
 CLEANFILES		= parser.cs \
 			  bsc.exe \

@@ -5,7 +5,8 @@ assembly_DATA		= bsio.dll
 bsio_dll_SRCS		= stream.sa \
 			  out.sa
 
-EXTRA_DIST		= $(bsio_dll_SRCS)
+EXTRA_DIST		= $(bsio_dll_SRCS) \
+			  bsio.dll
 
 CLEANFILES		= bsio.dll
 
