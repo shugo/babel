@@ -18,6 +18,7 @@ namespace Babel.Sather.Compiler
         protected TypeManager typeManager;
         protected Report report;
         protected Hashtable visitingClasses;
+        protected int adapterCount;
 
         public TypeCreatingVisitor(Report report)
         {
@@ -29,6 +30,7 @@ namespace Babel.Sather.Compiler
             this.program = program;
             typeManager = program.TypeManager;
             visitingClasses = new Hashtable();
+            adapterCount = 0;
             program.Children.Accept(this);
         }
 
@@ -94,7 +96,6 @@ namespace Babel.Sather.Compiler
                 }
                 if (cls.Subtypes != null) {
                     cls.Subtypes.Accept(this);
-                    int adapterCount = 0;
                     Type[] subtypeAncestors = new Type[ancestors.Length + 1];
                     ancestors.CopyTo(subtypeAncestors, 0);
                     subtypeAncestors[subtypeAncestors.Length - 1] =
@@ -105,12 +106,12 @@ namespace Babel.Sather.Compiler
                         SubtypeAdapter adapter =
                             new SubtypeAdapter(subtype.NodeType);
                         adapter.TypeBuilder =
-                            cls.TypeBuilder.
-                            DefineNestedType("__adapter" + adapterCount,
-                                             TypeAttributes.Class |
-                                             TypeAttributes.NestedPublic,
-                                             typeof(object),
-                                             subtypeAncestors);
+                            program.Module.
+                            DefineType("__adapter" + adapterCount,
+                                       TypeAttributes.Class |
+                                       TypeAttributes.Public,
+                                       typeof(object),
+                                       subtypeAncestors);
                         typeManager.AddType(adapter.TypeBuilder,
                                             new Type[] { cls.TypeBuilder },
                                             subtypeAncestors);
