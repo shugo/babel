@@ -18,6 +18,8 @@ EXTRA_DIST		= test.rb.in \
 			  conflict.sa \
 			  fact.out \
 			  fact.sa \
+			  generics.out \
+			  generics.sa \
 			  hello.out \
 			  hello.sa \
 			  import.out \

@@ -112,8 +112,8 @@ namespace Babel.Compiler {
         }
 
         protected virtual BuiltinTypeData
-        AddBuiltinType(string name, Type type,
-                       Type builtinMethodContainer)
+            AddBuiltinType(string name, Type type,
+                           Type builtinMethodContainer)
         {
             BuiltinTypeData typeData = AddBuiltinType(name, type);
             typeData.BuiltinMethodContainer = builtinMethodContainer;
@@ -277,7 +277,7 @@ namespace Babel.Compiler {
         }
 
         public virtual UserDefinedMethodData
-        AddMethod(Type type, MethodBuilder method)
+            AddMethod(Type type, MethodBuilder method)
         {
             ArrayList methods = (ArrayList) methodsTable[type];
             if (methods == null)
@@ -312,7 +312,7 @@ namespace Babel.Compiler {
         }
 
         public virtual UserDefinedConstructorData
-        AddConstructor(Type type, ConstructorBuilder constructor)
+            AddConstructor(Type type, ConstructorBuilder constructor)
         {
             ArrayList constructors = (ArrayList) constructorsTable[type];
             if (constructors == null)
@@ -363,8 +363,8 @@ namespace Babel.Compiler {
         }
 
         public virtual void
-        AddCustomAttribute(ICustomAttributeProvider provider,
-                           Attribute attribute)
+            AddCustomAttribute(ICustomAttributeProvider provider,
+                               Attribute attribute)
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
@@ -379,8 +379,8 @@ namespace Babel.Compiler {
         }
 
         public virtual object[]
-        GetCustomAttributes(ICustomAttributeProvider provider,
-                            Type type)
+            GetCustomAttributes(ICustomAttributeProvider provider,
+                                Type type)
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
@@ -454,7 +454,7 @@ namespace Babel.Compiler {
         }
 
         public virtual ArgumentMode
-        GetArgumentMode(ICustomAttributeProvider provider)
+            GetArgumentMode(ICustomAttributeProvider provider)
         {
             object[] attrs =
                 GetCustomAttributes(provider,

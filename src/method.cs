@@ -138,6 +138,10 @@ namespace Babel.Compiler {
             }
             return s;
         }
+
+        public virtual bool IsBuiltin {
+            get { return false; }
+        }
     }
 
     public abstract class ConstructorData : MethodBaseData {
@@ -272,6 +276,50 @@ namespace Babel.Compiler {
             }
             return true;
         }
+
+        public virtual bool Match(string name,
+                                  TypedNodeList arguments,
+                                  bool hasReturnValue)
+        {
+            if (Name.ToLower() != name.ToLower())
+                return false;
+            if (Parameters.Count != arguments.Length)
+                return false;
+            if (!ReturnType.IsVoid != hasReturnValue)
+                return false;
+            int pos = 0;
+            foreach (ModalExpression arg in arguments) {
+                ParameterData param = (ParameterData) Parameters[pos++];
+                TypeData paramType = param.ParameterType;
+                switch (arg.Mode) {
+                case ArgumentMode.In:
+                case ArgumentMode.Once:
+                    if (paramType.IsByRef) {
+                        return false;
+                    }
+                    if (arg.NodeType == null)
+                        continue;
+                    if (!arg.NodeType.IsSubtypeOf(paramType))
+                        return false;
+                    break;
+                case ArgumentMode.Out:
+                    if (!paramType.IsByRef || param.Mode != ArgumentMode.Out)
+                        return false;
+                    TypeData eltType = paramType.ElementType;
+                    if (!eltType.IsSubtypeOf(arg.NodeType) ||
+                        eltType.IsValueType && !arg.NodeType.IsValueType)
+                        return false;
+                    break;
+                case ArgumentMode.InOut:
+                    if (!paramType.IsByRef || param.Mode != ArgumentMode.InOut)
+                        return false;
+                    if (arg.NodeType != paramType.ElementType)
+                        return false;
+                    break;
+                }
+            }
+            return true;
+        }
     }
 
     public class PredefinedMethodData : MethodData {
@@ -312,6 +360,10 @@ namespace Babel.Compiler {
         {
             parameterList =
                 new BuiltinMethodParameterList(typeManager, methodInfo);
+        }
+
+        public override bool IsBuiltin {
+            get { return true; }
         }
     }
 }

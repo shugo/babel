@@ -469,6 +469,7 @@ namespace Babel.Compiler {
                 return;
             }
             call.Arguments.Accept(this);
+#if false
             MethodInfo method;
             TypeData builtinMethodContainer =
                 typeManager.GetBuiltinMethodContainer(receiverType);
@@ -497,6 +498,15 @@ namespace Babel.Compiler {
                                       call.HasValue);
                 SetupMethod(call, method, receiverType);
             }
+#else
+            try {
+                MethodData method = receiverType.LookupMethod(call.Name,
+                                                              call.Arguments,
+                                                              call.HasValue);
+                call.IsBuiltin = method.IsBuiltin;
+                SetupMethod(call, method.MethodInfo, receiverType);
+            }
+#endif
             catch (LookupMethodException e) {
                 string routInfo = receiverType.FullName +
                     "::" + call.Name;

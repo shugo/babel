@@ -38,6 +38,11 @@ namespace Babel.Compiler {
             get { return rawType.FullName.Replace(".", "::"); }
         }
 
+        public override string ToString()
+        {
+            return Name;
+        }
+
         public virtual bool IsVoid {
             get { return rawType == typeof(void); }
         }
@@ -159,6 +164,95 @@ namespace Babel.Compiler {
                 return result;
             }
         }
+
+        public virtual MethodData LookupMethod(string name,
+                                               TypedNodeList arguments,
+                                               bool hasReturnValue)
+        {
+            ArrayList candidates = new ArrayList();
+            foreach (MethodData method in Methods) {
+                if (method.Match(name, arguments, hasReturnValue))
+                    candidates.Add(method);
+            }
+            if (candidates.Count == 0)
+                throw new LookupMethodException("no match");
+            if (candidates.Count == 1)
+                return (MethodData) candidates[0];
+            return (MethodData) SelectBestOverload(candidates, arguments);
+        }
+
+        protected virtual MethodBaseData
+            SelectBestOverload(ArrayList candidates,
+                               TypedNodeList arguments)
+        {
+            ArrayList winners = null;
+            MethodBaseData firstMethod = (MethodBaseData) candidates[0];
+
+            int pos = 0;
+            foreach (ModalExpression arg in arguments) {
+                if (arg.Mode == ArgumentMode.InOut) {
+                    if (winners == null)
+                        winners = candidates;
+                }
+                else {
+                    ArrayList currentPosWinners = new ArrayList();
+                    ParameterData firstMethodParameter =
+                        (ParameterData) firstMethod.Parameters[pos];
+                    TypeData t = firstMethodParameter.ParameterType;
+                    TypeData bestType;
+                    if (t.IsByRef)
+                        bestType = t.ElementType;
+                    else
+                        bestType = t;
+                    foreach (MethodBaseData method in candidates) {
+                        ParameterData param =
+                            (ParameterData) method.Parameters[pos];
+                        switch (arg.Mode) {
+                        case ArgumentMode.In:
+                        case ArgumentMode.Once:
+                            if (param.ParameterType.IsSubtypeOf(bestType)) {
+                                if (param.ParameterType != bestType) {
+                                    bestType = param.ParameterType;
+                                    currentPosWinners.Clear();
+                                }
+                                currentPosWinners.Add(method);
+                            }
+                            break;
+                        case ArgumentMode.Out:
+                            TypeData paramType =
+                                param.ParameterType.ElementType;
+                            if (bestType.IsSubtypeOf(paramType)) {
+                                if (paramType != bestType) {
+                                    bestType = paramType;
+                                    currentPosWinners.Clear();
+                                }
+                                currentPosWinners.Add(method);
+                            }
+                            break;
+                        }
+                    }
+                    if (winners == null) {
+                        winners = currentPosWinners;
+                    }
+                    else {
+                        ArrayList newWinners = new ArrayList();
+                        foreach (MethodBaseData m in winners) {
+                            if (currentPosWinners.Contains(m))
+                                newWinners.Add(m);
+                        }
+                        winners = newWinners;
+                    }
+                }
+                pos++;
+            }
+            if (winners == null || winners.Count == 0) {
+                throw new LookupMethodException("no match");
+            }
+            if (winners.Count > 1) {
+                throw new LookupMethodException("multiple matches");
+            }
+            return (MethodBaseData) winners[0];
+        }
     }
 
     public class PredefinedTypeData : TypeData {
@@ -235,10 +329,8 @@ namespace Babel.Compiler {
                     if (builtinMethodContainer != null) {
                         MethodInfo[] methodInfos =
                             builtinMethodContainer.
-                            GetMethods(BindingFlags.Instance |
-                                       BindingFlags.Static |
-                                       BindingFlags.Public |
-                                       BindingFlags.NonPublic);
+                            GetMethods(BindingFlags.Static |
+                                       BindingFlags.Public);
                         foreach (MethodInfo m in methodInfos) {
                             methods.Add(new BuiltinMethodData(typeManager, m));
                         }

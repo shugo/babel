@@ -1,0 +1,10 @@
+class FOO{T} is
+  print(o: T) is
+  --  #OUT + o.ToString;
+  end;
+end;
+
+class MAIN is
+  main is
+  end
+end
