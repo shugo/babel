@@ -97,8 +97,9 @@ namespace Babel.Compiler {
             charType = AddBuiltinType("CHAR", typeof(char));
             strType = AddBuiltinType("STR", typeof(string),
                                      typeof(Babel.Base.STR));
-            voidType = new TypeData(this, typeof(void));
-            exceptionType = new TypeData(this, typeof(System.Exception));
+            voidType = new PredefinedTypeData(this, typeof(void));
+            exceptionType = new PredefinedTypeData(this,
+                                                   typeof(System.Exception));
         }
 
         protected virtual BuiltinTypeData AddBuiltinType(string name, Type type)
@@ -131,7 +132,13 @@ namespace Babel.Compiler {
                 return null;
             TypeData typeData = (TypeData) typeDataTable[type];
             if (typeData == null) {
-                typeData = new TypeData(this, type);
+                if (type is TypeBuilder) {
+                    typeData = new UserDefinedTypeData(this,
+                                                       (TypeBuilder) type);
+                }
+                else {
+                    typeData = new PredefinedTypeData(this, type);
+                }
                 typeDataTable[type] = typeData;
             }
             return typeData;

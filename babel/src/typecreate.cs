@@ -51,7 +51,7 @@ namespace Babel.Compiler {
             visitingClasses.Add(cls, cls);
             try {
                 cls.Supertypes.Accept(this);
-                cls.TypeData = new TypeData(typeManager, null);
+                cls.TypeData = new UserDefinedTypeData(typeManager, null);
                 cls.TypeData.Parents = new ArrayList();
                 foreach (TypeSpecifier supertype in cls.Supertypes) {
                     TypeData anc = supertype.NodeType;
@@ -103,7 +103,8 @@ namespace Babel.Compiler {
                             return;
                         SupertypingAdapter adapter =
                             new SupertypingAdapter(subtype.NodeType);
-                        adapter.TypeData = new TypeData(typeManager, null);
+                        adapter.TypeData =
+                            new UserDefinedTypeData(typeManager, null);
                         adapter.TypeData.Parents = new ArrayList();
                         adapter.TypeData.Parents.Add(cls.TypeData);
                         adapter.TypeBuilder =

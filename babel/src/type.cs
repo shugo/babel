@@ -13,7 +13,7 @@ using System.Collections;
 using Babel.Base;
 
 namespace Babel.Compiler {
-    public class TypeData {
+    public abstract class TypeData {
         protected TypeManager typeManager;
         protected Type rawType;
         protected ArrayList parents;
@@ -149,9 +149,55 @@ namespace Babel.Compiler {
                 return typeManager.GetType(refTypeName);
             }
         }
+
+        public abstract ArrayList Methods {
+            get;
+        }
     }
 
-    public class BuiltinTypeData : TypeData {
+    public class PredefinedTypeData : TypeData {
+        protected ArrayList methods;
+
+        public PredefinedTypeData(TypeManager typeManager, Type rawType)
+            : base(typeManager, rawType)
+        {
+            methods = null;
+        }
+
+        public override ArrayList Methods {
+            get {
+                if (methods == null) {
+                    MethodInfo[] methodInfos =
+                        rawType.GetMethods(BindingFlags.Instance |
+                                           BindingFlags.Static |
+                                           BindingFlags.Public |
+                                           BindingFlags.NonPublic);
+                    methods = new ArrayList();
+                    foreach (MethodInfo m in methodInfos) {
+                        methods.Add(new PredefinedMethodData(typeManager, m));
+                    }
+                }
+                return methods;
+            }
+        }
+    }
+
+    public class UserDefinedTypeData : TypeData {
+        protected ArrayList methods;
+
+        public UserDefinedTypeData(TypeManager typeManager,
+                                   TypeBuilder typeBuilder)
+            : base(typeManager, typeBuilder)
+        {
+            methods = new ArrayList();
+        }
+
+        public override ArrayList Methods {
+            get { return methods; }
+        }
+    }
+
+    public class BuiltinTypeData : PredefinedTypeData {
         protected string name;
 
         public BuiltinTypeData(TypeManager typeManager,
@@ -173,21 +219,6 @@ namespace Babel.Compiler {
             get {
                 return name;
             }
-        }
-    }
-
-    public class PredefinedTypeData : TypeData {
-        public PredefinedTypeData(TypeManager typeManager, Type rawType)
-            : base(typeManager, rawType)
-        {
-        }
-    }
-
-    public class UserDefinedTypeData : TypeData {
-        public UserDefinedTypeData(TypeManager typeManager,
-                                   TypeBuilder typeBuilder)
-            : base(typeManager, typeBuilder)
-        {
         }
     }
 }
