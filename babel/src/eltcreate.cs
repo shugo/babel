@@ -108,11 +108,10 @@ namespace Babel.Compiler {
                         }
                     }
                 }
-                foreach (MethodInfo method in supertypeMethods) {
+                foreach (MethodData method in supertypeMethods) {
                     report.Error(cls.Location,
                                  "no implementation for {0} in {1}",
-                                 typeManager.GetMethodInfo(method),
-                                 adapter.AdapteeType.FullName);
+                                 method, adapter.AdapteeType.FullName);
                 }
             }
         }

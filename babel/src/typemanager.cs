@@ -116,6 +116,7 @@ namespace Babel.Compiler {
                        Type builtinMethodContainer)
         {
             BuiltinTypeData typeData = AddBuiltinType(name, type);
+            typeData.BuiltinMethodContainer = builtinMethodContainer;
             TypeData container = GetTypeData(builtinMethodContainer);
             builtinMethodContainers.Add(typeData, container);
             return typeData;

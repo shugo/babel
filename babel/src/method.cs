@@ -304,4 +304,14 @@ namespace Babel.Compiler {
             }
         }
     }
+
+    public class BuiltinMethodData : PredefinedMethodData {
+        public BuiltinMethodData(TypeManager typeManager,
+                                 MethodInfo methodInfo)
+            : base(typeManager, methodInfo)
+        {
+            parameterList =
+                new BuiltinMethodParameterList(typeManager, methodInfo);
+        }
+    }
 }
