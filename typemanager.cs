@@ -262,7 +262,12 @@ namespace Babel.Sather.Compiler
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
-                return provider.GetCustomAttributes(type, false);
+                try {
+                    return provider.GetCustomAttributes(type, false);
+                }
+                catch (NotSupportedException exception) {
+                    return null;
+                }
             }
             else {
                 ArrayList list = new ArrayList();
@@ -274,6 +279,15 @@ namespace Babel.Sather.Compiler
                 list.CopyTo(attributes);
                 return attributes;
             }
+        }
+
+        public virtual string GetSatherName(ICustomAttributeProvider provider)
+        {
+            object[] attrs =
+                GetCustomAttributes(provider, typeof(SatherNameAttribute));
+            if (attrs == null || attrs.Length == 0)
+                return null;
+            return ((SatherNameAttribute) attrs[0]).Name;
         }
 
         public virtual Type GetIterType(ICustomAttributeProvider provider)
