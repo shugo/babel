@@ -367,7 +367,7 @@ abstract_iter_signature
 iter_name
         : IDENTIFIER ITER_BANG
           {
-              $$ = (string) $1 + "!";
+              $$ = (string) $1;
           }
         ;
 
@@ -596,6 +596,8 @@ routine_definition
           IDENTIFIER
           opt_routine_argument_list
           opt_return_type
+          opt_pre
+          opt_post
           IS
           statement_list
           END
@@ -604,7 +606,7 @@ routine_definition
                   new RoutineDefinition((string) $2,
                                         (TypedNodeList) $3,
                                         (TypeSpecifier) $4,
-                                        (StatementList) $6,
+                                        (StatementList) $8,
                                         (RoutineModifier) $1,
                                         lexer.Location);
               currentClass.AddChild(routine);
@@ -622,11 +624,23 @@ opt_routine_modifier
           }
         ;
 
+opt_pre
+        : /* empty */
+        | PRE expression
+        ;
+
+opt_post
+        : /* empty */
+        | POST expression
+        ;
+
 iter_definition
         : opt_routine_modifier
           iter_name
           opt_iter_argument_list
           opt_return_type
+          opt_pre
+          opt_post
           IS
           statement_list
           END
@@ -635,7 +649,7 @@ iter_definition
                   new IterDefinition((string) $2,
                                      (TypedNodeList) $3,
                                      (TypeSpecifier) $4,
-                                     (StatementList) $6,
+                                     (StatementList) $8,
                                      (RoutineModifier) $1,
                                      lexer.Location);
               currentClass.AddChild(iter);

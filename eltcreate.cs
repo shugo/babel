@@ -20,6 +20,7 @@ namespace Babel.Sather.Compiler
         protected TypeManager typeManager;
         protected Report report;
         protected ClassDefinition currentClass;
+        protected int iterCount;
 
         public TypeElementCreatingVisitor(Report report)
         {
@@ -42,6 +43,7 @@ namespace Babel.Sather.Compiler
         {
             ClassDefinition prevClass = currentClass;
             currentClass = cls;
+            iterCount = 0;
             cls.Children.Accept(this);
             currentClass = prevClass;
         }
@@ -185,10 +187,11 @@ namespace Babel.Sather.Compiler
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             iter.TypeBuilder =
-                typeBuilder.DefineNestedType("ITER_" + iter.Name,
+                typeBuilder.DefineNestedType("__itertype" + iterCount +
+                                             "_" + iter.Name,
                                              TypeAttributes.Public,
                                              typeof(object));
-
+            
             ArrayList list = new ArrayList();
             list.Add(typeBuilder);
             foreach (Argument arg in iter.Arguments) {
@@ -204,11 +207,11 @@ namespace Babel.Sather.Compiler
                                   CallingConventions.Standard,
                                   constructorParams);
             iter.Self =
-                iter.TypeBuilder.DefineField("_self",
+                iter.TypeBuilder.DefineField("__self",
                                              typeBuilder,
                                              FieldAttributes.Private);
             iter.CurrentPosition =
-                iter.TypeBuilder.DefineField("_currentPosition",
+                iter.TypeBuilder.DefineField("__currentPosition",
                                              typeof(int),
                                              FieldAttributes.Private);
 
@@ -221,9 +224,9 @@ namespace Babel.Sather.Compiler
                              iter.MoveNextArguments);
             if (!iter.ReturnType.IsNull) {
                 iter.Current =
-                    iter.TypeBuilder.DefineField("_current",
-                                                iter.ReturnType.NodeType,
-                                                FieldAttributes.Private);
+                    iter.TypeBuilder.DefineField("__current",
+                                                 iter.ReturnType.NodeType,
+                                                 FieldAttributes.Private);
                 iter.GetCurrent =
                     DefineMethod(iter.TypeBuilder, "GetCurrent",
                                  MethodAttributes.Virtual |
@@ -244,7 +247,7 @@ namespace Babel.Sather.Compiler
                 break;
             }
             iter.MethodBuilder =
-                DefineMethod(typeBuilder, iter.Name, attributes,
+                DefineMethod(typeBuilder, "__iter_" + iter.Name, attributes,
                              iter.ReturnType.NodeType, iter.Arguments);
 
             Type[] iterTypeParams = new Type[] { typeof(Type) };
@@ -257,6 +260,8 @@ namespace Babel.Sather.Compiler
             Attribute iterTypeAttr = new IterTypeAttribute(iter.TypeBuilder);
             typeManager.AddCustomAttribute(iter.MethodBuilder, iterTypeAttr);
             Type iterType = typeManager.GetIterType(iter.MethodBuilder);
+
+            iterCount++;
         }
 
         public override void VisitArgument(Argument arg)

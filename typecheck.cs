@@ -19,7 +19,7 @@ namespace Babel.Sather.Compiler
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
-        protected Hashtable builtinRoutineContainers;
+        protected Hashtable builtinMethodContainers;
         protected ClassDefinition currentClass;
         protected RoutineDefinition currentRoutine;
         protected IterDefinition currentIter;
@@ -40,13 +40,13 @@ namespace Babel.Sather.Compiler
 
         protected virtual void InitBuiltinRoutines()
         {
-            builtinRoutineContainers = new Hashtable();
-            builtinRoutineContainers.Add(typeof(bool),
-                                         typeof(Babel.Sather.Base.BOOL));
-            builtinRoutineContainers.Add(typeof(int),
-                                         typeof(Babel.Sather.Base.INT));
-            builtinRoutineContainers.Add(typeof(string),
-                                         typeof(Babel.Sather.Base.STR));
+            builtinMethodContainers = new Hashtable();
+            builtinMethodContainers.Add(typeof(bool),
+                                        typeof(Babel.Sather.Base.BOOL));
+            builtinMethodContainers.Add(typeof(int),
+                                        typeof(Babel.Sather.Base.INT));
+            builtinMethodContainers.Add(typeof(string),
+                                        typeof(Babel.Sather.Base.STR));
         }
 
         public override void VisitProgram(Program program)
@@ -479,9 +479,9 @@ namespace Babel.Sather.Compiler
             }
             call.Arguments.Accept(this);
             MethodInfo method;
-            Type builtinRoutineContainer =
-                (Type) builtinRoutineContainers[receiverType];
-            if (builtinRoutineContainer != null) {
+            Type builtinMethodContainer =
+                (Type) builtinMethodContainers[receiverType];
+            if (builtinMethodContainer != null) {
                 try {
                     Expression expr = new VoidExpression(Location.Null);
                     expr.NodeType = receiverType;
@@ -490,7 +490,7 @@ namespace Babel.Sather.Compiler
                                                               Location.Null);
                     TypedNodeList args = new TypedNodeList(arg);
                     args.Append(call.Arguments.First);
-                    method = LookupMethod(builtinRoutineContainer,
+                    method = LookupMethod(builtinMethodContainer,
                                           call.Name, args,
                                           call.HasValue);
                     call.IsBuiltin = true;
@@ -542,85 +542,54 @@ namespace Babel.Sather.Compiler
                 receiverType = iter.TypeSpecifier.NodeType;
             }
             if (receiverType == null) {
-                report.Error(iter.Location, "no match for {0}", iter.Name);
+                report.Error(iter.Location, "no match for {0}!", iter.Name);
                 return;
             }
             iter.Arguments.Accept(this);
             MethodInfo method;
-            Type builtinRoutineContainer =
-                (Type) builtinRoutineContainers[receiverType];
-            try {
-                method = LookupMethod(receiverType,
-                                      iter.Name, iter.Arguments,
-                                      iter.HasValue);
-                SetupMethod(iter, method, receiverType);
-
-                Type iterType = typeManager.GetIterType(method);
-
-                string localName = getTemporallyName();
-                iter.Local = localVariableStack.AddLocal(localName,
-                                                         iterType);
-
-                TypedNodeList newArguments = new TypedNodeList();
-                TypedNodeList moveNextArguments = new TypedNodeList();
-                ModalExpression receiver =
-                    new ModalExpression(ArgumentMode.In,
-                                        (Expression) iter.Receiver.Clone(),
-                                        iter.Receiver.Location);
-                newArguments.Append(receiver);
-                ParameterInfo[] parameters = typeManager.GetParameters(method);
-                ModalExpression arg = (ModalExpression) iter.Arguments.First;
-                foreach (ParameterInfo param in parameters) {
-                    if (arg == null)
-                        break;
-                    ArgumentMode mode = typeManager.GetArgumentMode(param);
-                    if (mode == ArgumentMode.Once) {
-                        ModalExpression a = (ModalExpression) arg.Clone();
-                        a.Mode = ArgumentMode.In;
-                        newArguments.Append(a);
-                    }
-                    else {
-                        moveNextArguments.Append((ModalExpression) arg.Clone());
-                    }
-                    arg = (ModalExpression) arg.Next;
+            Type builtinMethodContainer =
+                (Type) builtinMethodContainers[receiverType];
+            if (builtinMethodContainer != null) {
+                try {
+                    Expression expr = new VoidExpression(Location.Null);
+                    expr.NodeType = receiverType;
+                    ModalExpression arg = new ModalExpression(ArgumentMode.In,
+                                                              expr,
+                                                              Location.Null);
+                    TypedNodeList args = new TypedNodeList(arg);
+                    args.Append(iter.Arguments.First);
+                    method = LookupMethod(builtinMethodContainer,
+                                          "__iter_" + iter.Name, args,
+                                          iter.HasValue);
+                    iter.IsBuiltin = true;
+                    SetupIter(iter, method, receiverType);
+                    return;
                 }
-                iter.New = new NewExpression(iterType,
-                                             newArguments,
-                                             iter.Location);
-                iter.New.Accept(this);
-                LocalExpression moveNextReceiver =
-                    new LocalExpression(iter.Local.Name, iter.Location);
-                iter.MoveNext = new CallExpression(moveNextReceiver,
-                                                   "MoveNext",
-                                                   moveNextArguments,
-                                                   iter.Location);
-                iter.MoveNext.Accept(this);
-                if (iter.NodeType != typeof(void)) {
-                    LocalExpression getCurrentReceiver =
-                        new LocalExpression(iter.Local.Name, iter.Location);
-                    iter.GetCurrent = new CallExpression(getCurrentReceiver,
-                                                         "GetCurrent",
-                                                         new TypedNodeList(),
-                                                         iter.Location);
-                    iter.GetCurrent.Accept(this);
+                catch (LookupMethodException e) {
                 }
             }
+            try {
+                method = LookupMethod(receiverType,
+                                      "__iter_" + iter.Name, iter.Arguments,
+                                      iter.HasValue);
+                SetupIter(iter, method, receiverType);
+            }
             catch (LookupMethodException e) {
-                string routInfo = typeManager.GetTypeName(receiverType) +
-                    "::" + iter.Name;
+                string iterInfo = typeManager.GetTypeName(receiverType) +
+                    "::" + iter.Name + "!";
                 if (iter.Arguments.Length > 0) {
-                    routInfo += "(";
+                    iterInfo += "(";
                     foreach (ModalExpression arg in iter.Arguments) {
                         if (arg != iter.Arguments.First)
-                            routInfo += ",";
-                        routInfo += typeManager.GetTypeName(arg.NodeType);
+                            iterInfo += ",";
+                        iterInfo += typeManager.GetTypeName(arg.NodeType);
                     }
-                    routInfo += ")";
+                    iterInfo += ")";
                 }
                 if (iter.HasValue)
-                    routInfo += ":_";
+                    iterInfo += ":_";
                 report.Error(iter.Location,
-                             "{0} for {1}", e.Message, routInfo);
+                             "{0} for {1}", e.Message, iterInfo);
             }
         }
 
@@ -988,6 +957,79 @@ namespace Babel.Sather.Compiler
                 ParameterInfo param = parameters[i++];
                 if (arg.NodeType == null) // void expression
                     arg.NodeType = param.ParameterType;
+            }
+        }
+
+        protected virtual void SetupIter(IterCallExpression iter,
+                                         MethodInfo method,
+                                         Type receiverType)
+        {
+            if (!method.IsPublic &&
+                currentClass.TypeBuilder != receiverType) {
+                report.Error(iter.Location,
+                             "cannot call private iterator {0}",
+                             iter.Name);
+                return;
+            }
+
+            iter.Method = method;
+            iter.NodeType = method.ReturnType;
+            if (iter.Receiver == null &&
+                (iter.IsBuiltin || !method.IsStatic)) {
+                iter.Receiver = new VoidExpression(iter.Location);
+                iter.Receiver.NodeType = receiverType;
+            }
+
+            Type iterType = typeManager.GetIterType(method);
+
+            string localName = getTemporallyName();
+            iter.Local = localVariableStack.AddLocal(localName,
+                                                     iterType);
+
+            TypedNodeList newArguments = new TypedNodeList();
+            TypedNodeList moveNextArguments = new TypedNodeList();
+            ModalExpression receiver =
+                new ModalExpression(ArgumentMode.In,
+                                    (Expression) iter.Receiver.Clone(),
+                                    iter.Receiver.Location);
+            newArguments.Append(receiver);
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            ModalExpression arg = (ModalExpression) iter.Arguments.First;
+            foreach (ParameterInfo param in parameters) {
+                if (arg == null)
+                    break;
+                if (arg.NodeType == null) // void expression
+                    arg.NodeType = param.ParameterType;
+                ArgumentMode mode = typeManager.GetArgumentMode(param);
+                if (mode == ArgumentMode.Once) {
+                    ModalExpression a = (ModalExpression) arg.Clone();
+                    a.Mode = ArgumentMode.In;
+                    newArguments.Append(a);
+                }
+                else {
+                    moveNextArguments.Append((ModalExpression) arg.Clone());
+                }
+                arg = (ModalExpression) arg.Next;
+            }
+            iter.New = new NewExpression(iterType,
+                                         newArguments,
+                                         iter.Location);
+            iter.New.Accept(this);
+            LocalExpression moveNextReceiver =
+                new LocalExpression(iter.Local.Name, iter.Location);
+            iter.MoveNext = new CallExpression(moveNextReceiver,
+                                               "MoveNext",
+                                               moveNextArguments,
+                                               iter.Location);
+            iter.MoveNext.Accept(this);
+            if (iter.NodeType != typeof(void)) {
+                LocalExpression getCurrentReceiver =
+                    new LocalExpression(iter.Local.Name, iter.Location);
+                iter.GetCurrent = new CallExpression(getCurrentReceiver,
+                                                     "GetCurrent",
+                                                     new TypedNodeList(),
+                                                     iter.Location);
+                iter.GetCurrent.Accept(this);
             }
         }
     }

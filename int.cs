@@ -236,5 +236,33 @@ namespace Babel.Sather.Base
         {
             return self <= 0;
         }
+
+        [IterTypeAttribute(typeof(__itertype_times))]
+        public static void __iter_times(int self)
+        {
+        }
+
+        public class __itertype_times
+        {
+            protected int limit;
+            protected int current;
+
+            public __itertype_times(int limit)
+            {
+                this.limit = limit;
+                this.current = -1;
+            }
+
+            public virtual bool MoveNext()
+            {
+                current++;
+                return current < limit;
+            }
+
+            public int GetCurrent()
+            {
+                return current;
+            }
+        }
     }
 }
