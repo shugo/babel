@@ -30,10 +30,11 @@ BASE_LIB_SRCS	= bool.cs \
 COMPILER	= bsc.exe
 BASE_LIB	= sacorlib.dll
 
-all: bsc.exe
+all: $(COMPILER)
 
 clean:
-	rm -f bsc.exe
+	rm -f $(COMPILER)
+	rm -f $(BASE_LIB)
 	rm -f parser.cs
 	rm -f y.output
 	rm -f *~
