@@ -18,8 +18,7 @@ end;
 
 class MAIN is
   main is
-    x: VALUE_HOLDER{STR};
-    x := #VALUE_HOLDER{STR}("foo");
+    x: VALUE_HOLDER{STR} := #VALUE_HOLDER{STR}("foo");
     #OUT + x.get + "\n";
     x.set("bar");
     #OUT + x.get + "\n";
