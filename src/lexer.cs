@@ -431,13 +431,14 @@ namespace Babell.Compiler {
                 switch (c) {
                 case ' ':
                 case '\t':
-                case '\n':
                 case '\v':
                 case '\b':
                 case '\r':
                 case '\f':
                     whitespace = true;
                     break;
+                case '\n':
+		    return Token.NL;
                 case '(':
                     if (NextChar() == '*') {
                         GetChar();

@@ -113,6 +113,7 @@ namespace Babell.Compiler {
 %token COMMA ","
 %token DOT "."
 %token SEMI ";"
+%token NL "\n"
 %token COLON ":"
 %token UNDER "_"
 %token PLUS "+"
@@ -172,7 +173,7 @@ opt_namespace_directive
 	;
 
 namespace_directive
-	: NAMESPACE namespace_name SEMI
+	: NAMESPACE namespace_name term
           {
               sourceFile.Namespace = (string) $2;
           }
@@ -189,7 +190,7 @@ import_directives
 	;
 
 import_directive
-	: IMPORT namespace_name SEMI
+	: IMPORT namespace_name term
           {
               sourceFile.ImportNamespace((string) $2);
           }
@@ -201,7 +202,7 @@ namespace_name
 
 class_def_list
 	: class_def
-        | class_def_list SEMI class_def
+        | class_def_list term class_def
         ;
 
 class_def
@@ -310,7 +311,7 @@ qualified_identifier
 
 abstract_signature_list
         : abstract_signature
-        | abstract_signature_list SEMI abstract_signature
+        | abstract_signature_list term abstract_signature
         ;
 
 abstract_signature
@@ -535,7 +536,7 @@ class_definition
 
 class_element_list
         : class_element
-        | class_element_list SEMI class_element
+        | class_element_list term class_element
         ;
 
 class_element
@@ -822,7 +823,7 @@ statement_list
               list.AddChild((Node) $1);
               $$ = list;
           }
-        | statement_list SEMI statement
+        | statement_list term statement
           {
               ((StatementList) $1).AddChild((Statement) $3);
               $$ = $1;
@@ -1552,6 +1553,11 @@ parenthesized_expression
               $$ = $2;
           }
         ;
+
+term
+	: SEMI
+	| NL
+	;
 
 %%
 
