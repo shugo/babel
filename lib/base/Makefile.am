@@ -1,16 +1,16 @@
 assemblydir		= $(libdir)
 
-assembly_DATA		= bsbase.dll
+assembly_DATA		= Babel.Base.dll
 
-bsbase_dll_SRCS		= abstract.sa
+Babel_Base_dll_SRCS		= abstract.sa
 
-EXTRA_DIST		= $(bsbase_dll_SRCS) \
-			  bsbase.dll
+EXTRA_DIST		= $(Babel_Base_dll_SRCS) \
+			  Babel.Base.dll
 
-CLEANFILES		= bsbase.dll
+CLEANFILES		= Babel.Base.dll
 
-bsbase.dll: $(bsbase_dll_SRCS)
+Babel.Base.dll: $(Babel_Base_dll_SRCS)
 	MONO_PATH=$(top_builddir)/src \
 		$(MONO) $(top_builddir)/src/babelc.exe \
-		-nostdlib -target:library -out:bsbase.dll \
-		$(bsbase_dll_SRCS)
+		-nostdlib -target:library -out:Babel.Base.dll \
+		$(Babel_Base_dll_SRCS)

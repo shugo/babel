@@ -1,6 +1,6 @@
 bin_PROGRAMS		= babelc.exe
 
-babelc_exe_SOURCES		= compiler.cs \
+babelc_exe_SOURCES	= compiler.cs \
 			  lexer.cs \
 			  parser.cs \
 			  node.cs \
@@ -22,41 +22,41 @@ babelc_exe_SOURCES		= compiler.cs \
 			  typecheck.cs \
 			  codegen.cs
 
-assembly_DATA		= bscore.dll
+assembly_DATA		= Babel.Core.dll
 
-bscore_dll_SRCS		= attribute.cs \
+Babel_Core_dll_SRCS	= attribute.cs \
 			  bool.cs \
 			  int.cs \
 			  str.cs
 
-EXTRA_DIST		= $(bscore_dll_SRCS) \
+EXTRA_DIST		= $(Babel_Core_dll_SRCS) \
 			  parser.jay \
 			  babelc.exe \
-			  bscore.dll
+			  Babel.Core.dll
 
 CLEANFILES		= babelc.exe \
-			  bscore.dll \
+			  Babel.Core.dll \
 			  parser.cs \
 			  y.output
 
-ETAGS_ARGS		= $(bscore_dll_SRCS) \
+ETAGS_ARGS		= $(Babel_Core_dll_SRCS) \
 			  $(babelc_exe_SOURCES)
 
 ETAGSFLAGS		= --c\#-kinds=-n --extra=+q
 
-CTAGS_ARGS		= $(bscore_dll_SRCS) \
+CTAGS_ARGS		= $(Babel_Core_dll_SRCS) \
 			  $(babelc_exe_SOURCES)
 
 CTAGSFLAGS		= --c\#-kinds=-n --extra=+q
 
-babelc.exe: $(babelc_exe_SOURCES) bscore.dll
+babelc.exe: $(babelc_exe_SOURCES) Babel.Core.dll
 	$(CS) $(CSFLAGS) -target:exe -out:babelc.exe \
-		 -reference:bscore.dll \
+		 -reference:Babel.Core.dll \
 		$(babelc_exe_SOURCES)
 
 parser.cs: parser.jay
 	$(JAY) -ctv < $(SKELETON) $< > $@
 
-bscore.dll: $(bscore_dll_SRCS)
+Babel.Core.dll: $(Babel_Core_dll_SRCS)
 	$(CS) $(CSFLAGS) -target:library \
-		-out:bscore.dll $(bscore_dll_SRCS)
+		-out:Babel.Core.dll $(Babel_Core_dll_SRCS)

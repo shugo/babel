@@ -1,9 +1,9 @@
 check_SCRIPTS		= test.rb
 
 check_DATA		= babelc.exe \
-			  bscore.dll \
-			  bsbase.dll \
-			  bsio.dll
+			  Babel.Core.dll \
+			  Babel.Base.dll \
+			  Babel.IO.dll
 
 TESTS			= test.rb
 
@@ -41,9 +41,9 @@ EXTRA_DIST		= test.rb.in \
 
 CLEANFILES		= test.rb \
 			  babelc.exe \
-			  bscore.dll \
-			  bsbase.dll \
-			  bsio.dll \
+			  Babel.Core.dll \
+			  Babel.Base.dll \
+			  Babel.IO.dll \
 			  caseinsensitive.exe \
 			  absiter.exe \
 			  fact.exe \
@@ -68,11 +68,11 @@ test.rb: test.rb.in
 babelc.exe: ../src/babelc.exe
 	cp ../src/babelc.exe babelc.exe
 
-bscore.dll: ../src/bscore.dll
-	cp ../src/bscore.dll bscore.dll
+Babel.Core.dll: ../src/Babel.Core.dll
+	cp ../src/Babel.Core.dll Babel.Core.dll
 
-bsbase.dll: ../lib/base/bsbase.dll
-	cp ../lib/base/bsbase.dll bsbase.dll
+Babel.Base.dll: ../lib/base/Babel.Base.dll
+	cp ../lib/base/Babel.Base.dll Babel.Base.dll
 
-bsio.dll: ../lib/io/bsio.dll
-	cp ../lib/io/bsio.dll bsio.dll
+Babel.IO.dll: ../lib/io/Babel.IO.dll
+	cp ../lib/io/Babel.IO.dll Babel.IO.dll

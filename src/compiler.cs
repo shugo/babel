@@ -134,8 +134,8 @@ namespace Babel.Compiler {
                 }
             }
             if (loadStdLib) {
-                softReferences.Add("bsbase");
-                softReferences.Add("bsio");
+                softReferences.Add("Babel.Base");
+                softReferences.Add("Babel.IO");
             }
         }
 
@@ -197,9 +197,15 @@ namespace Babel.Compiler {
             string totalLog = "";
 
             try {
+                /*
                 char[] path_chars = { '/', '\\', '.' };
 
                 if (assembly.IndexOfAny(path_chars) != -1) {
+                */
+                char[] path_chars = { '/', '\\' };
+
+                if (assembly.IndexOfAny(path_chars) != -1 ||
+                    assembly.ToLower().EndsWith(".dll")) {
                     a = Assembly.LoadFrom(assembly);
                 } else {
                     a = Assembly.Load(assembly);
