@@ -1,0 +1,14 @@
+class FOO is
+   foo(x: INT, y: INT): STR is
+      return x.str + y.str;
+   end;
+
+   foo(x: INT, y: INT): INT is
+      return x + y;
+   end;
+end;
+
+class MAIN is
+   main is
+   end;
+end;
