@@ -98,8 +98,10 @@ namespace Babel.Compiler {
             strType = AddBuiltinType("str", typeof(string),
                                      typeof(Babel.Core.STR));
             voidType = new PredefinedTypeData(this, typeof(void));
+            typeDataTable.Add(typeof(void), voidType);
 	    exceptionType =
                 new PredefinedTypeData(this, typeof(System.Exception));
+            typeDataTable.Add(typeof(System.Exception), exceptionType);
         }
 
         protected virtual BuiltinTypeData AddBuiltinType(string name, Type type)
