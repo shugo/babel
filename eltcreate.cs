@@ -182,13 +182,15 @@ namespace Babel.Sather.Compiler
 
         public override void VisitIter(IterDefinition iter)
         {
+            string baseName = iter.Name.Substring(0, iter.Name.Length - 1);
+
             iter.Arguments.Accept(this);
             iter.MoveNextArguments.Accept(this);
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
             iter.TypeBuilder =
                 typeBuilder.DefineNestedType("__itertype" + iterCount +
-                                             "_" + iter.Name,
+                                             "_" + baseName,
                                              TypeAttributes.Public,
                                              typeof(object));
             
@@ -247,8 +249,18 @@ namespace Babel.Sather.Compiler
                 break;
             }
             iter.MethodBuilder =
-                DefineMethod(typeBuilder, "__iter_" + iter.Name, attributes,
+                DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
                              iter.ReturnType.NodeType, iter.Arguments);
+
+            Type[] satherNameParams = new Type[] { typeof(string) };
+            ConstructorInfo satherNameConstructor =
+                typeof(SatherNameAttribute).GetConstructor(satherNameParams);
+            CustomAttributeBuilder satherNameAttributeBuilder =
+                new CustomAttributeBuilder(satherNameConstructor,
+                                           new object[] { iter.Name });
+            iter.MethodBuilder.SetCustomAttribute(satherNameAttributeBuilder);
+            Attribute satherNameAttr = new SatherNameAttribute(iter.Name);
+            typeManager.AddCustomAttribute(iter.MethodBuilder, satherNameAttr);
 
             Type[] iterTypeParams = new Type[] { typeof(Type) };
             ConstructorInfo iterTypeConstructor =
@@ -259,7 +271,6 @@ namespace Babel.Sather.Compiler
             iter.MethodBuilder.SetCustomAttribute(iterTypeAttributeBuilder);
             Attribute iterTypeAttr = new IterTypeAttribute(iter.TypeBuilder);
             typeManager.AddCustomAttribute(iter.MethodBuilder, iterTypeAttr);
-            Type iterType = typeManager.GetIterType(iter.MethodBuilder);
 
             iterCount++;
         }
