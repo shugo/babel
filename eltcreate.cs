@@ -439,10 +439,10 @@ namespace Babel.Sather.Compiler
                                            iterRetAttr);
 
             foreach (Type t in iterTypeAncestors) {
-                MethodBuilder adapter =
+                MethodBuilder bridgeMethod =
                     DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
                                  t, iter.Arguments);
-                iter.Adapters.Add(adapter);
+                iter.BridgeMethods.Add(bridgeMethod);
             }
 
             iterCount++;

@@ -169,8 +169,8 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
             ilGenerator.Emit(OpCodes.Ret);
 
-            foreach (MethodBuilder adapter in iter.Adapters) {
-                ilGenerator = adapter.GetILGenerator();
+            foreach (MethodBuilder bridgeMethod in iter.BridgeMethods) {
+                ilGenerator = bridgeMethod.GetILGenerator();
                 ilGenerator.Emit(OpCodes.Jmp, iter.MethodBuilder);
             }
 

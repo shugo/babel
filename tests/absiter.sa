@@ -1,8 +1,12 @@
-abstract class $TIMES is
+abstract class $TIMES1 is
    times!(once n: INT): INT;
 end;
 
-class TIMES < $TIMES is
+abstract class $TIMES2 is
+   times!(once n: INT): INT;
+end;
+
+class TIMES < $TIMES1, $TIMES2 is
    create: SAME is
       return new;
    end;
@@ -19,10 +23,10 @@ end;
 
 class MAIN is
    main is
-      t: $TIMES := #TIMES;
+      t1: $TIMES1 := #TIMES;
+      t2: $TIMES2 := #TIMES;
       loop
-         i ::= t.times!(3);
-         #OUT + "i=" + i + "\n";
+         #OUT + t1.times!(3) + "," + t2.times!(3) + "\n";
       end;
    end;
 end;

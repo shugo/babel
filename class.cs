@@ -574,7 +574,7 @@ namespace Babel.Sather.Compiler
         protected Hashtable localVariables;
         protected ArrayList resumePoints;
         protected TypedNodeList moveNextArguments;
-        protected ArrayList adapters;
+        protected ArrayList bridgeMethods;
 
         public IterDefinition(string name,
                               TypedNodeList arguments,
@@ -596,7 +596,7 @@ namespace Babel.Sather.Compiler
             resumePoints = new ArrayList();
             resumePoints.Add(new ResumePoint());
             InitArguments();
-            adapters = new ArrayList();
+            bridgeMethods = new ArrayList();
         }
 
         protected override void InitArguments()
@@ -673,9 +673,9 @@ namespace Babel.Sather.Compiler
             get { return moveNextArguments; }
         }
 
-        public virtual ArrayList Adapters
+        public virtual ArrayList BridgeMethods
         {
-            get { return adapters; }
+            get { return bridgeMethods; }
         }
 
         public override void Accept(NodeVisitor visitor)

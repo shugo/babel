@@ -664,7 +664,8 @@ namespace Babel.Sather.Compiler
         {
             if (currentLoop == null) {
                 report.Error(breakExpr.Location,
-                             "`break!', `while!', `until!' calls must appear inside loops");
+                             "`break!', `while!', `until!' calls " +
+                             "must appear inside loops");
                 return;
             }
             breakExpr.NodeType = typeof(void);
