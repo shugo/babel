@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class TypeData
-    {
+namespace Babel.Sather.Compiler {
+    public class TypeData {
         protected TypeManager typeManager;
         protected Type rawType;
         protected ArrayList parents;
@@ -27,30 +25,24 @@ namespace Babel.Sather.Compiler
             this.rawType = rawType;
         }
 
-        public virtual Type RawType
-        {
+        public virtual Type RawType {
             get { return rawType; }
             set { rawType = value; }
         }
         
-        public virtual string Name
-        {
-            get
-            {
+        public virtual string Name {
+            get {
                 return rawType.Name;
             }
         }
         
-        public virtual string FullName
-        {
-            get
-            {
+        public virtual string FullName {
+            get {
                 return rawType.FullName;
             }
         }
 
-        public virtual bool IsVoid
-        {
+        public virtual bool IsVoid {
             get { return rawType == typeof(void); }
         }
 
@@ -70,15 +62,12 @@ namespace Babel.Sather.Compiler
             return adapter != null;
         }
 
-        public virtual bool IsAbstract
-        {
+        public virtual bool IsAbstract {
             get { return rawType.IsInterface; }
         }
 
-        public virtual ArrayList Parents
-        {
-            get
-            {
+        public virtual ArrayList Parents {
+            get {
                 if (parents == null) {
                     Type[] ifaces = RawType.GetInterfaces();
                     parents = new ArrayList();
@@ -95,10 +84,8 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual ArrayList Ancestors
-        {
-            get
-            {
+        public virtual ArrayList Ancestors {
+            get {
                 if (ancestors == null)
                     ancestors = ExtractAncestors(Parents);
                 return ancestors;
@@ -138,42 +125,33 @@ namespace Babel.Sather.Compiler
             return rawTypes;
         }
 
-        public virtual bool IsValueType
-        {
-            get
-            {
+        public virtual bool IsValueType {
+            get {
                 return rawType.IsValueType;
             }
         }
 
-        public virtual bool IsByRef
-        {
-            get
-            {
+        public virtual bool IsByRef {
+            get {
                 return rawType.IsByRef;
             }
         }
 
-        public virtual TypeData ElementType
-        {
-            get
-            {
+        public virtual TypeData ElementType {
+            get {
                 return typeManager.GetTypeData(rawType.GetElementType());
             }
         }
 
-        public virtual TypeData ReferenceType
-        {
-            get
-            {
+        public virtual TypeData ReferenceType {
+            get {
                 string refTypeName = rawType.FullName + "&";
                 return typeManager.GetType(refTypeName);
             }
         }
     }
 
-    public class BuiltinTypeData : TypeData
-    {
+    public class BuiltinTypeData : TypeData {
         protected string name;
 
         public BuiltinTypeData(TypeManager typeManager,
@@ -185,31 +163,27 @@ namespace Babel.Sather.Compiler
         
         public override string Name
         {
-            get
-            {
+            get {
                 return name;
             }
         }
         
         public override string FullName
         {
-            get
-            {
+            get {
                 return name;
             }
         }
     }
 
-    public class PredefinedTypeData : TypeData
-    {
+    public class PredefinedTypeData : TypeData {
         public PredefinedTypeData(TypeManager typeManager, Type rawType)
             : base(typeManager, rawType)
         {
         }
     }
 
-    public class UserDefinedTypeData : TypeData
-    {
+    public class UserDefinedTypeData : TypeData {
         public UserDefinedTypeData(TypeManager typeManager,
                                    TypeBuilder typeBuilder)
             : base(typeManager, typeBuilder)

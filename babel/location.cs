@@ -5,8 +5,7 @@
  * Licensed under the terms of the GNU GPL
  */
 
-namespace Babel.Sather.Compiler
-{
+namespace Babel.Sather.Compiler {
     public struct Location
     {
         string fileName;

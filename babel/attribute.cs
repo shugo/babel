@@ -10,10 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base
-{
-    public class SatherNameAttribute : Attribute
-    {
+namespace Babel.Sather.Base {
+    public class SatherNameAttribute : Attribute {
         protected string name;
 
         public SatherNameAttribute(string name)
@@ -21,22 +19,19 @@ namespace Babel.Sather.Base
             this.name = name;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
     }
 
-    public enum ArgumentMode
-    {
+    public enum ArgumentMode {
         In,
         Out,
         InOut,
         Once
     }
 
-    public class ArgumentModeAttribute : Attribute
-    {
+    public class ArgumentModeAttribute : Attribute {
         protected ArgumentMode mode;
 
         public ArgumentModeAttribute(ArgumentMode mode)
@@ -44,14 +39,12 @@ namespace Babel.Sather.Base
             this.mode = mode;
         }
 
-        public virtual ArgumentMode Mode
-        {
+        public virtual ArgumentMode Mode {
             get { return mode; }
         }
     }
 
-    public class IterReturnTypeAttribute : Attribute
-    {
+    public class IterReturnTypeAttribute : Attribute {
         protected Type returnType;
 
         public IterReturnTypeAttribute(Type returnType)
@@ -59,10 +52,8 @@ namespace Babel.Sather.Base
             this.returnType = returnType;
         }
 
-        public virtual Type ReturnType
-        {
-            get
-            {
+        public virtual Type ReturnType {
+            get {
                 if (returnType == null)
                     return typeof(void);
                 return returnType;
@@ -70,8 +61,7 @@ namespace Babel.Sather.Base
         }
     }
 
-    public class SupertypingAdapterAttribute : Attribute
-    {
+    public class SupertypingAdapterAttribute : Attribute {
         protected Type adapteeType;
         protected Type adapterType;
 
@@ -81,13 +71,11 @@ namespace Babel.Sather.Base
             this.adapterType = adapterType;
         }
 
-        public virtual Type AdapteeType
-        {
+        public virtual Type AdapteeType {
             get { return adapteeType; }
         }
 
-        public virtual Type AdapterType
-        {
+        public virtual Type AdapterType {
             get { return adapterType; }
         }
     }

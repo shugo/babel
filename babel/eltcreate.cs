@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class TypeElementCreatingVisitor : AbstractNodeVisitor
-    {
+namespace Babel.Sather.Compiler {
+    public class TypeElementCreatingVisitor : AbstractNodeVisitor {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
@@ -844,8 +842,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class MethodConflictionException : Exception
-    {
+    public class MethodConflictionException : Exception {
         public MethodConflictionException(string message) : base(message) {}
     }
 }

@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class Parameter : ParameterInfo
-    {
+namespace Babel.Sather.Compiler {
+    public class Parameter : ParameterInfo {
         public Parameter(ParameterBuilder pb, Type type,
                          MemberInfo member)
         {
@@ -27,8 +25,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class ParameterData
-    {
+    public class ParameterData {
         protected TypeManager typeManager;
         protected ParameterInfo rawParameter;
 
@@ -39,24 +36,20 @@ namespace Babel.Sather.Compiler
             this.rawParameter = rawParameter;
         }
 
-        public virtual ParameterInfo RawParameter
-        {
+        public virtual ParameterInfo RawParameter {
             get { return rawParameter; }
         }
     }
 
-    public class PredefinedParameterData : ParameterData
-    {
+    public class PredefinedParameterData : ParameterData {
         public PredefinedParameterData(TypeManager typeManager,
                                        ParameterInfo rawParameter)
             : base(typeManager, rawParameter)
         {
         }
         
-        public virtual ArgumentMode Mode
-        {
-            get
-            {
+        public virtual ArgumentMode Mode {
+            get {
                 object[] attrs =
                     RawParameter.GetCustomAttributes(
                         typeof(ArgumentModeAttribute), false);
@@ -68,8 +61,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class UserDefinedParameterData : ParameterData
-    {
+    public class UserDefinedParameterData : ParameterData {
         protected ArgumentMode mode;
 
         public UserDefinedParameterData(TypeManager typeManager,
@@ -86,8 +78,7 @@ namespace Babel.Sather.Compiler
         {
         }
         
-        public virtual ArgumentMode Mode
-        {
+        public virtual ArgumentMode Mode {
             get { return mode; }
             
             set { mode = value; }
@@ -102,8 +93,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class PredefinedParameterList : ParameterList
-    {
+    public class PredefinedParameterList : ParameterList {
         protected TypeManager typeManager;
         protected MethodBase methodBase;
         protected ArrayList parameters;
@@ -118,8 +108,7 @@ namespace Babel.Sather.Compiler
 
         public ArrayList Parameters
         {
-            get
-            {
+            get {
                 if (parameters == null) {
                     parameters = new ArrayList();
                     foreach (ParameterInfo param in methodBase.GetParameters()) {
@@ -133,8 +122,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class UserDefinedParameterList : ParameterList
-    {
+    public class UserDefinedParameterList : ParameterList {
         protected ArrayList parameters;
 
         public UserDefinedParameterList()
@@ -144,8 +132,7 @@ namespace Babel.Sather.Compiler
 
         public ArrayList Parameters
         {
-            get
-            {
+            get {
                 return parameters;
             }
 

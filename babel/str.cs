@@ -10,10 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base
-{
-    public class STR
-    {
+namespace Babel.Sather.Base {
+    public class STR {
         public static string create(string self)
         {
             return "";

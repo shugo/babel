@@ -10,10 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base
-{
-    public class INT
-    {
+namespace Babel.Sather.Base {
+    public class INT {
         public static int plus(int self, int i)
         {
             return self + i;
@@ -249,8 +247,7 @@ namespace Babel.Sather.Base
             return new __itertype_up(self);
         }
 
-        public class __itertype_up
-        {
+        public class __itertype_up {
             protected int current;
 
             public __itertype_up(int self)
@@ -279,8 +276,7 @@ namespace Babel.Sather.Base
             return new __itertype_upto(self, i);
         }
 
-        public class __itertype_upto
-        {
+        public class __itertype_upto {
             protected int limit;
             protected int current;
 
@@ -317,8 +313,7 @@ namespace Babel.Sather.Base
             return new __itertype_times(self);
         }
 
-        public class __itertype_times : __itertype_upto
-        {
+        public class __itertype_times : __itertype_upto {
             public __itertype_times(int self)
                 : base(0, self - 1) {}
         }
@@ -332,8 +327,7 @@ namespace Babel.Sather.Base
             return new __itertype_for(self, i);
         }
 
-        public class __itertype_for : __itertype_upto
-        {
+        public class __itertype_for : __itertype_upto {
             public __itertype_for(int self, int i)
                 : base(self, self + i - 1) {}
         }

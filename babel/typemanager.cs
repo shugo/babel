@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class TypeManager
-    {
+namespace Babel.Sather.Compiler {
+    public class TypeManager {
         protected ArrayList assemblies;
         protected ArrayList modules;
         protected Hashtable classes;
@@ -56,43 +54,35 @@ namespace Babel.Sather.Compiler
             InitBuiltinTypes();
         }
 
-        public virtual TypeData ObType
-        {
+        public virtual TypeData ObType {
             get { return obType; }
         }
 
-        public virtual TypeData BoolType
-        {
+        public virtual TypeData BoolType {
             get { return boolType; }
         }
 
-        public virtual TypeData IntType
-        {
+        public virtual TypeData IntType {
             get { return intType; }
         }
 
-        public virtual TypeData FltType
-        {
+        public virtual TypeData FltType {
             get { return fltType; }
         }
 
-        public virtual TypeData CharType
-        {
+        public virtual TypeData CharType {
             get { return charType; }
         }
 
-        public virtual TypeData StrType
-        {
+        public virtual TypeData StrType {
             get { return strType; }
         }
 
-        public virtual TypeData VoidType
-        {
+        public virtual TypeData VoidType {
             get { return voidType; }
         }
 
-        public virtual TypeData ExceptionType
-        {
+        public virtual TypeData ExceptionType {
             get { return exceptionType; }
         }
 

@@ -14,10 +14,8 @@ using System.Text;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class Parser
-    {
+namespace Babel.Sather.Compiler {
+    public class Parser {
         protected Program program;
         protected LexicalAnalyzer lexer;
         protected Report report;

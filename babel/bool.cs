@@ -10,10 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Base
-{
-    public class BOOL
-    {
+namespace Babel.Sather.Base {
+    public class BOOL {
         public static bool not(bool self)
         {
             return !self;
