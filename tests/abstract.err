@@ -1,0 +1,2 @@
+abstract.sa:9:19: no implementation for $BAR::bar in BAR
+abstract.sa:9:19: no implementation for $FOO::foo in BAR

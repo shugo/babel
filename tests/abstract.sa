@@ -1,0 +1,15 @@
+abstract class $FOO is
+   foo;
+end;
+
+abstract class $BAR < $FOO is
+   bar;
+end;
+
+class BAR < $BAR is
+end;
+
+class MAIN is
+   main is
+   end;
+end;

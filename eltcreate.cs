@@ -47,8 +47,22 @@ namespace Babel.Sather.Compiler
             ArrayList prevAncestorMethods = ancestorMethods;
             currentClass = cls;
             iterCount = 0;
-            ancestorMethods = typeManager.GetAncestorMethods(cls.TypeBuilder);
+            if (cls.Kind == ClassKind.Abstract) {
+                ancestorMethods = null;
+            }
+            else {
+                ancestorMethods =
+                    typeManager.GetAncestorMethods(cls.TypeBuilder);
+            }
             cls.Children.Accept(this);
+            if (cls.Kind != ClassKind.Abstract && ancestorMethods.Count > 0) {
+                foreach (MethodInfo method in ancestorMethods) {
+                    report.Error(cls.Location,
+                                 "no implementation for {0} in {1}",
+                                 typeManager.GetMethodInfo(method),
+                                 typeManager.GetTypeName(cls.TypeBuilder));
+                }
+            }
             currentClass = prevClass;
             iterCount = prevIterCount;
             ancestorMethods = prevAncestorMethods;
