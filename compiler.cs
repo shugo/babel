@@ -124,9 +124,7 @@ namespace Babel.Sather.Compiler
                     outputFileName = firstInputFile + ext;
                 }
             }
-            string fileName = Path.GetFileName(outputFileName);
-            string baseName = Path.GetFileNameWithoutExtension(fileName);
-            program = new Program(baseName, target);
+            program = new Program(Path.GetFileName(outputFileName), target);
             foreach (string reference in references) {
                 LoadAssembly(reference, false);
             }

@@ -6,6 +6,7 @@
  */
 
 using System;
+using System.IO;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
@@ -25,15 +26,16 @@ namespace Babel.Sather.Compiler
         protected TypeManager typeManager;
         protected Target target;
 
-        public Program(string name, Target target)
+        public Program(string fileName, Target target)
         {
+            string baseName = Path.GetFileNameWithoutExtension(fileName);
             AppDomain domain = AppDomain.CurrentDomain;
             AssemblyName assemblyName = new AssemblyName();
-            assemblyName.Name = name;
+            assemblyName.Name = baseName;
             assembly =
                 domain.DefineDynamicAssembly(assemblyName,
                                              AssemblyBuilderAccess.RunAndSave);
-            module = assembly.DefineDynamicModule(name);
+            module = assembly.DefineDynamicModule(fileName);
             typeManager = new TypeManager();
             typeManager.AddModule(module);
             this.target = target;
