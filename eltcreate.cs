@@ -185,7 +185,8 @@ namespace Babel.Sather.Compiler
                 typeBuilder.DefineNestedType("__itertype" + iterCount +
                                              "_" + baseName,
                                              TypeAttributes.Interface |
-                                             TypeAttributes.Public,
+                                             TypeAttributes.Abstract |
+                                             TypeAttributes.NestedPublic,
                                              typeof(object));
 
             iter.MoveNext =
