@@ -980,13 +980,11 @@ namespace Babel.Sather.Compiler
             iter.Local = localVariableStack.AddLocal(localName,
                                                      iterType);
 
-            TypedNodeList newArguments = new TypedNodeList();
             TypedNodeList moveNextArguments = new TypedNodeList();
             ModalExpression receiver =
                 new ModalExpression(ArgumentMode.In,
                                     (Expression) iter.Receiver.Clone(),
                                     iter.Receiver.Location);
-            newArguments.Append(receiver);
             ParameterInfo[] parameters = typeManager.GetParameters(method);
             int i;
             if (iter.IsBuiltin)
@@ -998,19 +996,10 @@ namespace Babel.Sather.Compiler
                 if (arg.NodeType == null) // void expression
                     arg.NodeType = param.ParameterType;
                 ArgumentMode mode = typeManager.GetArgumentMode(param);
-                if (mode == ArgumentMode.Once) {
-                    ModalExpression a = (ModalExpression) arg.Clone();
-                    a.Mode = ArgumentMode.In;
-                    newArguments.Append(a);
-                }
-                else {
+                if (mode != ArgumentMode.Once) {
                     moveNextArguments.Append((ModalExpression) arg.Clone());
                 }
             }
-            iter.New = new NewExpression(iterType,
-                                         newArguments,
-                                         iter.Location);
-            iter.New.Accept(this);
             LocalExpression moveNextReceiver =
                 new LocalExpression(iter.Local.Name, iter.Location);
             iter.MoveNext = new CallExpression(moveNextReceiver,

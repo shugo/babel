@@ -316,7 +316,6 @@ namespace Babel.Sather.Compiler
     public class IterCallExpression : CallExpression
     {
         protected LocalVariable local;
-        protected NewExpression newExpression;
         protected CallExpression moveNext;
         protected CallExpression getCurrent;
 
@@ -330,12 +329,6 @@ namespace Babel.Sather.Compiler
         {
             get { return local; }
             set { local = value; }
-        }
-
-        public virtual NewExpression New
-        {
-            get { return newExpression; }
-            set { newExpression = value; }
         }
 
         public virtual CallExpression MoveNext

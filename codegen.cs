@@ -525,7 +525,27 @@ namespace Babel.Sather.Compiler
             iter.Local.EmitLoad(ilGenerator);
             ilGenerator.Emit(OpCodes.Brtrue, moveNextLabel);
             iter.Local.EmitStorePrefix(ilGenerator);
-            iter.New.Accept(this);
+            MethodInfo method = iter.Method;
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            int i = iter.IsBuiltin ? 1 : 0;
+            if (iter.Receiver != null)
+                iter.Receiver.Accept(this);
+            foreach (ModalExpression arg in iter.Arguments) {
+                ParameterInfo param = parameters[i++];
+                ArgumentMode mode = typeManager.GetArgumentMode(param);
+                if (mode == ArgumentMode.Once) {
+                    arg.Accept(this);
+                    BoxIfNecessary(arg.NodeType, param.ParameterType);
+                }
+                else {
+                    EmitVoid(param.ParameterType);
+                }
+            }
+            if (iter.Receiver != null &&
+                iter.Receiver.NodeType.IsInterface)
+                ilGenerator.EmitCall(OpCodes.Callvirt, method, null);
+            else
+                ilGenerator.EmitCall(OpCodes.Call, method, null);
             iter.Local.EmitStore(ilGenerator);
             ilGenerator.MarkLabel(moveNextLabel);
             iter.MoveNext.Accept(this);
