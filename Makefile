@@ -1,4 +1,4 @@
-CS	= /usr/local/bin/mcs
+CS	= mcs
 
 CSFLAGS	= -g
 
