@@ -1,0 +1,136 @@
+------------------------->  GNU Sather - sourcefile  <-------------------------
+-- Copyright (C) 1994 by International Computer Science Institute            --
+-- This file is part of the GNU Sather library. It is free software; you may --
+-- redistribute  and/or modify it under the terms of the GNU Library General --
+-- Public  License (LGPL)  as published  by the  Free  Software  Foundation; --
+-- either version 2 of the license, or (at your option) any later version.   --
+-- This  library  is distributed  in the  hope that it will  be  useful, but --
+-- WITHOUT ANY WARRANTY without even the implied warranty of MERCHANTABILITY --
+-- or FITNESS FOR A PARTICULAR PURPOSE. See Doc/LGPL for more details.       --
+-- The license text is also available from:  Free Software Foundation, Inc., --
+-- 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA                     --
+-------------->  Please email comments to <bug-sather@gnu.org>  <--------------
+
+-- $IS_EQ: Subtypes define "is_eq($OB):BOOL".
+-- $IS_LT{T}: Subtypes define "is_lt(T):BOOL".
+-- $HASH: Subtypes define "hash:INT".
+-- $NIL: Subtypes define "nil:SAME".
+-- $COPY: Subtypes define "copy:SAME"
+-- $STR: Subtypes define "str:STR".
+-- $ELT{T}: Subtypes define "elt!:T".
+-------------------------------------------------------------------
+abstract class $IS_EQ > BOOL, INT, STR is
+    -- Subtypes of this define "is_eq:BOOL". Typically used in 
+    -- typecases to use instead of "=". Examples: INT < $IS_EQ, 
+    -- STR < $IS_EQ.
+    -- NOTE:
+    --   This equality should be an IMMUTABLE equality that is valid
+    --   over the lifetime of the whole object. It should be possible
+    --   to use this equality (and an associated hash value) to 
+    --   place an object in a hash table and then later retrieve it.
+    
+    is_eq(e:$OB):BOOL;		-- True if self is equal arg for 
+    -- this element type.
+
+end;
+-------------------------------------------------------------------
+abstract class $HASH < $IS_EQ is
+   -- Subtypes of this must provide a hash routine.  This is the *new*
+   -- $HASH class and is a subtype of $IS_EQ so that all subtypes must
+   -- redefine both hash and is_eq. These two routines must work
+   -- together - is_eq must refer to an immutable equality
+   
+   hash: INT;
+   
+end;
+-------------------------------------------------------------------
+abstract class $SUPPORTS_REHASH is
+   -- A class that supports rehashing of its values, when its pointers
+   -- have been changed (possibly mysteriously, such as by being restored
+   -- from a string) 
+   
+   rehash;
+end;
+-------------------------------------------------------------------
+-- abstract class $IS_LT{T} < $IS_EQ is
+--    -- Subtypes of this define "is_lt(T):BOOL and is_eq($OB)". 
+--    -- Typically used in typecases. 
+--    -- Examples: INT < $IS_LT{INT}, STR < $IS_LT{INT}.
+--    -- 
+--    -- Design Note: $IS_LT has the type parameter since objects are
+--    -- almost always comparable only with the same type.  With the new
+--    -- rules, if is_lt were defined on e: $OB, then we would have to
+--    -- find some meaning for < with arbitrary objects. (you can't just
+--    -- return false - that makes >= be true!).
+--    -- Hence, objects will only define comparisons with themselves
+--    -- while the container classes can switch on $IS_LT{T} and then
+--    -- use the SYS::is_lt when the contained objects are not directly
+--    -- comparable
+   
+    
+--     is_lt(e:T):BOOL;		-- True if self is less than arg for 
+--     -- this element type.
+-- end;
+
+-------------------------------------------------------------------
+abstract class $IS_NIL is
+    -- Subtypes of this define "is_nil:BOOL". Typically used in typecases.
+    -- Example: INT < $IS_NIL.
+
+   is_nil:BOOL;         -- Test whether a value is nil.
+    -- This is necessary for types with unusual is_eq behavior (such
+    -- as IEEE floats).
+end;
+
+-------------------------------------------------------------------
+abstract class $NIL < $IS_NIL is
+   -- Inidicates that the subtype provides a nil value
+   -- 
+   -- Designer's Note:The advantage of T over SAME is that in
+   -- parametrized classes typecase e when $NILthen .... e.nil e.nil
+   -- is now known to be of type T, whereas if it were SAME, you would
+   -- need at least an extra level of typecase
+   
+   nil:SAME;
+end;
+-------------------------------------------------------------------
+abstract class $COPY is
+   -- Indicates that a subtype provides a copy routine
+   
+    copy:SAME;			-- Return a copy of self.
+end;
+-------------------------------------------------------------------
+abstract class $STR > STR, BOOL, INT is
+    -- Subtypes of this define "str:STR". This should be a reasonable
+    -- string representation of an object.
+
+    str:STR;			-- String form of self
+
+end;
+-------------------------------------------------------------------
+abstract class $VAR is
+   -- Subtypes of this are reference classes that may be viewed
+   -- as variables with a particular value. The value of the reference
+   -- object is an object with value semantics
+
+   as_value:$OB;			-- Return the value of self
+
+end;
+-------------------------------------------------------------------
+abstract class $ELT is
+   -- Subtypes will provide an elt! iterator that returns at least
+   -- a $OB (it could be more specific). Most objects will actually
+   -- subtype from $ELT{T}
+   elt!: $OB;
+end;
+-------------------------------------------------------------------
+-- abstract class $ELT{T} < $ELT is
+--    -- Subtypes of this define "elt!:T".  This is a stronger version of
+--    -- the generic $ELT routine
+
+--     elt!:T;			-- Contained items.
+-- end;
+
+-------------------------------------------------------------------
+
+
