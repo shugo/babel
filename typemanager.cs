@@ -19,6 +19,7 @@ namespace Babel.Sather.Compiler
         Hashtable classes;
         Hashtable parentsTable;
         Hashtable ancestorsTable;
+        Hashtable methodsTable;
 
         public TypeManager()
         {
@@ -27,6 +28,7 @@ namespace Babel.Sather.Compiler
             classes = new Hashtable();
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
+            methodsTable = new Hashtable();
             InitBuiltinTypes();
         }
 
@@ -120,6 +122,32 @@ namespace Babel.Sather.Compiler
             if (name != null)
                 return name;
             return type.Name;
+        }
+
+        public void AddMethod(Type type, MethodInfo method)
+        {
+            ArrayList methods = (ArrayList) methodsTable[type];
+            if (methods == null)
+                methodsTable[type] = methods = new ArrayList();
+            methods.Add(method);
+        }
+
+        public MethodInfo[] GetMethods(Type type)
+        {
+            if (type is TypeBuilder) {
+                ArrayList methods = (ArrayList) methodsTable[type];
+                if (methods == null)
+                    return new MethodInfo[0];
+                MethodInfo[] result = new MethodInfo[methods.Count];
+                methods.CopyTo(result);
+                return result;
+            }
+            else {
+                return type.GetMethods(BindingFlags.Instance |
+                                       BindingFlags.Static |
+                                       BindingFlags.Public |
+                                       BindingFlags.NonPublic);
+            }
         }
     }
 }
