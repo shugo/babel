@@ -501,15 +501,42 @@ namespace Babel.Sather.Compiler
                 ModalExpression arg = (ModalExpression) call.Arguments.First;
                 arg.Accept(this);
                 BoxIfNecessary(arg.NodeType, parameters[i].ParameterType);
-                LocalBuilder local =
+                LocalBuilder tmp =
                     ilGenerator.DeclareLocal(parameters[i].ParameterType);
-                ilGenerator.Emit(OpCodes.Stloc, local);
+                ilGenerator.Emit(OpCodes.Stloc, tmp);
                 call.Receiver.Accept(this);
-                ilGenerator.Emit(OpCodes.Ldloc, local);
+                ilGenerator.Emit(OpCodes.Ldloc, tmp);
             }
             else {
-                if (call.Receiver != null)
-                    call.Receiver.Accept(this);
+                if (call.Receiver != null) {
+                    if (!call.IsBuiltin &&
+                        call.Receiver.NodeType.IsValueType) {
+                        if (call.Receiver is LocalExpression) {
+                            LocalExpression localExpr =
+                                (LocalExpression) call.Receiver;
+                            Argument arg =
+                                currentRoutine.GetArgument(localExpr.Name);
+                            if (arg != null) {
+                                ilGenerator.Emit(OpCodes.Ldarga, arg.Index);
+                            }
+                            else {
+                                LocalVariable local =
+                                    localVariableStack.GetLocal(localExpr.Name);
+                                local.EmitLoadAddress(ilGenerator);
+                            }
+                        }
+                        else {
+                            LocalBuilder tmp2 =
+                                ilGenerator.DeclareLocal(call.Receiver.NodeType);
+                            call.Receiver.Accept(this);
+                            ilGenerator.Emit(OpCodes.Stloc, tmp2);
+                            ilGenerator.Emit(OpCodes.Ldloca, tmp2);
+                        }
+                    }
+                    else {
+                        call.Receiver.Accept(this);
+                    }
+                }
                 foreach (ModalExpression arg in call.Arguments) {
                     arg.Accept(this);
                     BoxIfNecessary(arg.NodeType, parameters[i].ParameterType);
