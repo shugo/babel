@@ -1,4 +1,13 @@
 class MAIN is
+   repeat!(once n: INT) is
+      i ::= 0;
+      loop
+         while!(i < n);
+         yield;
+         i := i + 1;
+      end;
+   end;
+
    upto!(once from, once to: INT): INT is
       i ::= from;
       loop
@@ -25,6 +34,10 @@ class MAIN is
    end;
 
    main is
+      loop
+         repeat!(3);
+         #OUT + "hello\n";
+      end;
       sum: INT;
       product: INT;
       loop
