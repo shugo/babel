@@ -97,7 +97,7 @@ namespace Babel.Compiler {
                 if (type == null) {
                     report.Error(typeSpecifier.Location,
                                  "there is no class named {0}",
-                                 typeSpecifier.Name);
+                                 typeSpecifier);
                     return;
                 }
                 typeSpecifier.NodeType = type;
@@ -126,7 +126,7 @@ namespace Babel.Compiler {
                 report.Error(decl.Location,
                              "this local variable declaration is " +
                              "in the scope of {0}:{1} which has the same name",
-                             local.Name, local.LocalType);
+                             local.Name, local.LocalType.FullName);
                 return;
             }
             TypeData type;

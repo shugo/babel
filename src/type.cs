@@ -35,7 +35,7 @@ namespace Babel.Compiler {
         }
         
         public virtual string FullName {
-            get { return rawType.FullName; }
+            get { return rawType.FullName.Replace(".", "::"); }
         }
 
         public virtual bool IsVoid {

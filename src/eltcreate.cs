@@ -542,7 +542,7 @@ namespace Babel.Compiler {
             if (type == null) {
                 report.Error(typeSpecifier.Location,
                              "there is no class named {0}",
-                             typeSpecifier.Name);
+                             typeSpecifier);
                 return;
             }
             typeSpecifier.NodeType = type;
