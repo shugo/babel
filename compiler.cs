@@ -31,8 +31,8 @@ namespace Babel.Sather.Compiler
             references = new ArrayList();
             linkPaths = new ArrayList();
             softReferences = new ArrayList();
-            softReferences.Add("sather-base.dll");
-            softReferences.Add("sather-io.dll");
+            softReferences.Add("sather-base");
+            softReferences.Add("sather-io");
             target = Target.Exe;
         }
 
@@ -203,7 +203,7 @@ namespace Babel.Sather.Compiler
                 if (!soft) {
                     Console.Error.WriteLine("cannot find assembly `{0}'",
                                             assembly);
-                    Console.Error.WriteLine("Log: {0}\n" + totalLog);
+                    Console.Error.WriteLine("Log: {0}\n", totalLog);
                     Environment.Exit(1);
                 }
             } catch (BadImageFormatException f) {
