@@ -34,9 +34,10 @@ EXTRA_DIST		= $(bscore_dll_SRCS) \
 			  bsc.exe \
 			  bscore.dll
 
-CLEANFILES		= parser.cs \
-			  bsc.exe \
-			  bscore.dll
+CLEANFILES		= bsc.exe \
+			  bscore.dll \
+			  parser.cs \
+			  y.output
 
 SKELETON		= `$(JAY) -p`/skeleton.cs
 
