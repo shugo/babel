@@ -9,30 +9,71 @@ using System;
 using System.IO;
 using System.Collections;
 using System.Text;
+using System.Reflection;
 
 namespace Babel.Sather.Compiler
 {
     public class Compiler
     {
-        protected string[] inputFiles;
+        protected Program program;
+        protected Report report;
+        protected ArrayList inputFiles;
+        protected ArrayList references;
+        protected ArrayList linkPaths;
         protected string baseName;
+
+        public Compiler()
+        {
+            report = new Report();
+            inputFiles = new ArrayList();
+            references = new ArrayList();
+            linkPaths = new ArrayList();
+        }
 
         public void ParseArguments(string[] args)
         {
-            if (args.Length == 0) {
+            for (int i = 0; i < args.Length; i++) {
+                string arg = (string) args[i];
+                if (arg[0] == '-' || arg[0] == '/') {
+                    string[] vals = arg.Split(':');
+                    string name, value;
+                    name = vals[0].Substring(1);
+                    if (vals.Length == 2)
+                        value = vals[1];
+                    else
+                        value = "";
+                    if (name == "r" || name == "reference") {
+                        references.Add(value);
+                    }
+                    else if (name == "lib") {
+                        string[] dirs = value.Split(',');
+                        foreach (string dir in dirs) {
+                            linkPaths.Add(value);
+                        }
+                    }
+                    else {
+                        Console.Error.WriteLine("unkown option: `{0}'", name);
+                        Environment.Exit(1);
+                    }
+                }
+                else {
+                    inputFiles.Add(args[i]);
+                }
+            }
+            if (inputFiles.Count == 0) {
                 Console.Error.WriteLine("no input files");
                 Environment.Exit(1);
             }
-            inputFiles = args;
-            string fileName = Path.GetFileName(args[0]);
+            string fileName = Path.GetFileName((string) inputFiles[0]);
             baseName = Path.GetFileNameWithoutExtension(fileName);
+            program = new Program(baseName);
+            foreach (string reference in references) {
+                LoadAssembly(reference, true);
+            }
         }
 
         public virtual void Run()
         {
-            Program program = new Program(baseName);
-            Report report = new Report();
-
             foreach (string fileName in inputFiles) {
                 StreamReader reader = new StreamReader(fileName);
                 Parser parser = new Parser(program, reader, fileName, report);
@@ -58,6 +99,54 @@ namespace Babel.Sather.Compiler
         protected virtual void Usage()
         {
             Console.Error.WriteLine("usage: bsc.exe filename...");
+        }
+
+        protected virtual void LoadAssembly(string assembly, bool soft)
+        {
+            TypeManager typeManager = program.TypeManager;
+            Assembly a;
+            string totalLog = "";
+
+            try {
+                char[] path_chars = { '/', '\\', '.' };
+
+                if (assembly.IndexOfAny(path_chars) != -1) {
+                    a = Assembly.LoadFrom(assembly);
+                } else {
+                    a = Assembly.Load(assembly);
+                }
+                typeManager.AddAssembly(a);
+            } catch (FileNotFoundException){
+                foreach (string dir in linkPaths){
+                    string full_path = Path.Combine (dir, assembly);
+                    if (!assembly.EndsWith (".dll"))
+                        full_path += ".dll";
+
+                    try {
+                        a = Assembly.LoadFrom (full_path);
+                        typeManager.AddAssembly (a);
+                        return;
+                    } catch (FileNotFoundException ff) {
+                        totalLog += ff.FusionLog;
+                        continue;
+                    }
+                }
+                if (!soft) {
+                    Console.Error.WriteLine("cannot find assembly `{0}'",
+                                            assembly);
+                    Console.Error.WriteLine("Log: {0}\n" + totalLog);
+                    Environment.Exit(1);
+                }
+            } catch (BadImageFormatException f) {
+                Console.Error.WriteLine("cannot load assembly " +
+                                        "(bad file format): {0}",
+                                        f.FusionLog);
+                Environment.Exit(1);
+            } catch (FileLoadException f){
+                Console.Error.WriteLine("cannot load assembly {0}: {1}",
+                                        assembly, f.FusionLog);
+                Environment.Exit(1);
+            }
         }
 
         public static void Main(string[] args)

@@ -18,6 +18,7 @@ namespace Babel.Sather.Compiler
     {
         protected Hashtable builtinTypes;
         protected Hashtable builtinTypeNames;
+        protected ArrayList assemblies;
         protected ArrayList modules;
         protected Hashtable classes;
         protected Hashtable parentsTable;
@@ -31,6 +32,7 @@ namespace Babel.Sather.Compiler
         {
             builtinTypes = new Hashtable();
             builtinTypeNames = new Hashtable();
+            assemblies = new ArrayList();
             modules = new ArrayList();
             classes = new Hashtable();
             parentsTable = new Hashtable();
@@ -63,6 +65,11 @@ namespace Babel.Sather.Compiler
             Type type = (Type) builtinTypes[name];
             if (type != null)
                 return type;
+            foreach (Assembly assembly in assemblies) {
+                type = (Type) assembly.GetType(name);
+                if (type != null)
+                    return type;
+            }
             return Type.GetType(name);
         }
 
@@ -94,6 +101,11 @@ namespace Babel.Sather.Compiler
         {
             string refTypeName = type.FullName + "&";
             return GetType(refTypeName);
+        }
+
+        public virtual void AddAssembly(Assembly assembly)
+        {
+            assemblies.Add(assembly);
         }
 
         public virtual void AddModule(Module module)
