@@ -153,6 +153,17 @@ namespace Babel.Compiler {
         public abstract ArrayList Methods {
             get;
         }
+
+        public virtual ArrayList AncestorMethods {
+            get {
+                ArrayList result = new ArrayList();
+                foreach (TypeData ancestor in Ancestors) {
+                    ArrayList methods = ancestor.Methods;
+                    result.AddRange(methods);
+                }
+                return result;
+            }
+        }
     }
 
     public class PredefinedTypeData : TypeData {

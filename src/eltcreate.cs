@@ -49,15 +49,14 @@ namespace Babel.Compiler {
                 ancestorMethods = null;
             }
             else {
-                ancestorMethods =
-                    typeManager.GetAncestorMethods(cls.TypeData);
+                ancestorMethods = cls.TypeData.AncestorMethods;
             }
             cls.Children.Accept(this);
             if (cls.Kind != ClassKind.Abstract && ancestorMethods.Count > 0) {
-                foreach (MethodInfo method in ancestorMethods) {
+                foreach (MethodData method in ancestorMethods) {
                     report.Error(cls.Location,
                                  "no implementation for {0} in {1}",
-                                 typeManager.GetMethodInfo(method),
+                                 method,
                                  cls.TypeData.FullName);
                 }
             }
@@ -80,28 +79,32 @@ namespace Babel.Compiler {
                                       MethodAttributes.Public,
                                       CallingConventions.Standard,
                                       types);
-                MethodInfo[] adapteeMethods =
-                    typeManager.GetMethods(adapter.AdapteeType);
+                ArrayList adapteeMethods =
+                    adapter.AdapteeType.Methods;
                 ArrayList supertypeMethods =
-                    typeManager.GetAncestorMethods(adapter.TypeData);
-                foreach (MethodInfo adapteeMethod in adapteeMethods) {
+                    adapter.TypeData.AncestorMethods;
+                foreach (MethodData adapteeMethod in adapteeMethods) {
                     ArrayList conformableMethods =
                         CheckMethodConformance(adapteeMethod, supertypeMethods);
-                    foreach (MethodInfo m in conformableMethods) {
-                        AddAdapterMethod(adapter, m, adapteeMethod);
+                    foreach (MethodData m in conformableMethods) {
+                        AddAdapterMethod(adapter,
+                                         m.MethodInfo,
+                                         adapteeMethod.MethodInfo);
                     }
                 }
                 TypeData builtinMethodContainer =
                     typeManager.GetBuiltinMethodContainer(adapter.AdapteeType);
                 if (builtinMethodContainer != null) {
-                    MethodInfo[] adapteeBuiltinMethods =
-                        typeManager.GetMethods(builtinMethodContainer);
-                    foreach (MethodInfo adapteeMethod in adapteeBuiltinMethods) {
+                    ArrayList adapteeBuiltinMethods =
+                        builtinMethodContainer.Methods;
+                    foreach (MethodData adapteeMethod in adapteeBuiltinMethods) {
                         ArrayList conformableMethods =
-                            CheckBuiltinMethodConformance(adapteeMethod,
-                                                          supertypeMethods);
-                        foreach (MethodInfo m in conformableMethods) {
-                            AddAdapterMethod(adapter, m, adapteeMethod);
+                            CheckMethodConformance(adapteeMethod,
+                                                   supertypeMethods);
+                        foreach (MethodData m in conformableMethods) {
+                            AddAdapterMethod(adapter,
+                                             m.MethodInfo,
+                                             adapteeMethod.MethodInfo);
                         }
                     }
                 }
@@ -396,8 +399,8 @@ namespace Babel.Compiler {
 
             Type[] iterTypeAncestors = new Type[conformableMethods.Count];
             int i = 0;
-            foreach (MethodInfo m in conformableMethods) {
-                iterTypeAncestors[i++] = m.ReturnType;
+            foreach (MethodData m in conformableMethods) {
+                iterTypeAncestors[i++] = m.MethodInfo.ReturnType;
             }
 
             iter.TypeBuilder =
@@ -606,33 +609,6 @@ namespace Babel.Compiler {
             }
         }
 
-        protected virtual bool
-        ConformMethod(string name,
-                      TypedNodeList arguments,
-                      TypeData returnType,
-                      MethodInfo method)
-        {
-            if (name != typeManager.GetMethodName(method))
-                return false;
-            ParameterInfo[] parameters = typeManager.GetParameters(method);
-            if (arguments.Length != parameters.Length)
-                return false;
-            if (returnType != typeManager.GetReturnType(method))
-                return false;
-
-            int i = 0;
-            foreach (Argument arg in arguments) {
-                ParameterInfo param = parameters[i++];
-                ArgumentMode mode = typeManager.GetArgumentMode(param);
-                if (arg.Mode != mode)
-                    return false;
-                if (arg.NodeType !=
-                    typeManager.GetTypeData(param.ParameterType))
-                    return false;
-            }
-            return true;
-        }
-
         protected virtual ArrayList
         CheckMethodConformance(TypeData type,
                                string name,
@@ -640,98 +616,29 @@ namespace Babel.Compiler {
                                TypedNodeList arguments,
                                ArrayList ancestorMethods)
         {
+            MethodSignature sig =
+                new MethodSignature(type, name, returnType, arguments);
             ArrayList conformableMethods = new ArrayList();
-            foreach (MethodInfo m in ancestorMethods) {
-                if (ConformMethod(name, arguments, returnType, m))
+            foreach (MethodData m in ancestorMethods) {
+                if (sig.ConformTo(m))
                     conformableMethods.Add(m);
             }
-            foreach (MethodInfo m in conformableMethods) {
+            foreach (MethodData m in conformableMethods) {
                 ancestorMethods.Remove(m);
             }
             return conformableMethods;
         }
 
-        protected virtual bool
-        ConformMethod(MethodInfo method1,
-                      MethodInfo method2)
-        {
-            if (typeManager.GetMethodName(method1) !=
-                typeManager.GetMethodName(method2))
-                return false;
-            ParameterInfo[] parameters1 = typeManager.GetParameters(method1);
-            ParameterInfo[] parameters2 = typeManager.GetParameters(method2);
-            if (parameters1.Length != parameters2.Length)
-                return false;
-            if (typeManager.GetReturnType(method1) !=
-                typeManager.GetReturnType(method2))
-                return false;
-
-            for (int i = 0; i < parameters1.Length; i++) {
-                ParameterInfo param1 = parameters1[i];
-                ParameterInfo param2 = parameters2[i];
-                ArgumentMode mode1 = typeManager.GetArgumentMode(param1);
-                ArgumentMode mode2 = typeManager.GetArgumentMode(param2);
-                if (mode1 != mode2)
-                    return false;
-                if (param1.ParameterType != param2.ParameterType)
-                    return false;
-            }
-            return true;
-        }
-
         protected virtual ArrayList
-        CheckMethodConformance(MethodInfo method,
+        CheckMethodConformance(MethodData method,
                                ArrayList ancestorMethods)
         {
             ArrayList conformableMethods = new ArrayList();
-            foreach (MethodInfo m in ancestorMethods) {
-                if (ConformMethod(method, m))
+            foreach (MethodData m in ancestorMethods) {
+                if (method.ConformTo(m))
                     conformableMethods.Add(m);
             }
-            foreach (MethodInfo m in conformableMethods) {
-                ancestorMethods.Remove(m);
-            }
-            return conformableMethods;
-        }
-
-        protected virtual bool
-        ConformBuiltinMethod(MethodInfo method1,
-                      MethodInfo method2)
-        {
-            if (typeManager.GetMethodName(method1) !=
-                typeManager.GetMethodName(method2))
-                return false;
-            ParameterInfo[] parameters1 = typeManager.GetParameters(method1);
-            ParameterInfo[] parameters2 = typeManager.GetParameters(method2);
-            if (parameters1.Length != parameters2.Length + 1)
-                return false;
-            if (typeManager.GetReturnType(method1) !=
-                typeManager.GetReturnType(method2))
-                return false;
-
-            for (int i = 1; i < parameters1.Length; i++) {
-                ParameterInfo param1 = parameters1[i];
-                ParameterInfo param2 = parameters2[i - 1];
-                ArgumentMode mode1 = typeManager.GetArgumentMode(param1);
-                ArgumentMode mode2 = typeManager.GetArgumentMode(param2);
-                if (mode1 != mode2)
-                    return false;
-                if (param1.ParameterType != param2.ParameterType)
-                    return false;
-            }
-            return true;
-        }
-
-        protected virtual ArrayList
-        CheckBuiltinMethodConformance(MethodInfo method,
-                                      ArrayList ancestorMethods)
-        {
-            ArrayList conformableMethods = new ArrayList();
-            foreach (MethodInfo m in ancestorMethods) {
-                if (ConformBuiltinMethod(method, m))
-                    conformableMethods.Add(m);
-            }
-            foreach (MethodInfo m in conformableMethods) {
+            foreach (MethodData m in conformableMethods) {
                 ancestorMethods.Remove(m);
             }
             return conformableMethods;
