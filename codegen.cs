@@ -104,6 +104,14 @@ namespace Babel.Sather.Compiler
             returnLabel = ilGenerator.DefineLabel();
             currentRoutine = routine;
             localVariableStack = new LocalVariableStack();
+            foreach (Argument arg in routine.Arguments) {
+                if (arg.Mode == ArgumentMode.Out) {
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                    Type argType = arg.NodeType.GetElementType();
+                    EmitVoid(argType);
+                    EmitStind(argType);
+                }
+            }
             routine.StatementList.Accept(this);
             ilGenerator.MarkLabel(returnLabel);
             ilGenerator.Emit(OpCodes.Ret);
