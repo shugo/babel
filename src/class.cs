@@ -92,7 +92,8 @@ namespace Babel.Compiler {
         public virtual TypeData BoundTypeData {
             get {
                 if (TypeParameters.Length > 0) {
-                    return TypeData.BindGenericParameters(TypeParameters);
+                    TypeData td = TypeData.GetGenericTypeDefinition();
+                    return td.BindGenericParameters(TypeParameters);
                 }
                 else {
                     return TypeData;

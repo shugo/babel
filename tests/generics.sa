@@ -1,8 +1,8 @@
 class VALUE_HOLDER{T} is
   attr value: T;
 
-  create(value: T): VALUE_HOLDER{T} is
-    res ::= new VALUE_HOLDER{T};
+  create(value: T): SAME is
+    res ::= new;
     res.value := value;
     return res;
   end;
