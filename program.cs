@@ -29,6 +29,7 @@ namespace Babel.Sather.Compiler
                                              AssemblyBuilderAccess.RunAndSave);
             module = assembly.DefineDynamicModule(name);
             typeManager = new TypeManager();
+            typeManager.AddModule(module);
         }
 
         public AssemblyBuilder Assembly
