@@ -16,6 +16,7 @@ namespace Babel.Sather.Compiler
     {
         Hashtable builtinTypes;
         Hashtable builtinTypeNames;
+        ArrayList modules;
         Hashtable classes;
         Hashtable parentsTable;
         Hashtable ancestorsTable;
@@ -26,6 +27,7 @@ namespace Babel.Sather.Compiler
         {
             builtinTypes = new Hashtable();
             builtinTypeNames = new Hashtable();
+            modules = new ArrayList();
             classes = new Hashtable();
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
@@ -56,6 +58,41 @@ namespace Babel.Sather.Compiler
             if (type != null)
                 return type;
             return Type.GetType(name);
+        }
+
+        public Type GetTypeFromModules(string name)
+        {
+            foreach (Module module in modules) {
+                Type type = (Type) module.GetType(name);
+                if (type != null)
+                    return type;
+            }
+            return null;
+        }
+
+        public Type GetType(string name)
+        {
+            ClassDefinition cls = GetClass(name);
+            if (cls != null && cls.TypeBuilder != null)
+                return cls.TypeBuilder;
+            Type type = GetTypeFromModules(name);
+            if (type != null)
+                return type;
+            type = GetPredefinedType(name);
+            if (type != null)
+                return type;
+            return null;
+        }
+
+        public Type GetReferenceType(Type type)
+        {
+            string refTypeName = type.FullName + "&";
+            return GetType(refTypeName);
+        }
+
+        public void AddModule(Module module)
+        {
+            modules.Add(module);
         }
 
         public void AddClass(ClassDefinition cls)
