@@ -10,9 +10,9 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-using Babel.Base;
+using Babell.Base;
 
-namespace Babel.Compiler {
+namespace Babell.Compiler {
     public abstract class Expression : TypedNode {
         protected bool hasValue;
 

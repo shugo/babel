@@ -5,7 +5,7 @@
  * Licensed under the terms of the GNU GPL
  */
 
-namespace Babel.Compiler {
+namespace Babell.Compiler {
     public struct Location
     {
         string fileName;

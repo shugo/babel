@@ -12,9 +12,9 @@ using System.Collections;
 using System.IO;
 using System.Text;
 
-using Babel.Base;
+using Babell.Base;
 
-namespace Babel.Compiler {
+namespace Babell.Compiler {
     public class Parser {
         protected Program program;
         protected LexicalAnalyzer lexer;

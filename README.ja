@@ -1,8 +1,8 @@
-= babelのREADME
+= babellのREADME
 
-== babelとは?
+== babellとは?
 
-babelは.NET環境用のSatherコンパイラです。
+babellは.NET環境用のSatherコンパイラです。
 
 Satherについての情報は((<URL:http://www.icsi.berkeley.edu/~sather/>))で
 入手できます。

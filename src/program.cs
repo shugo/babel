@@ -12,7 +12,7 @@ using System.Reflection.Emit;
 using System.Collections;
 using System.Text;
 
-namespace Babel.Compiler {
+namespace Babell.Compiler {
     public enum Target {
         Exe, WinExe, Library, Module
     }
