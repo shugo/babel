@@ -714,8 +714,9 @@ namespace Babel.Compiler {
         protected virtual void BoxIfNecessary(Type sourceType,
                                               Type destinationType)
         {
-            Type adapterType = typeManager.GetSupertypingAdapter(destinationType,
-                                                             sourceType);
+            Type adapterType =
+                typeManager.GetSupertypingAdapter(destinationType,
+                                                  sourceType);
             if (adapterType != null) {
                 ConstructorInfo[] constructors =
                     typeManager.GetConstructors(adapterType);
