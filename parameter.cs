@@ -73,10 +73,17 @@ namespace Babel.Sather.Compiler
         protected ArgumentMode mode;
 
         public UserDefinedParameterData(TypeManager typeManager,
-                                     ParameterInfo rawParameter)
+                                        ParameterInfo rawParameter,
+                                        ArgumentMode mode)
             : base(typeManager, rawParameter)
         {
-            mode = ArgumentMode.In;
+            this.mode = mode;
+        }
+
+        public UserDefinedParameterData(TypeManager typeManager,
+                                        ParameterInfo rawParameter)
+            : this(typeManager, rawParameter, ArgumentMode.In)
+        {
         }
         
         public virtual ArgumentMode Mode
