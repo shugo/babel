@@ -260,7 +260,6 @@ namespace Babel.Sather.Compiler
         public override object Clone()
         {
             TypedNode node = (TypedNode) base.Clone();
-            node.nodeType = null;
             return node;
         }
     }
@@ -294,6 +293,7 @@ namespace Babel.Sather.Compiler
         void VisitSharedAttr(SharedAttrDefinition attr);
         void VisitAttr(AttrDefinition attr);
         void VisitRoutine(RoutineDefinition routine);
+        void VisitIter(IterDefinition iter);
         void VisitArgument(Argument argument);
         void VisitInclude(IncludeClause include);
         void VisitTypeSpecifier(TypeSpecifier typeSpecifier);
@@ -335,6 +335,7 @@ namespace Babel.Sather.Compiler
         public virtual void VisitSharedAttr(SharedAttrDefinition sharedAttr) {}
         public virtual void VisitAttr(AttrDefinition attr) {}
         public virtual void VisitRoutine(RoutineDefinition routine) {}
+        public virtual void VisitIter(IterDefinition iter) {}
         public virtual void VisitInclude(IncludeClause include) {}
         public virtual void VisitArgument(Argument argument) {}
         public virtual void VisitTypeSpecifier(TypeSpecifier typeSpecifier) {}

@@ -176,6 +176,73 @@ namespace Babel.Sather.Compiler
                              rout.ReturnType.NodeType, rout.Arguments);
         }
 
+        public override void VisitIter(IterDefinition iter)
+        {
+            iter.Arguments.Accept(this);
+            iter.ReturnType.Accept(this);
+            TypeBuilder typeBuilder = currentClass.TypeBuilder;
+            iter.TypeBuilder =
+                typeBuilder.DefineNestedType("ITER_" + iter.Name,
+                                             TypeAttributes.Public,
+                                             typeof(object));
+
+            TypedNodeList creatorArguments = new TypedNodeList();
+            TypedNodeList moveNextArguments = new TypedNodeList();
+            int creatorPos = 1, moveNextPos = 1;
+            ArrayList list = new ArrayList();
+            list.Add(typeBuilder);
+            foreach (Argument arg in iter.Arguments) {
+                if (arg.Mode == ArgumentMode.Once) {
+                    list.Add(arg.NodeType);
+                    Argument ca = (Argument) arg.Clone();
+                    ca.Index = creatorPos++;
+                    creatorArguments.Append(ca);
+                }
+                else {
+                    Argument ma = (Argument) arg.Clone();
+                    ma.Index = moveNextPos++;
+                    moveNextArguments.Append(ma);
+                }
+            }
+            Type[] constructorParams = new Type[list.Count];
+            list.CopyTo(constructorParams);
+
+            iter.Constructor =
+                iter.TypeBuilder.DefineConstructor(MethodAttributes.Public,
+                                                   CallingConventions.Standard,
+                                                   constructorParams);
+
+            MethodAttributes attributes =
+                MethodAttributes.Virtual | MethodAttributes.HideBySig;
+            switch (iter.Modifier) {
+            case RoutineModifier.None:
+                attributes |= MethodAttributes.Public;
+                break;
+            case RoutineModifier.Private:
+                attributes |= MethodAttributes.Private;
+                break;
+            }
+            iter.MethodBuilder =
+                DefineMethod(typeBuilder, iter.Name, attributes,
+                             iter.TypeBuilder, creatorArguments);
+            iter.MoveNext =
+                DefineMethod(iter.TypeBuilder, "MoveNext",
+                             MethodAttributes.Virtual |
+                             MethodAttributes.HideBySig |
+                             MethodAttributes.Public,
+                             typeof(bool),
+                             moveNextArguments);
+            if (iter.ReturnType.IsNull()) {
+                iter.GetCurrent =
+                    DefineMethod(iter.TypeBuilder, "GetCurrent",
+                                 MethodAttributes.Virtual |
+                                 MethodAttributes.HideBySig |
+                                 MethodAttributes.Public,
+                                 iter.ReturnType.NodeType,
+                                 new TypedNodeList());
+            }
+        }
+
         public override void VisitArgument(Argument arg)
         {
             arg.TypeSpecifier.Accept(this);

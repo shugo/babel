@@ -480,11 +480,58 @@ namespace Babel.Sather.Compiler
         }
     }
 
+    public class IterDefinition : RoutineDefinition, ClassElement
+    {
+        TypeBuilder typeBuilder;
+        ConstructorBuilder constructor;
+        MethodBuilder moveNext;
+        MethodBuilder getCurrent;
+
+        public IterDefinition(string name,
+                              TypedNodeList arguments,
+                              TypeSpecifier returnType,
+                              StatementList statementList,
+                              RoutineModifier modifier,
+                              Location location)
+            : base(name, arguments, returnType,
+                   statementList, modifier, location) {}
+
+        public TypeBuilder TypeBuilder
+        {
+            get { return typeBuilder; }
+            set { typeBuilder = value; }
+        }
+
+        public ConstructorBuilder Constructor
+        {
+            get { return constructor; }
+            set { constructor = value; }
+        }
+
+        public MethodBuilder MoveNext
+        {
+            get { return moveNext; }
+            set { moveNext = value; }
+        }
+
+        public MethodBuilder GetCurrent
+        {
+            get { return getCurrent; }
+            set { getCurrent = value; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitIter(this);
+        }
+    }
+
     public enum ArgumentMode
     {
         In,
         Out,
-        InOut
+        InOut,
+        Once
     }
 
     public class Argument : TypedNode

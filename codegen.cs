@@ -131,6 +131,25 @@ namespace Babel.Sather.Compiler
             }
         }
 
+        public override void VisitIter(IterDefinition iter)
+        {
+            ilGenerator = iter.Constructor.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ret);
+
+            ilGenerator = iter.MethodBuilder.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ret); 
+
+            ilGenerator = iter.MoveNext.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ret); 
+
+            if (iter.GetCurrent != null) {
+                ilGenerator = iter.GetCurrent.GetILGenerator();
+                ilGenerator.Emit(OpCodes.Ret);
+            }
+
+            iter.TypeBuilder.CreateType();
+       }
+
         public override void VisitStatementList(StatementList statementList)
         {
             localVariableStack.Push(statementList.LocalVariables);
