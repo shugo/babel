@@ -1,0 +1,28 @@
+abstract class $TIMES is
+   times!(once n: INT): INT;
+end;
+
+class TIMES < $TIMES is
+   create: SAME is
+      return new;
+   end;
+
+   times!(once n: INT): INT is
+      i ::= 0;
+      loop
+         while!(i < n);
+         yield(i);
+         i := i + 1;
+      end;
+   end;
+end;
+
+class MAIN is
+   main is
+      t: $TIMES := #TIMES;
+      loop
+         i ::= t.times!(3);
+         #OUT + "i=" + i + "\n";
+      end;
+   end;
+end;

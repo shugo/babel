@@ -1,0 +1,13 @@
+class MAIN is
+   fact(n: INT): INT is
+      if n = 0 then
+         return 1;
+      else
+         return n * fact(n - 1);
+      end;
+   end;
+
+   main is
+      #OUT + "fact(10)=" + fact(10) + "\n";
+   end;
+end
