@@ -17,6 +17,7 @@ COMPILER_SRCS	= compiler.cs \
 		  local.cs \
 		  location.cs \
 		  report.cs \
+		  parameter.cs \
 		  typemanager.cs \
 		  typecreate.cs \
 		  eltcreate.cs \
