@@ -46,8 +46,14 @@ namespace Babel.Compiler {
             }
         }
 
-        public abstract ArgumentMode Mode {
-            get;
+        public virtual ArgumentMode Mode {
+            get {
+                return ArgumentMode.In;
+            }
+
+            set {
+                throw new NotSupportedException();
+            }
         }
     }
 

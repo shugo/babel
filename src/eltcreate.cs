@@ -516,7 +516,6 @@ namespace Babel.Compiler {
 
             foreach (MethodData m in conformableMethods) {
                 MethodData abstractCreator = m.IterCreator;
-Console.WriteLine(m.DeclaringType.RawType.FullName);
                 MethodBuilder bridgeMethod =
                     DefineMethod(typeBuilder,
                                  m.DeclaringType.RawType.FullName + "." +
@@ -524,7 +523,6 @@ Console.WriteLine(m.DeclaringType.RawType.FullName);
                                  attributes,
                                  abstractCreator.ReturnType,
                                  iter.Arguments);
-Console.WriteLine(bridgeMethod);
                 typeBuilder.DefineMethodOverride(bridgeMethod, m.MethodInfo);
                 iter.BridgeMethods.Add(bridgeMethod);
             }

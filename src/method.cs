@@ -117,6 +117,10 @@ namespace Babel.Compiler {
             get {
                 return parameterList.Parameters;
             }
+
+            set {
+                throw new NotSupportedException();
+            }
         }
 
         public override string ToString()
@@ -242,7 +246,7 @@ namespace Babel.Compiler {
 
         public virtual TypeData ReturnType {
             get {
-                return typeManager.GetReturnType(MethodInfo);
+                return typeManager.GetTypeData(MethodInfo.ReturnType);
             }
         }
 
@@ -354,6 +358,47 @@ namespace Babel.Compiler {
         {
             parameterList = new PredefinedParameterList(typeManager,
                                                         methodInfo);
+        }
+    }
+
+    public class GenericInstanceMethodData : PredefinedMethodData {
+        protected MethodData genericMethodDefinition;
+
+        public GenericInstanceMethodData(TypeManager typeManager,
+                                         MethodInfo methodInfo)
+            : base(typeManager, methodInfo)
+        {
+            genericMethodDefinition = null;
+        }
+
+        public virtual MethodData GenericMethodDefinition {
+            get {
+                if (genericMethodDefinition == null) {
+                    MethodInfo genericMethod =
+                        MethodInfo.GetGenericMethodDefinition();
+                    TypeData genericType =
+                        DeclaringType.GetGenericTypeDefinition();
+                    genericMethodDefinition =
+                        genericType.GetMethodData(genericMethod);
+                }
+                return genericMethodDefinition;
+            }
+        }
+
+        public override string Name {
+            get {
+                return GenericMethodDefinition.Name;
+            }
+        }
+
+        public override MethodData IterCreator {
+            get {
+                MethodInfo genericMethod =
+                    GenericMethodDefinition.MethodInfo;
+                string creatorName =
+                    typeManager.GetIterCreatorName(genericMethod);
+                return DeclaringType.LookupMethod(creatorName);
+            }
         }
     }
 

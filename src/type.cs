@@ -202,6 +202,15 @@ namespace Babel.Compiler {
             get;
         }
 
+        public virtual MethodData GetMethodData(MethodInfo method)
+        {
+            foreach (MethodData m in Methods) {
+                if (m.MethodInfo == method)
+                    return m;
+            }
+            return null;
+        }
+
         public virtual ArrayList AncestorMethods {
             get {
                 ArrayList result = new ArrayList();
@@ -372,32 +381,29 @@ namespace Babel.Compiler {
                                            BindingFlags.NonPublic);
                     methods = new ArrayList();
                     foreach (MethodInfo m in methodInfos) {
-                        methods.Add(new PredefinedMethodData(typeManager, m));
+                        methods.Add(CreateMethodData(m));
                     }
                 }
                 return methods;
             }
         }
+
+        protected virtual MethodData CreateMethodData(MethodInfo method)
+        {
+            return new PredefinedMethodData(typeManager, method);
+        }
     }
 
-    public class UserDefinedTypeData : TypeData {
-        protected ArrayList constructors;
-        protected ArrayList methods;
-
-        public UserDefinedTypeData(TypeManager typeManager,
-                                   TypeBuilder typeBuilder)
-            : base(typeManager, typeBuilder)
+    public class GenericInstanceTypeData : PredefinedTypeData {
+        public GenericInstanceTypeData(TypeManager typeManager,
+                                       Type rawType)
+            : base(typeManager, rawType)
         {
-            constructors = new ArrayList();
-            methods = new ArrayList();
         }
 
-        public override ArrayList Constructors {
-            get { return constructors; }
-        }
-
-        public override ArrayList Methods {
-            get { return methods; }
+        protected override MethodData CreateMethodData(MethodInfo method)
+        {
+            return new GenericInstanceMethodData(typeManager, method);
         }
     }
 
@@ -442,6 +448,27 @@ namespace Babel.Compiler {
                 }
                 return methods;
             }
+        }
+    }
+
+    public class UserDefinedTypeData : TypeData {
+        protected ArrayList constructors;
+        protected ArrayList methods;
+
+        public UserDefinedTypeData(TypeManager typeManager,
+                                   TypeBuilder typeBuilder)
+            : base(typeManager, typeBuilder)
+        {
+            constructors = new ArrayList();
+            methods = new ArrayList();
+        }
+
+        public override ArrayList Constructors {
+            get { return constructors; }
+        }
+
+        public override ArrayList Methods {
+            get { return methods; }
         }
     }
 

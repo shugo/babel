@@ -837,6 +837,10 @@ namespace Babel.Compiler {
             this.typeSpecifier = typeSpecifier;
         }
 
+        public virtual TypeData ArgumentType {
+            get { return NodeType; }
+        }
+
         public virtual ArgumentMode Mode {
             get { return mode; }
             set { mode = value; }

@@ -97,9 +97,9 @@ namespace Babel.Compiler {
             charType = AddBuiltinType("char", typeof(char));
             strType = AddBuiltinType("str", typeof(string),
                                      typeof(Babel.Core.STR));
-	    voidType = new PredefinedTypeData(this, typeof(void));
-	    exceptionType = new PredefinedTypeData(this,
-						   typeof(System.Exception));
+            voidType = new PredefinedTypeData(this, typeof(void));
+	    exceptionType =
+                new PredefinedTypeData(this, typeof(System.Exception));
         }
 
         protected virtual BuiltinTypeData AddBuiltinType(string name, Type type)
@@ -138,7 +138,12 @@ namespace Babel.Compiler {
                                                        (TypeBuilder) type);
                 }
                 else {
-                    typeData = new PredefinedTypeData(this, type);
+                    if (type.IsGenericInstance) {
+                        typeData = new GenericInstanceTypeData(this, type);
+                    }
+                    else {
+                        typeData = new PredefinedTypeData(this, type);
+                    }
                 }
                 typeDataTable[type] = typeData;
             }
@@ -404,7 +409,7 @@ namespace Babel.Compiler {
         }
 
         public void AddBabelName(MethodBuilder methodBuilder,
-                                  string babelName)
+                                 string babelName)
         {
             Type[] paramTypes = new Type[] { typeof(string) };
             ConstructorInfo constructor =
