@@ -1,11 +1,15 @@
-= BabelのREADME
+= babel
 
-== Babelとは?
+== babelとは?
 
-Babelは.NET環境用のSatherコンパイラです。
+babelは.NET環境用のSatherコンパイラです。
 
 Satherについての情報は((<URL:http://www.icsi.berkeley.edu/~sather/>))で
 入手できます。
+
+== ダウンロード
+
+((<URL:http://shugo.net/babel/babel-0.0.0.tar.gz>))
 
 == 要求される環境
 
@@ -21,17 +25,19 @@ Microsoftの.NET Frameworkでも動くかもしれません。
   $ make
   # make install
 
-手動でインストールする場合は、
+Windows上などで、手動でインストールする場合は、
 
 * src/bsc.exe
 * src/bscore.dll
 * lib/base/bsbase.dll
 * lib/base/bsio.dll
-* scripts/bsc
 
 を適当なディレクトリにコピーしてください。
+たぶん、PATHが通ってないとだめだと思います。
 
 == 使い方
+
+こんな感じでコンパイルできると思います。
 
   $ cat hello.sa
   class MAIN is
@@ -44,3 +50,13 @@ Microsoftの.NET Frameworkでも動くかもしれません。
   hello world!
 
 コマンドラインオプションについてはbsc -hで確認してください。
+
+Linuxだと、binfmt_miscを使った方が楽かもしれません。
+
+== できないこと
+
+たくさんありすぎて書ききれません。
+
+== バグレポート
+
+とりあえず、今はしないでください。
