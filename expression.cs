@@ -217,10 +217,12 @@ namespace Babel.Sather.Compiler
             : base(location)
         {
             this.receiver = receiver;
+            typeSpecifier = null;
             this.name = name;
             this.arguments = arguments;
             this.flip = flip;
-            this.isBuiltin = false;
+            method = null;
+            isBuiltin = false;
         }
 
         public CallExpression(Expression receiver,
@@ -240,9 +242,13 @@ namespace Babel.Sather.Compiler
                               Location location)
             : base(location)
         {
+            receiver = null;
             this.typeSpecifier = typeSpecifier;
             this.name = name;
             this.arguments = arguments;
+            flip = false;
+            method = null;
+            isBuiltin = false;
         }
 
 
