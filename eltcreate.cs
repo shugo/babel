@@ -195,7 +195,8 @@ namespace Babel.Sather.Compiler
             ArrayList list = new ArrayList();
             list.Add(typeBuilder);
             foreach (Argument arg in iter.CreatorArguments) {
-                list.Add(arg.NodeType);
+                if (arg.Mode == ArgumentMode.Once)
+                    list.Add(arg.NodeType);
             }
             Type[] constructorParams = new Type[list.Count];
             list.CopyTo(constructorParams);

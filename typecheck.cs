@@ -205,6 +205,8 @@ namespace Babel.Sather.Compiler
                 // NodeType may be already set by DeclarationStatement
                 if (assign.Value.NodeType == null)
                     assign.Value.Accept(this);
+                if (assign.Value.NodeType == null)
+                    return;
                 if (!IsSubtype(assign.Value.NodeType, lhsType)) {
                     report.Error(assign.Location,
                                  "{0} is not a subtype of {1}",
@@ -545,6 +547,7 @@ namespace Babel.Sather.Compiler
                                       iter.Name, iter.Arguments,
                                       iter.HasValue,
                                       true);
+                iter.NodeType = typeManager.GetIterReturnType(method);
             }
             catch (LookupMethodException e) {
                 string routInfo = typeManager.GetTypeName(receiverType) +
@@ -672,16 +675,21 @@ namespace Babel.Sather.Compiler
         {
             if (method.Name != name)
                 return false;
+            Type returnType;
             if (isIter) {
-                // FIXME.
-                return true;
-            }
-            if (hasReturnValue) {
-                if (method.ReturnType == typeof(void))
+                returnType = typeManager.GetIterReturnType(method);
+                if (returnType == null)
                     return false;
             }
             else {
-                if (method.ReturnType != typeof(void))
+                returnType = method.ReturnType;
+            }
+            if (hasReturnValue) {
+                if (returnType == typeof(void))
+                    return false;
+            }
+            else {
+                if (returnType != typeof(void))
                     return false;
             }
             ParameterInfo[] parameters = typeManager.GetParameters(method);
@@ -693,6 +701,7 @@ namespace Babel.Sather.Compiler
                 ParameterInfo param = parameters[pos++];
                 switch (arg.Mode) {
                 case ArgumentMode.In:
+                case ArgumentMode.Once:
                     if (param.ParameterType.IsByRef) {
                         return false;
                     }
@@ -749,6 +758,7 @@ namespace Babel.Sather.Compiler
                             typeManager.GetParameters(method)[pos];
                         switch (arg.Mode) {
                         case ArgumentMode.In:
+                        case ArgumentMode.Once:
                             if (IsSubtype(param.ParameterType, bestType)) {
                                 if (param.ParameterType != bestType) {
                                     bestType = param.ParameterType;

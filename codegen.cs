@@ -143,13 +143,14 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ldarg_0);
             ilGenerator.Emit(OpCodes.Ldarg_1);
             ilGenerator.Emit(OpCodes.Stfld, iter.Self);
+            int index = 2;
             foreach (Argument arg in iter.CreatorArguments) {
                 if (arg.Mode == ArgumentMode.Once) {
                     LocalVariable local =
                         (LocalVariable) iter.LocalVariables[arg.Name];
                     local.Declare(ilGenerator);
                     local.EmitStorePrefix(ilGenerator);
-                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index + 1);
+                    ilGenerator.Emit(OpCodes.Ldarg, index++);
                     local.EmitStore(ilGenerator);
                 }
             }
@@ -161,7 +162,8 @@ namespace Babel.Sather.Compiler
             ilGenerator = iter.MethodBuilder.GetILGenerator();
             ilGenerator.Emit(OpCodes.Ldarg_0);
             foreach (Argument arg in iter.CreatorArguments) {
-                ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
+                if (arg.Mode == ArgumentMode.Once)
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
             }
             ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
             ilGenerator.Emit(OpCodes.Ret); 

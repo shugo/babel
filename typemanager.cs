@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public class TypeManager
@@ -239,6 +241,16 @@ namespace Babel.Sather.Compiler
                 list.CopyTo(attributes);
                 return attributes;
             }
+        }
+
+        public Type GetIterReturnType(ICustomAttributeProvider provider)
+        {
+            object[] attrs =
+                GetCustomAttributes(provider,
+                                    typeof(IterReturnTypeAttribute));
+            if (attrs == null || attrs.Length == 0)
+                return null;
+            return ((IterReturnTypeAttribute) attrs[0]).Type;
         }
     }
 }
