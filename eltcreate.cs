@@ -57,8 +57,7 @@ namespace Babel.Sather.Compiler
                                               MethodAttributes.Abstract |
                                               MethodAttributes.HideBySig,
                                               rout.ReturnType.NodeType,
-                                              rout.Arguments,
-                                              false);
+                                              rout.Arguments);
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -176,25 +175,23 @@ namespace Babel.Sather.Compiler
             }
             rout.MethodBuilder =
                 DefineMethod(typeBuilder, rout.Name, attributes,
-                             rout.ReturnType.NodeType, rout.Arguments,
-                             false);
+                             rout.ReturnType.NodeType, rout.Arguments);
         }
 
         public override void VisitIter(IterDefinition iter)
         {
             iter.Arguments.Accept(this);
             iter.MoveNextArguments.Accept(this);
-            iter.CreatorArguments.Accept(this);
             iter.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
-            iter.Enumerator =
-                typeBuilder.DefineNestedType("Enumerator_" + iter.Name,
+            iter.TypeBuilder =
+                typeBuilder.DefineNestedType("ITER_" + iter.Name,
                                              TypeAttributes.Public,
                                              typeof(object));
 
             ArrayList list = new ArrayList();
             list.Add(typeBuilder);
-            foreach (Argument arg in iter.CreatorArguments) {
+            foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once)
                     list.Add(arg.NodeType);
             }
@@ -202,40 +199,38 @@ namespace Babel.Sather.Compiler
             list.CopyTo(constructorParams);
 
             iter.Constructor =
-                DefineConstructor(iter.Enumerator,
+                DefineConstructor(iter.TypeBuilder,
                                   MethodAttributes.Public,
                                   CallingConventions.Standard,
                                   constructorParams);
             iter.Self =
-                iter.Enumerator.DefineField("_self",
-                                            typeBuilder,
-                                            FieldAttributes.Private);
+                iter.TypeBuilder.DefineField("_self",
+                                             typeBuilder,
+                                             FieldAttributes.Private);
             iter.CurrentPosition =
-                iter.Enumerator.DefineField("_currentPosition",
-                                            typeof(int),
-                                            FieldAttributes.Private);
+                iter.TypeBuilder.DefineField("_currentPosition",
+                                             typeof(int),
+                                             FieldAttributes.Private);
 
             iter.MoveNext =
-                DefineMethod(iter.Enumerator, "MoveNext",
+                DefineMethod(iter.TypeBuilder, "MoveNext",
                              MethodAttributes.Virtual |
                              MethodAttributes.HideBySig |
                              MethodAttributes.Public,
                              typeof(bool),
-                             iter.MoveNextArguments,
-                             false);
+                             iter.MoveNextArguments);
             if (!iter.ReturnType.IsNull()) {
                 iter.Current =
-                    iter.Enumerator.DefineField("_current",
+                    iter.TypeBuilder.DefineField("_current",
                                                 iter.ReturnType.NodeType,
                                                 FieldAttributes.Private);
                 iter.GetCurrent =
-                    DefineMethod(iter.Enumerator, "GetCurrent",
+                    DefineMethod(iter.TypeBuilder, "GetCurrent",
                                  MethodAttributes.Virtual |
                                  MethodAttributes.HideBySig |
                                  MethodAttributes.Public,
                                  iter.ReturnType.NodeType,
-                                 new TypedNodeList(),
-                                 false);
+                                 new TypedNodeList());
             }
 
             MethodAttributes attributes =
@@ -250,19 +245,18 @@ namespace Babel.Sather.Compiler
             }
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, iter.Name, attributes,
-                             iter.Enumerator, iter.CreatorArguments,
-                             true);
+                             iter.ReturnType.NodeType, iter.Arguments);
 
-            Type[] cparamTypes = new Type[] { typeof(Type) };
-            ConstructorInfo constructor =
-                typeof(IterReturnTypeAttribute).GetConstructor(cparamTypes);
-            Type returnType = iter.ReturnType.NodeType;
-            CustomAttributeBuilder cbuilder =
-                new CustomAttributeBuilder(constructor,
-                                           new object[] { returnType });
-            iter.MethodBuilder.SetCustomAttribute(cbuilder);
-            Attribute attr = new IterReturnTypeAttribute(returnType);
-            typeManager.AddCustomAttribute(iter.MethodBuilder, attr);
+            Type[] iterTypeParams = new Type[] { typeof(Type) };
+            ConstructorInfo iterTypeConstructor =
+                typeof(IterTypeAttribute).GetConstructor(iterTypeParams);
+            CustomAttributeBuilder iterTypeAttributeBuilder =
+                new CustomAttributeBuilder(iterTypeConstructor,
+                                           new object[] { iter.TypeBuilder });
+            iter.MethodBuilder.SetCustomAttribute(iterTypeAttributeBuilder);
+            Attribute iterTypeAttr = new IterTypeAttribute(iter.TypeBuilder);
+            typeManager.AddCustomAttribute(iter.MethodBuilder, iterTypeAttr);
+            Type iterType = typeManager.GetIterType(iter.MethodBuilder);
         }
 
         public override void VisitArgument(Argument arg)
@@ -327,8 +321,7 @@ namespace Babel.Sather.Compiler
                                              string name,
                                              MethodAttributes attributes,
                                              Type returnType,
-                                             TypedNodeList arguments,
-                                             bool isIter)
+                                             TypedNodeList arguments)
         {
             MethodBuilder method =
                 type.DefineMethod(name,
@@ -373,8 +366,7 @@ namespace Babel.Sather.Compiler
                                              TypeSpecifier attrType)
         {
             return DefineMethod(type, name, attributes,
-                                attrType.NodeType, new TypedNodeList(),
-                                false);
+                                attrType.NodeType, new TypedNodeList());
         }
 
         protected MethodBuilder DefineWriter(TypeBuilder type, string name,
@@ -387,7 +379,7 @@ namespace Babel.Sather.Compiler
             arg.NodeType = attrType.NodeType;
             TypedNodeList args = new TypedNodeList(arg);
             return DefineMethod(type, name, attributes,
-                                typeof(void), args, false);
+                                typeof(void), args);
         }
 
         protected ConstructorBuilder

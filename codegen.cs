@@ -144,7 +144,7 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ldarg_1);
             ilGenerator.Emit(OpCodes.Stfld, iter.Self);
             int index = 2;
-            foreach (Argument arg in iter.CreatorArguments) {
+            foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once) {
                     LocalVariable local =
                         (LocalVariable) iter.LocalVariables[arg.Name];
@@ -160,17 +160,12 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ret);
 
             ilGenerator = iter.MethodBuilder.GetILGenerator();
-            ilGenerator.Emit(OpCodes.Ldarg_0);
-            foreach (Argument arg in iter.CreatorArguments) {
-                if (arg.Mode == ArgumentMode.Once)
-                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index);
-            }
-            ilGenerator.Emit(OpCodes.Newobj, iter.Constructor);
+            EmitVoid(iter.MethodBuilder.ReturnType);
             ilGenerator.Emit(OpCodes.Ret); 
 
             ilGenerator = iter.MoveNext.GetILGenerator();
             returnLabel = ilGenerator.DefineLabel();
-            localVariableStack = new IterLocalVariableStack(iter.Enumerator);
+            localVariableStack = new IterLocalVariableStack(iter.TypeBuilder);
             localVariableStack.Push(iter.LocalVariables);
             foreach (Argument arg in iter.MoveNextArguments) {
                 if (arg.Mode == ArgumentMode.Out) {
@@ -202,7 +197,7 @@ namespace Babel.Sather.Compiler
                 ilGenerator.Emit(OpCodes.Ret);
             }
 
-            iter.Enumerator.CreateType();
+            iter.TypeBuilder.CreateType();
             currentRoutine = currentIter = null;
        }
 
@@ -631,7 +626,9 @@ namespace Babel.Sather.Compiler
 
         protected void EmitVoid(Type type)
         {
-            if (type == typeof(bool) ||
+            if (type == typeof(void)) {
+            }
+            else if (type == typeof(bool) ||
                 type == typeof(char) ||
                 type == typeof(int)) {
                 ilGenerator.Emit(OpCodes.Ldc_I4_0);

@@ -484,7 +484,7 @@ namespace Babel.Sather.Compiler
 
     public class IterDefinition : RoutineDefinition, ClassElement
     {
-        TypeBuilder enumerator;
+        TypeBuilder typeBuilder;
         FieldBuilder self;
         FieldBuilder current;
         FieldBuilder currentPosition;
@@ -493,7 +493,6 @@ namespace Babel.Sather.Compiler
         MethodBuilder getCurrent;
         Hashtable localVariables;
         ArrayList resumePoints;
-        TypedNodeList creatorArguments;
         TypedNodeList moveNextArguments;
 
         public IterDefinition(string name,
@@ -505,7 +504,7 @@ namespace Babel.Sather.Compiler
             : base(name, arguments, returnType,
                    statementList, modifier, location)
         {
-            enumerator = null;
+            typeBuilder = null;
             self = null;
             current = null;
             currentPosition = null;
@@ -521,15 +520,11 @@ namespace Babel.Sather.Compiler
         protected override void InitArguments()
         {
             int index = 1;
-            int creatorPos = 1, moveNextPos = 1;
-            creatorArguments = new TypedNodeList();
+            int moveNextPos = 1;
             moveNextArguments = new TypedNodeList();
             argumentTable = new Hashtable();
             foreach (Argument arg in Arguments) {
                 arg.Index = index++;
-                Argument ca = (Argument) arg.Clone();
-                ca.Index = creatorPos++;
-                creatorArguments.Append(ca);
                 if (arg.Mode != ArgumentMode.Once) {
                     Argument ma = (Argument) arg.Clone();
                     ma.Index = moveNextPos++;
@@ -539,10 +534,10 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public TypeBuilder Enumerator
+        public TypeBuilder TypeBuilder
         {
-            get { return enumerator; }
-            set { enumerator = value; }
+            get { return typeBuilder; }
+            set { typeBuilder = value; }
         }
 
         public FieldBuilder Self
@@ -589,11 +584,6 @@ namespace Babel.Sather.Compiler
         public Hashtable LocalVariables
         {
             get { return localVariables; }
-        }
-
-        public TypedNodeList CreatorArguments
-        {
-            get { return creatorArguments; }
         }
 
         public TypedNodeList MoveNextArguments

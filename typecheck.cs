@@ -88,9 +88,9 @@ namespace Babel.Sather.Compiler
         public override void VisitIter(IterDefinition iter)
         {
             currentRoutine = currentIter = iter;
-            localVariableStack = new IterLocalVariableStack(iter.Enumerator);
+            localVariableStack = new IterLocalVariableStack(iter.TypeBuilder);
             localVariableStack.Push(iter.LocalVariables);
-            foreach (Argument arg in iter.CreatorArguments) {
+            foreach (Argument arg in iter.Arguments) {
                 if (arg.Mode == ArgumentMode.Once)
                     localVariableStack.AddLocal(arg.Name, arg.NodeType);
             }
@@ -492,8 +492,7 @@ namespace Babel.Sather.Compiler
                     args.Append(call.Arguments.First);
                     method = LookupMethod(builtinRoutineContainer,
                                           call.Name, args,
-                                          call.HasValue,
-                                          false);
+                                          call.HasValue);
                     call.IsBuiltin = true;
                     SetupMethod(call, method, receiverType);
                     return;
@@ -504,8 +503,7 @@ namespace Babel.Sather.Compiler
             try {
                 method = LookupMethod(receiverType,
                                       call.Name, call.Arguments,
-                                      call.HasValue,
-                                      false);
+                                      call.HasValue);
                 SetupMethod(call, method, receiverType);
             }
             catch (LookupMethodException e) {
@@ -554,14 +552,14 @@ namespace Babel.Sather.Compiler
             try {
                 method = LookupMethod(receiverType,
                                       iter.Name, iter.Arguments,
-                                      iter.HasValue,
-                                      true);
+                                      iter.HasValue);
                 SetupMethod(iter, method, receiverType);
-                iter.NodeType = typeManager.GetIterReturnType(method);
+
+                Type iterType = typeManager.GetIterType(method);
 
                 string localName = getTemporallyName();
                 iter.Local = localVariableStack.AddLocal(localName,
-                                                         method.ReturnType);
+                                                         iterType);
 
                 TypedNodeList newArguments = new TypedNodeList();
                 TypedNodeList moveNextArguments = new TypedNodeList();
@@ -586,7 +584,7 @@ namespace Babel.Sather.Compiler
                     }
                     arg = (ModalExpression) arg.Next;
                 }
-                iter.New = new NewExpression(method.ReturnType,
+                iter.New = new NewExpression(iterType,
                                              newArguments,
                                              iter.Location);
                 iter.New.Accept(this);
@@ -738,14 +736,13 @@ namespace Babel.Sather.Compiler
         protected MethodInfo LookupMethod(Type type,
                                           string name,
                                           TypedNodeList arguments,
-                                          bool hasReturnValue,
-                                          bool isIter)
+                                          bool hasReturnValue)
         {
             MethodInfo[] methods = typeManager.GetMethods(type);
             ArrayList candidates = new ArrayList();
             foreach (MethodInfo method in methods) {
                 if (ConfirmMethod(method, name, arguments,
-                                  hasReturnValue, isIter))
+                                  hasReturnValue))
                     candidates.Add(method);
             }
             if (candidates.Count == 0)
@@ -758,26 +755,16 @@ namespace Babel.Sather.Compiler
         protected bool ConfirmMethod(MethodInfo method,
                                      string name,
                                      TypedNodeList arguments,
-                                     bool hasReturnValue,
-                                     bool isIter)
+                                     bool hasReturnValue)
         {
             if (method.Name != name)
                 return false;
-            Type returnType;
-            if (isIter) {
-                returnType = typeManager.GetIterReturnType(method);
-                if (returnType == null)
-                    return false;
-            }
-            else {
-                returnType = method.ReturnType;
-            }
             if (hasReturnValue) {
-                if (returnType == typeof(void))
+                if (method.ReturnType == typeof(void))
                     return false;
             }
             else {
-                if (returnType != typeof(void))
+                if (method.ReturnType != typeof(void))
                     return false;
             }
             ParameterInfo[] parameters = typeManager.GetParameters(method);
