@@ -7,10 +7,8 @@
 
 using System;
 
-namespace Babel.Sather.Compiler
-{
-    public class Report
-    {
+namespace Babel.Sather.Compiler {
+    public class Report {
         protected int errors;
         protected int warnings;
 
@@ -20,13 +18,11 @@ namespace Babel.Sather.Compiler
             warnings = 0;
         }
 
-        public virtual int Errors
-        {
+        public virtual int Errors {
             get { return errors; }
         }
 
-        public virtual int Warnings
-        {
+        public virtual int Warnings {
             get { return warnings; }
         }
 

@@ -11,10 +11,8 @@ using System.Collections;
 using System.Text;
 using System.Reflection;
 
-namespace Babel.Sather.Compiler
-{
-    public class Compiler
-    {
+namespace Babel.Sather.Compiler {
+    public class Compiler {
         protected Program program;
         protected Report report;
         protected ArrayList inputFiles;

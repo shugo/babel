@@ -10,10 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
-namespace Babel.Sather.Compiler
-{
-    public abstract class LocalVariable
-    {
+namespace Babel.Sather.Compiler {
+    public abstract class LocalVariable {
         protected string name;
         protected TypeData localType;
         protected bool isTypecaseVariable;
@@ -26,23 +24,19 @@ namespace Babel.Sather.Compiler
             this.isTypecaseVariable = isTypecaseVariable;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual TypeData LocalType
-        {
+        public virtual TypeData LocalType {
             get { return localType; }
         }
 
-        public virtual Type RawType
-        {
+        public virtual Type RawType {
             get { return localType.RawType; }
         }
 
-        public virtual bool IsTypecaseVariable
-        {
+        public virtual bool IsTypecaseVariable {
             get { return isTypecaseVariable; }
             set { isTypecaseVariable = value; }
         }
@@ -54,8 +48,7 @@ namespace Babel.Sather.Compiler
         public abstract void EmitLoadAddress(ILGenerator ilGenerator);
     }
 
-    public abstract class LocalVariableStack : Stack
-    {
+    public abstract class LocalVariableStack : Stack {
         public virtual LocalVariable GetLocal(string name)
         {
             foreach (Hashtable tbl in this) {
@@ -85,8 +78,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class RoutineLocalVariable : LocalVariable
-    {
+    public class RoutineLocalVariable : LocalVariable {
         protected LocalBuilder localBuilder;
 
         public RoutineLocalVariable(string name, TypeData localType,
@@ -124,8 +116,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class RoutineLocalVariableStack : LocalVariableStack
-    {
+    public class RoutineLocalVariableStack : LocalVariableStack {
         public override LocalVariable CreateLocal(string name, TypeData type,
                                                   bool isTypecaseVariable)
         {
@@ -133,8 +124,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class IterLocalVariable : LocalVariable
-    {
+    public class IterLocalVariable : LocalVariable {
         protected TypeBuilder enumerator;
         protected int index;
         protected FieldBuilder fieldBuilder;
@@ -181,8 +171,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class IterLocalVariableStack : LocalVariableStack
-    {
+    public class IterLocalVariableStack : LocalVariableStack {
         protected TypeBuilder enumerator;
         protected int count;
 

@@ -12,15 +12,12 @@ using System.Reflection.Emit;
 using System.Collections;
 using System.Text;
 
-namespace Babel.Sather.Compiler
-{
-    public enum Target
-    {
+namespace Babel.Sather.Compiler {
+    public enum Target {
         Exe, WinExe, Library, Module
     }
 
-    public class Program : CompositeNode
-    {
+    public class Program : CompositeNode {
         protected AssemblyBuilder assembly;
         protected ModuleBuilder module;
         protected TypeManager typeManager;
@@ -41,23 +38,19 @@ namespace Babel.Sather.Compiler
             this.target = target;
         }
 
-        public virtual AssemblyBuilder Assembly
-        {
+        public virtual AssemblyBuilder Assembly {
             get { return assembly; }
         }
 
-        public virtual ModuleBuilder Module
-        {
+        public virtual ModuleBuilder Module {
             get { return module; }
         }
 
-        public virtual TypeManager TypeManager
-        {
+        public virtual TypeManager TypeManager {
             get { return typeManager; }
         }
 
-        public virtual Target Target
-        {
+        public virtual Target Target {
             get { return target; }
         }
 

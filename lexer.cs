@@ -10,10 +10,8 @@ using System.Collections;
 using System.IO;
 using System.Text;
 
-namespace Babel.Sather.Compiler
-{
-    public class LexicalAnalyzer : yyParser.yyInput
-    {
+namespace Babel.Sather.Compiler {
+    public class LexicalAnalyzer : yyParser.yyInput {
         const int EOF = -1;
         const int EMPTY = -2;
 

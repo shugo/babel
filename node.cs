@@ -8,10 +8,8 @@
 using System;
 using System.Collections;
 
-namespace Babel.Sather.Compiler
-{
-    public abstract class Node : ICloneable, IEnumerable
-    {
+namespace Babel.Sather.Compiler {
+    public abstract class Node : ICloneable, IEnumerable {
         protected Location location;
         protected Node next;
 
@@ -25,24 +23,20 @@ namespace Babel.Sather.Compiler
             this.location = location;
         }
 
-        public virtual Location Location
-        {
+        public virtual Location Location {
             get { return location; }
             set { location = value; }
         }
 
         public abstract void Accept(NodeVisitor visitor);
 
-        public virtual Node Next
-        {
+        public virtual Node Next {
             get { return next; }
             set { next = value; }
         }
 
-        public virtual Node Last
-        {
-            get
-            {
+        public virtual Node Last {
+            get {
                 Node last = this;
                 while (last.Next != null) {
                     last = last.Next;
@@ -51,10 +45,8 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual int Length
-        {
-            get
-            {
+        public virtual int Length {
+            get {
                 int length = 1;
                 Node node = Next;
                 while (node != null) {
@@ -89,8 +81,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class NodeEnumerator : IEnumerator
-    {
+    public class NodeEnumerator : IEnumerator {
         protected Node first;
         protected Node current;
 
@@ -119,14 +110,12 @@ namespace Babel.Sather.Compiler
             current = null;
         }
 
-        public virtual Object Current
-        {
+        public virtual Object Current {
             get { return current; }
         }
     }
 
-    public class NodeList : ICloneable, IEnumerable
-    {
+    public class NodeList : ICloneable, IEnumerable {
         protected Node first;
 
         public NodeList()
@@ -139,25 +128,20 @@ namespace Babel.Sather.Compiler
             this.first = first;
         }
 
-        public virtual Node First
-        {
+        public virtual Node First {
             get { return first; }
         }
 
-        public virtual Node Last
-        {
-            get
-            {
+        public virtual Node Last {
+            get {
                 if (first == null)
                     return null;
                 return first.Last;
             }
         }
 
-        public virtual int Length
-        {
-            get
-            {
+        public virtual int Length {
+            get {
                 if (first == null)
                     return 0;
                 return first.Length;
@@ -197,8 +181,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public abstract class CompositeNode : Node
-    {
+    public abstract class CompositeNode : Node {
         protected NodeList children;
 
         public CompositeNode()
@@ -212,8 +195,7 @@ namespace Babel.Sather.Compiler
             children = new NodeList();
         }
 
-        public virtual NodeList Children
-        {
+        public virtual NodeList Children {
             get { return children; }
         }
 
@@ -237,8 +219,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public abstract class TypedNode : Node
-    {
+    public abstract class TypedNode : Node {
         TypeData nodeType;
 
         public TypedNode()
@@ -251,14 +232,12 @@ namespace Babel.Sather.Compiler
             nodeType = null;
         }
 
-        public virtual TypeData NodeType
-        {
+        public virtual TypeData NodeType {
             get { return nodeType; }
             set { nodeType = value; }
         }
         
-        public virtual Type RawType
-        {
+        public virtual Type RawType {
             get { return nodeType.RawType; }
         }
 
@@ -269,15 +248,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class TypedNodeList : NodeList
-    {
+    public class TypedNodeList : NodeList {
         public TypedNodeList() {}
         public TypedNodeList(Node first) : base(first) {}
 
         public virtual Type[] NodeTypes
         {
-            get
-            {
+            get {
                 Type[] types = new Type[Length];
                 int i = 0;
                 foreach (TypedNode node in this) {
@@ -334,8 +311,7 @@ namespace Babel.Sather.Compiler
         void VisitException(ExceptionExpression exception);
     }
 
-    public abstract class AbstractNodeVisitor : NodeVisitor
-    {
+    public abstract class AbstractNodeVisitor : NodeVisitor {
         public virtual void VisitProgram(Program program) {}
         public virtual void VisitSourceFile(SourceFile sourceFile) {}
         public virtual void VisitClass(ClassDefinition cls) {}

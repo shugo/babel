@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class TypeCheckingVisitor : AbstractNodeVisitor
-    {
+namespace Babel.Sather.Compiler {
+    public class TypeCheckingVisitor : AbstractNodeVisitor {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
@@ -1014,8 +1012,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class LookupMethodException : Exception
-    {
+    public class LookupMethodException : Exception {
         public LookupMethodException(string message) : base(message) {}
     }
 }

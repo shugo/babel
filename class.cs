@@ -13,16 +13,13 @@ using System.Text;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public enum ClassKind
-    {
+namespace Babel.Sather.Compiler {
+    public enum ClassKind {
         Reference,
         Abstract
     }
 
-    public class ClassDefinition : CompositeNode, ICloneable
-    {
+    public class ClassDefinition : CompositeNode, ICloneable {
         protected string name;
         protected ClassKind kind;
         protected TypedNodeList supertypes;
@@ -58,54 +55,44 @@ namespace Babel.Sather.Compiler
                                Location location)
             : this(name, kind, supertypes, null, location) {}
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual ClassKind Kind
-        {
+        public virtual ClassKind Kind {
             get { return kind; }
         }
 
-        public virtual TypedNodeList Supertypes
-        {
+        public virtual TypedNodeList Supertypes {
             get { return supertypes; }
         }
 
-        public virtual TypedNodeList Subtypes
-        {
+        public virtual TypedNodeList Subtypes {
             get { return subtypes; }
         }
 
-        public virtual TypeBuilder TypeBuilder
-        {
+        public virtual TypeBuilder TypeBuilder {
             get { return typeBuilder; }
             set { typeBuilder = value; }
         }
 
-        public virtual TypeData TypeData
-        {
+        public virtual TypeData TypeData {
             get { return typeData; }
             set { typeData = value; }
         }
 
-        public virtual ConstructorBuilder Constructor
-        {
+        public virtual ConstructorBuilder Constructor {
             get { return constructor; }
             set { constructor = value; }
         }
 
-        public virtual ConstructorBuilder StaticConstructor
-        {
+        public virtual ConstructorBuilder StaticConstructor {
             get { return staticConstructor; }
             set { staticConstructor = value; }
         }
 
-        public virtual ILGenerator StaticConstructorIL
-        {
-            get
-            {
+        public virtual ILGenerator StaticConstructorIL {
+            get {
                 if (staticConstructor != null &&
                     staticConstructorIL == null) {
                     staticConstructorIL =
@@ -115,8 +102,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual ArrayList Adapters
-        {
+        public virtual ArrayList Adapters {
             get { return adapters; }
         }
 
@@ -137,8 +123,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class SupertypingAdapter
-    {
+    public class SupertypingAdapter {
         protected TypeData adapteeType;
         protected TypeBuilder typeBuilder;
         protected TypeData typeData;
@@ -156,43 +141,36 @@ namespace Babel.Sather.Compiler
             this.methods = new ArrayList();
         }
 
-        public virtual TypeData AdapteeType
-        {
+        public virtual TypeData AdapteeType {
             get { return adapteeType; }
         }
 
-        public virtual TypeBuilder TypeBuilder
-        {
+        public virtual TypeBuilder TypeBuilder {
             get { return typeBuilder; }
             set { typeBuilder = value; }
         }
 
-        public virtual TypeData TypeData
-        {
+        public virtual TypeData TypeData {
             get { return typeData; }
             set { typeData = value; }
         }
 
-        public virtual FieldBuilder AdapteeField
-        {
+        public virtual FieldBuilder AdapteeField {
             get { return adapteeField; }
             set { adapteeField = value; }
         }
 
-        public virtual ConstructorBuilder Constructor
-        {
+        public virtual ConstructorBuilder Constructor {
             get { return constructor; }
             set { constructor = value; }
         }
 
-        public virtual ArrayList Methods
-        {
+        public virtual ArrayList Methods {
             get { return methods; }
         }
     }
 
-    public class SupertypingAdapterMethod
-    {
+    public class SupertypingAdapterMethod {
         MethodBuilder methodBuilder;
         MethodInfo adapteeMethod;
         int parameterCount;
@@ -206,18 +184,15 @@ namespace Babel.Sather.Compiler
             this.parameterCount = parameterCount;
         }
 
-        public virtual MethodBuilder MethodBuilder
-        {
+        public virtual MethodBuilder MethodBuilder {
             get { return methodBuilder; }
         }
 
-        public virtual MethodInfo AdapteeMethod
-        {
+        public virtual MethodInfo AdapteeMethod {
             get { return adapteeMethod; }
         }
 
-        public virtual int ParameterCount
-        {
+        public virtual int ParameterCount {
             get { return parameterCount; }
         }
     }
@@ -229,8 +204,7 @@ namespace Babel.Sather.Compiler
         TypeSpecifier ReturnType { get; }
     }
 
-    public class AbstractRoutineSignature : Node, MethodSignature
-    {
+    public class AbstractRoutineSignature : Node, MethodSignature {
         protected string name;
         protected TypedNodeList arguments;
         protected TypeSpecifier returnType;
@@ -260,23 +234,19 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual TypedNodeList Arguments
-        {
+        public virtual TypedNodeList Arguments {
             get { return arguments; }
         }
 
-        public virtual TypeSpecifier ReturnType
-        {
+        public virtual TypeSpecifier ReturnType {
             get { return returnType; }
         }
 
-        public virtual MethodBuilder MethodBuilder
-        {
+        public virtual MethodBuilder MethodBuilder {
             get { return methodBuilder; }
             set { methodBuilder = value; }
         }
@@ -303,8 +273,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class AbstractIterSignature : AbstractRoutineSignature
-    {
+    public class AbstractIterSignature : AbstractRoutineSignature {
         protected TypeBuilder typeBuilder;
         protected ConstructorBuilder constructor;
         protected MethodBuilder moveNext;
@@ -341,32 +310,27 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual TypeBuilder TypeBuilder
-        {
+        public virtual TypeBuilder TypeBuilder {
             get { return typeBuilder; }
             set { typeBuilder = value; }
         }
 
-        public virtual ConstructorBuilder Constructor
-        {
+        public virtual ConstructorBuilder Constructor {
             get { return constructor; }
             set { constructor = value; }
         }
 
-        public virtual MethodBuilder MoveNext
-        {
+        public virtual MethodBuilder MoveNext {
             get { return moveNext; }
             set { moveNext = value; }
         }
 
-        public virtual MethodBuilder GetCurrent
-        {
+        public virtual MethodBuilder GetCurrent {
             get { return getCurrent; }
             set { getCurrent = value; }
         }
 
-        public virtual TypedNodeList MoveNextArguments
-        {
+        public virtual TypedNodeList MoveNextArguments {
             get { return moveNextArguments; }
         }
 
@@ -383,14 +347,12 @@ namespace Babel.Sather.Compiler
                        FeatureModifier featureModifier);
     }
 
-    public enum ConstModifier
-    {
+    public enum ConstModifier {
         None,
         Private
     }
 
-    public class ConstDefinition : Node, ClassElement
-    {
+    public class ConstDefinition : Node, ClassElement {
         protected string name;
         protected TypeSpecifier typeSpecifier;
         protected object value;
@@ -413,34 +375,28 @@ namespace Babel.Sather.Compiler
             reader = null;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual TypeSpecifier TypeSpecifier
-        {
+        public virtual TypeSpecifier TypeSpecifier {
             get { return typeSpecifier; }
         }
 
-        public virtual object Value
-        {
+        public virtual object Value {
             get { return value; }
         }
 
-        public virtual ConstModifier Modifier
-        {
+        public virtual ConstModifier Modifier {
             get { return modifier; }
         }
 
-        public virtual FieldBuilder FieldBuilder
-        {
+        public virtual FieldBuilder FieldBuilder {
             get { return fieldBuilder; }
             set { fieldBuilder = value; }
         }
 
-        public virtual MethodBuilder Reader
-        {
+        public virtual MethodBuilder Reader {
             get { return reader; }
             set { reader = value; }
         }
@@ -477,15 +433,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public enum AttrModifier
-    {
+    public enum AttrModifier {
         None,
         Private,
         Readonly
     }
 
-    public class AttrDefinition : Node, ClassElement
-    {
+    public class AttrDefinition : Node, ClassElement {
         protected string name;
         protected TypeSpecifier typeSpecifier;
         protected AttrModifier modifier;
@@ -507,35 +461,29 @@ namespace Babel.Sather.Compiler
             writer = null;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual TypeSpecifier TypeSpecifier
-        {
+        public virtual TypeSpecifier TypeSpecifier {
             get { return typeSpecifier; }
         }
 
-        public virtual AttrModifier Modifier
-        {
+        public virtual AttrModifier Modifier {
             get { return modifier; }
         }
 
-        public virtual FieldBuilder FieldBuilder
-        {
+        public virtual FieldBuilder FieldBuilder {
             get { return fieldBuilder; }
             set { fieldBuilder = value; }
         }
 
-        public virtual MethodBuilder Reader
-        {
+        public virtual MethodBuilder Reader {
             get { return reader; }
             set { reader = value; }
         }
 
-        public virtual MethodBuilder Writer
-        {
+        public virtual MethodBuilder Writer {
             get { return writer; }
             set { writer = value; }
         }
@@ -577,8 +525,7 @@ namespace Babel.Sather.Compiler
     }
 
 
-    public class SharedAttrDefinition : AttrDefinition
-    {
+    public class SharedAttrDefinition : AttrDefinition {
         protected Expression value;
 
         public SharedAttrDefinition(string name,
@@ -591,8 +538,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public virtual Expression Value
-        {
+        public virtual Expression Value {
             get { return value; }
         }
 
@@ -610,14 +556,12 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public enum RoutineModifier
-    {
+    public enum RoutineModifier {
         None,
         Private
     }
 
-    public class RoutineDefinition : AbstractRoutineSignature, ClassElement
-    {
+    public class RoutineDefinition : AbstractRoutineSignature, ClassElement {
         protected StatementList statementList;
         protected RoutineModifier modifier;
 
@@ -633,13 +577,11 @@ namespace Babel.Sather.Compiler
             this.modifier = modifier;
         }
 
-        public virtual StatementList StatementList
-        {
+        public virtual StatementList StatementList {
             get { return statementList; }
         }
 
-        public virtual RoutineModifier Modifier
-        {
+        public virtual RoutineModifier Modifier {
             get { return modifier; }
         }
 
@@ -676,8 +618,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class IterDefinition : RoutineDefinition, ClassElement
-    {
+    public class IterDefinition : RoutineDefinition, ClassElement {
         protected TypeBuilder typeBuilder;
         protected FieldBuilder self;
         protected FieldBuilder current;
@@ -730,65 +671,54 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public virtual TypeBuilder TypeBuilder
-        {
+        public virtual TypeBuilder TypeBuilder {
             get { return typeBuilder; }
             set { typeBuilder = value; }
         }
 
-        public virtual FieldBuilder Self
-        {
+        public virtual FieldBuilder Self {
             get { return self; }
             set { self = value; }
         }
 
-        public virtual FieldBuilder Current
-        {
+        public virtual FieldBuilder Current {
             get { return current; }
             set { current = value; }
         }
 
-        public virtual FieldBuilder CurrentPosition
-        {
+        public virtual FieldBuilder CurrentPosition {
             get { return currentPosition; }
             set { currentPosition = value; }
         }
 
-        public virtual ConstructorBuilder Constructor
-        {
+        public virtual ConstructorBuilder Constructor {
             get { return constructor; }
             set { constructor = value; }
         }
 
-        public virtual MethodBuilder MoveNext
-        {
+        public virtual MethodBuilder MoveNext {
             get { return moveNext; }
             set { moveNext = value; }
         }
 
-        public virtual MethodBuilder GetCurrent
-        {
+        public virtual MethodBuilder GetCurrent {
             get { return getCurrent; }
             set { getCurrent = value; }
         }
 
-        public virtual ArrayList ResumePoints
-        {
+        public virtual ArrayList ResumePoints {
             get { return resumePoints; }
         }
 
-        public virtual Hashtable LocalVariables
-        {
+        public virtual Hashtable LocalVariables {
             get { return localVariables; }
         }
 
-        public virtual TypedNodeList MoveNextArguments
-        {
+        public virtual TypedNodeList MoveNextArguments {
             get { return moveNextArguments; }
         }
 
-        public virtual ArrayList BridgeMethods
-        {
+        public virtual ArrayList BridgeMethods {
             get { return bridgeMethods; }
         }
 
@@ -798,8 +728,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class ResumePoint
-    {
+    public class ResumePoint {
         protected int index;
         protected Label label;
 
@@ -808,21 +737,18 @@ namespace Babel.Sather.Compiler
             index = 0;
         }
 
-        public virtual int Index
-        {
+        public virtual int Index {
             get { return index; }
             set { index = value; }
         }
 
-        public virtual Label Label
-        {
+        public virtual Label Label {
             get { return label; }
             set { label = value; }
         }
     }
 
-    public class Argument : TypedNode
-    {
+    public class Argument : TypedNode {
         protected ArgumentMode mode;
         protected string name;
         protected int index;
@@ -838,24 +764,20 @@ namespace Babel.Sather.Compiler
             this.typeSpecifier = typeSpecifier;
         }
 
-        public virtual ArgumentMode Mode
-        {
+        public virtual ArgumentMode Mode {
             get { return mode; }
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual int Index
-        {
+        public virtual int Index {
             get { return index; }
             set { index = value; }
         }
 
-        public virtual TypeSpecifier TypeSpecifier
-        {
+        public virtual TypeSpecifier TypeSpecifier {
             get { return typeSpecifier; }
             set { typeSpecifier = value; }
         }
@@ -874,16 +796,14 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public enum IncludeModifier
-    {
+    public enum IncludeModifier {
         None,
         Private,
         Readonly,
         NoChange
     }
 
-    public class IncludeClause : Node, ClassElement
-    {
+    public class IncludeClause : Node, ClassElement {
         protected TypeSpecifier typeSpecifier;
         protected IncludeModifier modifier;
         protected NodeList featureModifierList;
@@ -899,23 +819,19 @@ namespace Babel.Sather.Compiler
             this.featureModifierList = featureModifierList;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return ""; }
         }
 
-        public virtual TypeSpecifier TypeSpecifier
-        {
+        public virtual TypeSpecifier TypeSpecifier {
             get { return typeSpecifier; }
         }
 
-        public virtual IncludeModifier Modifier
-        {
+        public virtual IncludeModifier Modifier {
             get { return modifier; }
         }
 
-        public virtual NodeList FeatureModifierList
-        {
+        public virtual NodeList FeatureModifierList {
             get { return featureModifierList; }
         }
 
@@ -938,8 +854,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class FeatureModifier : Node
-    {
+    public class FeatureModifier : Node {
         protected string name;
         protected string newName;
         protected IncludeModifier newModifier;
@@ -955,18 +870,15 @@ namespace Babel.Sather.Compiler
             this.newModifier = newModifier;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual string NewName
-        {
+        public virtual string NewName {
             get { return newName; }
         }
 
-        public virtual IncludeModifier NewModifier
-        {
+        public virtual IncludeModifier NewModifier {
             get { return newModifier; }
         }
 

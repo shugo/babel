@@ -8,18 +8,15 @@
 using System;
 using System.Collections;
 
-namespace Babel.Sather.Compiler
-{
-    public enum TypeKind
-    {
+namespace Babel.Sather.Compiler {
+    public enum TypeKind {
         Normal,
         Routine,
         Iterator,
         Same
     }
 
-    public class TypeSpecifier : TypedNode
-    {
+    public class TypeSpecifier : TypedNode {
         protected string name;
         protected TypeKind kind;
 
@@ -42,18 +39,15 @@ namespace Babel.Sather.Compiler
             return name;
         }
 
-        public virtual string Name
-        {
+        public virtual string Name {
             get { return name; }
         }
 
-        public virtual TypeKind Kind
-        {
+        public virtual TypeKind Kind {
             get { return kind; }
         }
 
-        public virtual bool IsNull
-        {
+        public virtual bool IsNull {
             get { return false; }
         }
 
@@ -63,8 +57,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class NullTypeSpecifier : TypeSpecifier
-    {
+    public class NullTypeSpecifier : TypeSpecifier {
         public NullTypeSpecifier()
             : base(null, TypeKind.Normal, Location.Null)
         {

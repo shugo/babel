@@ -12,10 +12,8 @@ using System.Collections;
 
 using Babel.Sather.Base;
 
-namespace Babel.Sather.Compiler
-{
-    public class CodeGeneratingVisitor : AbstractNodeVisitor
-    {
+namespace Babel.Sather.Compiler {
+    public class CodeGeneratingVisitor : AbstractNodeVisitor {
         protected Program program;
         protected TypeManager typeManager;
         protected Report report;
