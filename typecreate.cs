@@ -99,8 +99,8 @@ namespace Babel.Sather.Compiler
                     foreach (TypeSpecifier subtype in cls.Subtypes) {
                         if (subtype.NodeType == null)
                             return;
-                        SupertypingAdapter adapter =
-                            new SupertypingAdapter(subtype.NodeType);
+                        SubtypeAdapter adapter =
+                            new SubtypeAdapter(subtype.NodeType);
                         adapter.TypeBuilder =
                             cls.TypeBuilder.
                             DefineNestedType("__adapter" + adapterCount,
@@ -112,6 +112,9 @@ namespace Babel.Sather.Compiler
                                             new Type[] { cls.TypeBuilder },
                                             subtypeAncestors);
                         cls.Adapters.Add(adapter);
+                        typeManager.AddSubtypeAdapter(cls.TypeBuilder,
+                                                      adapter.AdapteeType,
+                                                      adapter.TypeBuilder);
                         adapterCount++;
                     }
                 }

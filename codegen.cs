@@ -59,22 +59,29 @@ namespace Babel.Sather.Compiler
                 cls.StaticConstructorIL.Emit(OpCodes.Ret);
             }
             currentType.CreateType();
-            foreach (SupertypingAdapter adapter in cls.Adapters) {
+            foreach (SubtypeAdapter adapter in cls.Adapters) {
                 ilGenerator = adapter.Constructor.GetILGenerator();
                 ilGenerator.Emit(OpCodes.Ldarg_0);
                 ilGenerator.Emit(OpCodes.Ldarg_1);
                 ilGenerator.Emit(OpCodes.Stfld, adapter.AdapteeField);
                 ilGenerator.Emit(OpCodes.Ret);
-                foreach (SupertypingBridgeMethod method in adapter.Methods) {
+                foreach (SubtypeAdapterMethod method in adapter.Methods) {
                     ilGenerator = method.MethodBuilder.GetILGenerator();
                     ilGenerator.Emit(OpCodes.Ldarg_0);
+                    ilGenerator.Emit(OpCodes.Ldfld, adapter.AdapteeField);
                     ParameterInfo[] parameters =
                         typeManager.GetParameters(method.AdapteeMethod);
                     foreach (ParameterInfo param in parameters) {
-                        ilGenerator.Emit(OpCodes.Ldarg, param.Position);
+                        ilGenerator.Emit(OpCodes.Ldarg, param.Position + 1);
                     }
-                    ilGenerator.EmitCall(OpCodes.Callvirt, method.AdapteeMethod,
-                                         null);
+                    if (adapter.AdapteeType.IsInterface)
+                        ilGenerator.EmitCall(OpCodes.Callvirt,
+                                             method.AdapteeMethod,
+                                             null);
+                    else
+                        ilGenerator.EmitCall(OpCodes.Call,
+                                             method.AdapteeMethod,
+                                             null);
                     ilGenerator.Emit(OpCodes.Ret);
 
                 }
@@ -696,6 +703,14 @@ namespace Babel.Sather.Compiler
         protected virtual void BoxIfNecessary(Type sourceType,
                                               Type destinationType)
         {
+            Type adapterType = typeManager.GetSubtypeAdapter(destinationType,
+                                                             sourceType);
+            if (adapterType != null) {
+                ConstructorInfo[] constructors =
+                    typeManager.GetConstructors(adapterType);
+                ilGenerator.Emit(OpCodes.Newobj, constructors[0]);
+                return;
+            }
             if (sourceType.IsValueType &&
                 !destinationType.IsValueType)
                 ilGenerator.Emit(OpCodes.Box, sourceType);

@@ -63,7 +63,7 @@ namespace Babel.Sather.Compiler
                                  typeManager.GetTypeName(cls.TypeBuilder));
                 }
             }
-            foreach (SupertypingAdapter adapter in cls.Adapters) {
+            foreach (SubtypeAdapter adapter in cls.Adapters) {
                 adapter.AdapteeField =
                     adapter.TypeBuilder.DefineField("__adaptee",
                                                     adapter.AdapteeType,
@@ -96,9 +96,9 @@ namespace Babel.Sather.Compiler
                                          MethodAttributes.HideBySig,
                                          m.ReturnType,
                                          paramTypes);
-                        SupertypingBridgeMethod bridgeMethod =
-                            new SupertypingBridgeMethod(mb, m);
-                        adapter.Methods.Add(bridgeMethod);
+                        SubtypeAdapterMethod adapterMethod =
+                            new SubtypeAdapterMethod(mb, subtypeMethod);
+                        adapter.Methods.Add(adapterMethod);
                     }
                 }
             }
@@ -182,31 +182,9 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.HideBySig,
                              iter.TypeBuilder, iter.Arguments);
             
-            Type[] satherNameParams = new Type[] { typeof(string) };
-            ConstructorInfo satherNameConstructor =
-                typeof(SatherNameAttribute).GetConstructor(satherNameParams);
-            CustomAttributeBuilder satherNameAttrBuilder =
-                new CustomAttributeBuilder(satherNameConstructor,
-                                           new object[] { iter.Name });
-            iter.MethodBuilder.SetCustomAttribute(satherNameAttrBuilder);
-            Attribute satherNameAttr = new SatherNameAttribute(iter.Name);
-            typeManager.AddCustomAttribute(iter.MethodBuilder,
-                                           satherNameAttr);
-
-            Type iterRetType = typeof(IterReturnTypeAttribute);
-            Type[] iterRetParamTypes = new Type[] { typeof(Type) };
-            ConstructorInfo iterRetConstructor =
-                iterRetType.GetConstructor(iterRetParamTypes);
-            object[] iterRetParams =
-                new object[] { iter.ReturnType.NodeType };
-            CustomAttributeBuilder iterRetAttrBuilder =
-                new CustomAttributeBuilder(iterRetConstructor,
-                                           iterRetParams);
-            iter.MethodBuilder.SetCustomAttribute(iterRetAttrBuilder);
-            Attribute iterRetAttr =
-                new IterReturnTypeAttribute(iter.ReturnType.NodeType);
-            typeManager.AddCustomAttribute(iter.MethodBuilder,
-                                           iterRetAttr);
+            typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
+            typeManager.AddIterReturnType(iter.MethodBuilder,
+                                          iter.ReturnType.NodeType);
 
             iterCount++;
         }
@@ -454,31 +432,9 @@ namespace Babel.Sather.Compiler
                 DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
                              iter.TypeBuilder, iter.Arguments);
 
-            Type[] satherNameParams = new Type[] { typeof(string) };
-            ConstructorInfo satherNameConstructor =
-                typeof(SatherNameAttribute).GetConstructor(satherNameParams);
-            CustomAttributeBuilder satherNameAttrBuilder =
-                new CustomAttributeBuilder(satherNameConstructor,
-                                           new object[] { iter.Name });
-            iter.MethodBuilder.SetCustomAttribute(satherNameAttrBuilder);
-            Attribute satherNameAttr = new SatherNameAttribute(iter.Name);
-            typeManager.AddCustomAttribute(iter.MethodBuilder,
-                                           satherNameAttr);
-
-            Type iterRetType = typeof(IterReturnTypeAttribute);
-            Type[] iterRetParamTypes = new Type[] { typeof(Type) };
-            ConstructorInfo iterRetConstructor =
-                iterRetType.GetConstructor(iterRetParamTypes);
-            object[] iterRetParams =
-                new object[] { iter.ReturnType.NodeType };
-            CustomAttributeBuilder iterRetAttrBuilder =
-                new CustomAttributeBuilder(iterRetConstructor,
-                                           iterRetParams);
-            iter.MethodBuilder.SetCustomAttribute(iterRetAttrBuilder);
-            Attribute iterRetAttr =
-                new IterReturnTypeAttribute(iter.ReturnType.NodeType);
-            typeManager.AddCustomAttribute(iter.MethodBuilder,
-                                           iterRetAttr);
+            typeManager.AddSatherName(iter.MethodBuilder, iter.Name);
+            typeManager.AddIterReturnType(iter.MethodBuilder,
+                                          iter.ReturnType.NodeType);
 
             foreach (Type t in iterTypeAncestors) {
                 MethodBuilder bridgeMethod =

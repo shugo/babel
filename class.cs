@@ -129,7 +129,7 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class SupertypingAdapter
+    public class SubtypeAdapter
     {
         Type adapteeType;
         TypeBuilder typeBuilder;
@@ -137,7 +137,7 @@ namespace Babel.Sather.Compiler
         ConstructorBuilder constructor;
         ArrayList methods;
 
-        public SupertypingAdapter(Type adapteeType)
+        public SubtypeAdapter(Type adapteeType)
         {
             this.adapteeType = adapteeType;
             this.typeBuilder = null;
@@ -175,13 +175,13 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class SupertypingBridgeMethod
+    public class SubtypeAdapterMethod
     {
         MethodBuilder methodBuilder;
         MethodInfo adapteeMethod;
 
-        public SupertypingBridgeMethod(MethodBuilder methodBuilder,
-                                       MethodInfo adapteeMethod)
+        public SubtypeAdapterMethod(MethodBuilder methodBuilder,
+                                    MethodInfo adapteeMethod)
         {
             this.methodBuilder = methodBuilder;
             this.adapteeMethod = adapteeMethod;

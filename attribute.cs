@@ -69,4 +69,26 @@ namespace Babel.Sather.Base
             }
         }
     }
+
+    public class SubtypeAdapterAttribute : Attribute
+    {
+        protected Type adapteeType;
+        protected Type adapterType;
+
+        public SubtypeAdapterAttribute(Type adapteeType, Type adapterType)
+        {
+            this.adapteeType = adapteeType;
+            this.adapterType = adapterType;
+        }
+
+        public virtual Type AdapteeType
+        {
+            get { return adapteeType; }
+        }
+
+        public virtual Type AdapterType
+        {
+            get { return adapterType; }
+        }
+    }
 }

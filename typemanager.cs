@@ -170,7 +170,9 @@ namespace Babel.Sather.Compiler
             if (supertype == typeof(object))
                 return true;
             Type[] ancestors = GetAncestors(type);
-            return ((IList) ancestors).Contains(supertype);
+            if (((IList) ancestors).Contains(supertype))
+                return true;
+            return GetSubtypeAdapter(supertype, type) != null;
         }
 
         public virtual string GetTypeName(Type type)
@@ -295,6 +297,20 @@ namespace Babel.Sather.Compiler
             }
         }
 
+        public void AddSatherName(MethodBuilder methodBuilder,
+                                  string satherName)
+        {
+            Type[] paramTypes = new Type[] { typeof(string) };
+            ConstructorInfo constructor =
+                typeof(SatherNameAttribute).GetConstructor(paramTypes);
+            CustomAttributeBuilder attrBuilder =
+                new CustomAttributeBuilder(constructor,
+                                           new object[] { satherName });
+            methodBuilder.SetCustomAttribute(attrBuilder);
+            Attribute attr = new SatherNameAttribute(satherName);
+            AddCustomAttribute(methodBuilder, attr);
+        }
+
         public virtual string GetSatherName(ICustomAttributeProvider provider)
         {
             object[] attrs =
@@ -303,6 +319,21 @@ namespace Babel.Sather.Compiler
                 return null;
             else
                 return ((SatherNameAttribute) attrs[0]).Name;
+        }
+
+        public void AddIterReturnType(MethodBuilder methodBuilder,
+                                      Type returnType)
+        {
+            Type[] paramTypes = new Type[] { typeof(Type) };
+            ConstructorInfo constructor =
+                typeof(IterReturnTypeAttribute).GetConstructor(paramTypes);
+            CustomAttributeBuilder attrBuilder =
+                new CustomAttributeBuilder(constructor,
+                                           new object[] { returnType });
+            methodBuilder.SetCustomAttribute(attrBuilder);
+            Attribute attr =
+                new IterReturnTypeAttribute(returnType);
+            AddCustomAttribute(methodBuilder, attr);
         }
 
         public virtual Type GetIterReturnType(ICustomAttributeProvider provider)
@@ -326,6 +357,35 @@ namespace Babel.Sather.Compiler
                 return ArgumentMode.In;
             else
                 return ((ArgumentModeAttribute) attrs[0]).Mode;
+        }
+
+        public void AddSubtypeAdapter(TypeBuilder typeBuilder,
+                                      Type adapteeType,
+                                      Type adapterType)
+        {
+            Type[] paramTypes = new Type[] { typeof(Type), typeof(Type) };
+            ConstructorInfo constructor =
+                typeof(SubtypeAdapterAttribute).GetConstructor(paramTypes);
+            object[] parameters = new object [] { adapteeType, adapterType };
+            CustomAttributeBuilder attrBuilder =
+                new CustomAttributeBuilder(constructor, parameters);
+            typeBuilder.SetCustomAttribute(attrBuilder);
+            Attribute attr = new SubtypeAdapterAttribute(adapteeType,
+                                                         adapterType);
+            AddCustomAttribute(typeBuilder, attr);
+        }
+
+        public virtual Type GetSubtypeAdapter(Type type, Type subtype)
+        {
+            object[] attrs =
+                GetCustomAttributes(type, typeof(SubtypeAdapterAttribute));
+            if (attrs == null)
+                return null;
+            foreach (SubtypeAdapterAttribute attr in attrs) {
+                if (attr.AdapteeType == subtype)
+                    return attr.AdapterType;
+            }
+            return null;
         }
 
         public virtual string GetMethodName(MethodInfo method)
