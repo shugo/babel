@@ -179,12 +179,15 @@ namespace Babel.Sather.Compiler
     {
         MethodBuilder methodBuilder;
         MethodInfo adapteeMethod;
+        int parameterCount;
 
         public SubtypeAdapterMethod(MethodBuilder methodBuilder,
-                                    MethodInfo adapteeMethod)
+                                    MethodInfo adapteeMethod,
+                                    int parameterCount)
         {
             this.methodBuilder = methodBuilder;
             this.adapteeMethod = adapteeMethod;
+            this.parameterCount = parameterCount;
         }
 
         public virtual MethodBuilder MethodBuilder
@@ -195,6 +198,11 @@ namespace Babel.Sather.Compiler
         public virtual MethodInfo AdapteeMethod
         {
             get { return adapteeMethod; }
+        }
+
+        public virtual int ParameterCount
+        {
+            get { return parameterCount; }
         }
     }
 

@@ -63,6 +63,14 @@ namespace Babel.Sather.Compiler
                                  typeManager.GetTypeName(cls.TypeBuilder));
                 }
             }
+            CreateAdapterMethods(cls);
+            currentClass = prevClass;
+            iterCount = prevIterCount;
+            ancestorMethods = prevAncestorMethods;
+        }
+
+        protected virtual void CreateAdapterMethods(ClassDefinition cls)
+        {
             foreach (SubtypeAdapter adapter in cls.Adapters) {
                 adapter.AdapteeField =
                     adapter.TypeBuilder.DefineField("__adaptee",
@@ -73,32 +81,29 @@ namespace Babel.Sather.Compiler
                                       MethodAttributes.Public,
                                       CallingConventions.Standard,
                                       new Type[] { adapter.AdapteeType });
-                MethodInfo[] subtypeMethods =
+                MethodInfo[] adapteeMethods =
                     typeManager.GetMethods(adapter.AdapteeType);
                 ArrayList supertypeMethods =
                     typeManager.GetAncestorMethods(adapter.TypeBuilder);
-                foreach (MethodInfo subtypeMethod in subtypeMethods) {
+                foreach (MethodInfo adapteeMethod in adapteeMethods) {
                     ArrayList conformableMethods =
-                        CheckMethodConformance(subtypeMethod, supertypeMethods);
+                        CheckMethodConformance(adapteeMethod, supertypeMethods);
                     foreach (MethodInfo m in conformableMethods) {
-                        ParameterInfo[] parameters =
-                            typeManager.GetParameters(m);
-                        Type[] paramTypes = new Type[parameters.Length];
-                        for (int i = 0; i < parameters.Length; i++) {
-                            paramTypes[i] = parameters[i].ParameterType;
+                        AddAdapterMethod(adapter, m, adapteeMethod);
+                    }
+                }
+                Type builtinMethodContainer =
+                    typeManager.GetBuiltinMethodContainer(adapter.AdapteeType);
+                if (builtinMethodContainer != null) {
+                    MethodInfo[] adapteeBuiltinMethods =
+                        typeManager.GetMethods(builtinMethodContainer);
+                    foreach (MethodInfo adapteeMethod in adapteeBuiltinMethods) {
+                        ArrayList conformableMethods =
+                            CheckBuiltinMethodConformance(adapteeMethod,
+                                                          supertypeMethods);
+                        foreach (MethodInfo m in conformableMethods) {
+                            AddAdapterMethod(adapter, m, adapteeMethod);
                         }
-                        MethodBuilder mb =
-                            adapter.TypeBuilder.
-                            DefineMethod(m.DeclaringType.FullName + "." +
-                                         m.Name,
-                                         MethodAttributes.Private |
-                                         MethodAttributes.Virtual |
-                                         MethodAttributes.HideBySig,
-                                         m.ReturnType,
-                                         paramTypes);
-                        SubtypeAdapterMethod adapterMethod =
-                            new SubtypeAdapterMethod(mb, subtypeMethod);
-                        adapter.Methods.Add(adapterMethod);
                     }
                 }
                 foreach (MethodInfo method in supertypeMethods) {
@@ -108,9 +113,31 @@ namespace Babel.Sather.Compiler
                                  typeManager.GetTypeName(adapter.AdapteeType));
                 }
             }
-            currentClass = prevClass;
-            iterCount = prevIterCount;
-            ancestorMethods = prevAncestorMethods;
+        }
+
+        protected virtual void AddAdapterMethod(SubtypeAdapter adapter,
+                                                MethodInfo method,
+                                                MethodInfo adapteeMethod)
+        {
+            ParameterInfo[] parameters =
+                typeManager.GetParameters(method);
+            Type[] paramTypes = new Type[parameters.Length];
+            for (int i = 0; i < parameters.Length; i++) {
+                paramTypes[i] = parameters[i].ParameterType;
+            }
+            MethodBuilder mb =
+                adapter.TypeBuilder.
+                DefineMethod(method.DeclaringType.FullName + "." +
+                             method.Name,
+                             MethodAttributes.Private |
+                             MethodAttributes.Virtual |
+                             MethodAttributes.HideBySig,
+                             method.ReturnType,
+                             paramTypes);
+            SubtypeAdapterMethod adapterMethod =
+                new SubtypeAdapterMethod(mb, adapteeMethod,
+                                         parameters.Length);
+            adapter.Methods.Add(adapterMethod);
         }
 
         public override void VisitAbstractRoutine(AbstractRoutineSignature rout)
@@ -658,6 +685,49 @@ namespace Babel.Sather.Compiler
             ArrayList conformableMethods = new ArrayList();
             foreach (MethodInfo m in ancestorMethods) {
                 if (ConformMethod(method, m))
+                    conformableMethods.Add(m);
+            }
+            foreach (MethodInfo m in conformableMethods) {
+                ancestorMethods.Remove(m);
+            }
+            return conformableMethods;
+        }
+
+        protected virtual bool
+        ConformBuiltinMethod(MethodInfo method1,
+                      MethodInfo method2)
+        {
+            if (typeManager.GetMethodName(method1) !=
+                typeManager.GetMethodName(method2))
+                return false;
+            ParameterInfo[] parameters1 = typeManager.GetParameters(method1);
+            ParameterInfo[] parameters2 = typeManager.GetParameters(method2);
+            if (parameters1.Length != parameters2.Length + 1)
+                return false;
+            if (typeManager.GetReturnType(method1) !=
+                typeManager.GetReturnType(method2))
+                return false;
+
+            for (int i = 1; i < parameters1.Length; i++) {
+                ParameterInfo param1 = parameters1[i];
+                ParameterInfo param2 = parameters2[i - 1];
+                ArgumentMode mode1 = typeManager.GetArgumentMode(param1);
+                ArgumentMode mode2 = typeManager.GetArgumentMode(param2);
+                if (mode1 != mode2)
+                    return false;
+                if (param1.ParameterType != param2.ParameterType)
+                    return false;
+            }
+            return true;
+        }
+
+        protected virtual ArrayList
+        CheckBuiltinMethodConformance(MethodInfo method,
+                                      ArrayList ancestorMethods)
+        {
+            ArrayList conformableMethods = new ArrayList();
+            foreach (MethodInfo m in ancestorMethods) {
+                if (ConformBuiltinMethod(method, m))
                     conformableMethods.Add(m);
             }
             foreach (MethodInfo m in conformableMethods) {

@@ -60,34 +60,36 @@ namespace Babel.Sather.Compiler
             }
             currentType.CreateType();
             foreach (SubtypeAdapter adapter in cls.Adapters) {
-                ilGenerator = adapter.Constructor.GetILGenerator();
-                ilGenerator.Emit(OpCodes.Ldarg_0);
-                ilGenerator.Emit(OpCodes.Ldarg_1);
-                ilGenerator.Emit(OpCodes.Stfld, adapter.AdapteeField);
-                ilGenerator.Emit(OpCodes.Ret);
-                foreach (SubtypeAdapterMethod method in adapter.Methods) {
-                    ilGenerator = method.MethodBuilder.GetILGenerator();
-                    ilGenerator.Emit(OpCodes.Ldarg_0);
-                    ilGenerator.Emit(OpCodes.Ldfld, adapter.AdapteeField);
-                    ParameterInfo[] parameters =
-                        typeManager.GetParameters(method.AdapteeMethod);
-                    foreach (ParameterInfo param in parameters) {
-                        ilGenerator.Emit(OpCodes.Ldarg, param.Position + 1);
-                    }
-                    ilGenerator.Emit(OpCodes.Tailcall);
-                    if (adapter.AdapteeType.IsInterface)
-                        ilGenerator.EmitCall(OpCodes.Callvirt,
-                                             method.AdapteeMethod,
-                                             null);
-                    else
-                        ilGenerator.EmitCall(OpCodes.Call,
-                                             method.AdapteeMethod,
-                                             null);
-                    ilGenerator.Emit(OpCodes.Ret);
-
-                }
-                adapter.TypeBuilder.CreateType();
+                GenerateAdapter(adapter);
             }
+        }
+
+        protected virtual void GenerateAdapter(SubtypeAdapter adapter)
+        {
+            ilGenerator = adapter.Constructor.GetILGenerator();
+            ilGenerator.Emit(OpCodes.Ldarg_0);
+            ilGenerator.Emit(OpCodes.Ldarg_1);
+            ilGenerator.Emit(OpCodes.Stfld, adapter.AdapteeField);
+            ilGenerator.Emit(OpCodes.Ret);
+            foreach (SubtypeAdapterMethod method in adapter.Methods) {
+                ilGenerator = method.MethodBuilder.GetILGenerator();
+                ilGenerator.Emit(OpCodes.Ldarg_0);
+                ilGenerator.Emit(OpCodes.Ldfld, adapter.AdapteeField);
+                for (int i = 1; i <= method.ParameterCount; i++) {
+                    ilGenerator.Emit(OpCodes.Ldarg, i);
+                }
+                ilGenerator.Emit(OpCodes.Tailcall);
+                if (adapter.AdapteeType.IsInterface)
+                    ilGenerator.EmitCall(OpCodes.Callvirt,
+                                         method.AdapteeMethod,
+                                         null);
+                else
+                    ilGenerator.EmitCall(OpCodes.Call,
+                                         method.AdapteeMethod,
+                                         null);
+                ilGenerator.Emit(OpCodes.Ret);
+            }
+            adapter.TypeBuilder.CreateType();
         }
 
         public override void VisitConst(ConstDefinition constDef)
