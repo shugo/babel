@@ -137,6 +137,12 @@ namespace Babel.Compiler {
             }
         }
 
+        public virtual bool IsTypeParameter {
+            get {
+                return false;
+            }
+        }
+
         public virtual TypeData ElementType {
             get {
                 return typeManager.GetTypeData(rawType.GetElementType());
@@ -359,6 +365,12 @@ namespace Babel.Compiler {
         public override ArrayList Methods {
             get {
                 return constrainingType.Methods;
+            }
+        }
+
+        public override bool IsTypeParameter {
+            get {
+                return true;
             }
         }
     }
