@@ -469,36 +469,6 @@ namespace Babel.Compiler {
                 return;
             }
             call.Arguments.Accept(this);
-#if false
-            MethodInfo method;
-            TypeData builtinMethodContainer =
-                typeManager.GetBuiltinMethodContainer(receiverType);
-            if (builtinMethodContainer != null) {
-                try {
-                    Expression expr = new VoidExpression(Location.Null);
-                    expr.NodeType = receiverType;
-                    ModalExpression arg = new ModalExpression(ArgumentMode.In,
-                                                              expr,
-                                                              Location.Null);
-                    TypedNodeList args = new TypedNodeList(arg);
-                    args.Append(call.Arguments.First);
-                    method = LookupMethod(builtinMethodContainer,
-                                          call.Name, args,
-                                          call.HasValue);
-                    call.IsBuiltin = true;
-                    SetupMethod(call, method, receiverType);
-                    return;
-                }
-                catch (LookupMethodException e) {
-                }
-            }
-            try {
-                method = LookupMethod(receiverType,
-                                      call.Name, call.Arguments,
-                                      call.HasValue);
-                SetupMethod(call, method, receiverType);
-            }
-#else
             try {
                 MethodData method = receiverType.LookupMethod(call.Name,
                                                               call.Arguments,
@@ -506,7 +476,6 @@ namespace Babel.Compiler {
                 call.IsBuiltin = method.IsBuiltin;
                 SetupMethod(call, method.MethodInfo, receiverType);
             }
-#endif
             catch (LookupMethodException e) {
                 string routInfo = receiverType.FullName +
                     "::" + call.Name;
@@ -547,33 +516,12 @@ namespace Babel.Compiler {
                 return;
             }
             iter.Arguments.Accept(this);
-            MethodInfo method;
-            TypeData builtinMethodContainer =
-                typeManager.GetBuiltinMethodContainer(receiverType);
-            if (builtinMethodContainer != null) {
-                try {
-                    Expression expr = new VoidExpression(Location.Null);
-                    expr.NodeType = receiverType;
-                    ModalExpression arg = new ModalExpression(ArgumentMode.In,
-                                                              expr,
-                                                              Location.Null);
-                    TypedNodeList args = new TypedNodeList(arg);
-                    args.Append(iter.Arguments.First);
-                    method = LookupMethod(builtinMethodContainer,
-                                          iter.Name, args,
-                                          iter.HasValue);
-                    iter.IsBuiltin = true;
-                    SetupIter(iter, method, receiverType);
-                    return;
-                }
-                catch (LookupMethodException e) {
-                }
-            }
             try {
-                method = LookupMethod(receiverType,
-                                      iter.Name, iter.Arguments,
-                                      iter.HasValue);
-                SetupIter(iter, method, receiverType);
+                MethodData method = receiverType.LookupMethod(iter.Name,
+                                                              iter.Arguments,
+                                                              iter.HasValue);
+                iter.IsBuiltin = method.IsBuiltin;
+                SetupIter(iter, method.MethodInfo, receiverType);
             }
             catch (LookupMethodException e) {
                 string iterInfo = receiverType.FullName +
