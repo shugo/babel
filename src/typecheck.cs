@@ -92,8 +92,11 @@ namespace Babel.Compiler {
             }
             else {
                 TypeData type =
-                    typeManager.GetType(typeSpecifier.Name,
+                    currentClass.GetTypeParameter(typeSpecifier.Name);
+                if (type == null) {
+                    type = typeManager.GetType(typeSpecifier.Name,
                                         currentSouceFile.ImportedNamespaces);
+                }
                 if (type == null) {
                     report.Error(typeSpecifier.Location,
                                  "there is no class named {0}",

@@ -131,6 +131,11 @@ namespace Babel.Compiler {
                     Type baseType = pd.ConstrainingType.RawType;
                     pd.Builder.SetBaseTypeConstraint(baseType);
                 }
+                pd.NodeType =
+                    new TypeParameterData(typeManager, pd.Builder,
+                                          pd.ConstrainingType.NodeType);
+                pd.NodeType.Parents = new ArrayList();
+                pd.NodeType.Parents.Add(pd.ConstrainingType.NodeType);
             }
         }
 

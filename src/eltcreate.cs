@@ -534,18 +534,22 @@ namespace Babel.Compiler {
             if (typeSpecifier.Kind == TypeKind.Same) {
                 typeSpecifier.NodeType =
                     typeManager.GetTypeData(currentClass.TypeBuilder);
-                return;
             }
-            TypeData type =
-                typeManager.GetType(typeSpecifier.Name,
-                                    currentSouceFile.ImportedNamespaces);
-            if (type == null) {
-                report.Error(typeSpecifier.Location,
-                             "there is no class named {0}",
-                             typeSpecifier);
-                return;
+            else {
+                TypeData type =
+                    currentClass.GetTypeParameter(typeSpecifier.Name);
+                if (type == null) {
+                    type = typeManager.GetType(typeSpecifier.Name,
+                                        currentSouceFile.ImportedNamespaces);
+                }
+                if (type == null) {
+                    report.Error(typeSpecifier.Location,
+                                 "there is no class named {0}",
+                                 typeSpecifier);
+                    return;
+                }
+                typeSpecifier.NodeType = type;
             }
-            typeSpecifier.NodeType = type;
         }
 
         protected virtual void

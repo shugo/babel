@@ -129,9 +129,20 @@ namespace Babel.Compiler {
             cls.staticConstructorIL = null;
             return cls;
         }
+
+        public TypeData GetTypeParameter(string name)
+        {
+            string lowerName = name.ToLower();
+            foreach (ParameterDeclaration pd in TypeParameters) {
+                if (pd.Name.ToLower() == lowerName) {
+                    return pd.NodeType;
+                }
+            }
+            return null;
+        }
     }
 
-    public class ParameterDeclaration : Node {
+    public class ParameterDeclaration : TypedNode {
         protected string name;
         protected TypeSpecifier constrainingType;
         protected GenericTypeParameterBuilder builder;

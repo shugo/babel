@@ -226,7 +226,7 @@ abstract_class_definition
                   name = sourceFile.Namespace + Type.Delimiter + (string) $3;
               currentClass = new ClassDefinition(name,
                                                  ClassKind.Abstract,
-                                                 (NodeList) $4,
+                                                 (TypedNodeList) $4,
                                                  (TypedNodeList) $5,
                                                  (TypedNodeList) $6,
                                                  lexer.Location);
@@ -243,11 +243,11 @@ abstract_class_definition
 parameterization
 	: /* empty */
           {
-              $$ = new NodeList();
+              $$ = new TypedNodeList();
           }
 	| LBRACE parameter_declaration_list RBRACE
 	  {
-              $$ = new NodeList((Node) $2);
+              $$ = new TypedNodeList((Node) $2);
 	  }
 	;
 
@@ -255,8 +255,8 @@ parameter_declaration_list
         : parameter_declaration
         | parameter_declaration_list COMMA type_specifier
           {
-              Node list = (Node) $1;
-              list.Append((Node) $3);
+              TypedNode list = (TypedNode) $1;
+              list.Append((TypedNode) $3);
               $$ = $1;
           }
         ;

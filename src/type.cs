@@ -50,8 +50,7 @@ namespace Babel.Compiler {
                 return true;
             if (supertype.RawType == typeof(object))
                 return true;
-            Type[] ancestors = typeManager.GetAncestors(rawType);
-            if (((IList) ancestors).Contains(supertype.RawType))
+            if (Ancestors.Contains(supertype))
                 return true;
             Type adapter =
                 typeManager.GetSupertypingAdapter(supertype.RawType, rawType);
@@ -259,6 +258,10 @@ namespace Babel.Compiler {
             : base(typeManager, typeBuilder)
         {
             this.constrainingType = constrainingType;
+        }
+
+        public override string FullName {
+            get { return Name; }
         }
 
         public override ArrayList Methods {
