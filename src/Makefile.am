@@ -39,8 +39,6 @@ CLEANFILES		= bsc.exe \
 			  parser.cs \
 			  y.output
 
-SKELETON		= `$(JAY) -p`/skeleton.cs
-
 ETAGS_ARGS		= $(bscore_dll_SRCS) \
 			  $(bsc_exe_SOURCES)
 

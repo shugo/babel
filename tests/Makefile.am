@@ -12,6 +12,8 @@ EXTRA_DIST		= test.rb.in \
 			  absiter.sa \
 			  abstract.err \
 			  abstract.sa \
+			  caseinsensitive.out \
+			  caseinsensitive.sa \
 			  conflict.err \
 			  conflict.sa \
 			  fact.out \
@@ -20,38 +22,39 @@ EXTRA_DIST		= test.rb.in \
 			  hello.sa \
 			  import.out \
 			  import.sa \
+			  if.out
+			  if.sa
 			  iter.out \
 			  iter.sa \
 			  iterconflict.err \
 			  iterconflict.sa \
 			  new.out \
 			  new.sa \
+			  newline.out \
+			  newline.sa \
 			  outarg.out \
 			  outarg.sa \
 			  subtype.out \
 			  subtype.sa \
 			  valuetype.out \
-			  valuetype.sa \
-			  caseinsensitive.out \
-			  caseinsensitive.sa \
-			  newline.out \
-			  newline.sa
+			  valuetype.sa
 
 CLEANFILES		= test.rb \
 			  bsc.exe \
 			  bscore.dll \
 			  bsbase.dll \
 			  bsio.dll \
+			  caseinsensitive.exe \
 			  absiter.exe \
 			  fact.exe \
 			  hello.exe \
+			  if.exe \
 			  iter.exe \
 			  new.exe \
+			  newline.exe \
 			  outarg.exe \
 			  subtype.exe \
-			  valuetype.exe \
-			  caseinsensitive.exe \
-			  newline.exe
+			  valuetype.exe
 
 test.rb: test.rb.in
 	rm -f test.rb

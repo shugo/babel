@@ -153,62 +153,62 @@ source_file
         : {
               sourceFile = new SourceFile();
           }
-          opt_namespace_directive
-          opt_import_directives
-          class_def_list
+          components
           opt_EOF
           {
               program.AddChild(sourceFile);
           }
         ;
 
-opt_EOF
-        : /* empty */
-        | EOF
+components
+        : component
+        | components sep component
         ;
 
-opt_namespace_directive
-	: /* empty */
-	| namespace_directive
-	;
+component
+        : /* empty */
+        | namespace_directive
+        | import_directive
+        | abstract_class_definition
+        | class_definition
+        ;
 
 namespace_directive
-	: NAMESPACE namespace_name term
+        : NAMESPACE namespace_name
           {
-              sourceFile.Namespace = (string) $2;
+              if (sourceFile.Namespace != null) {
+                  report.Error(lexer.Location,
+                               "namespace is already declared");
+              }
+              else if (sourceFile.ImportedNamespaces.Count > 0) {
+                  report.Error(lexer.Location,
+                               "namespace must precede import directives");
+              }
+              else if (sourceFile.Children.First != null) {
+                  report.Error(lexer.Location,
+                               "namespace must precede class definitions");
+              }
+              else {
+                  sourceFile.Namespace = (string) $2;
+              }
           }
-	;
-
-opt_import_directives
-	: /* empty */
-	| import_directives
-	;
-
-import_directives
-	: import_directive 
-	| import_directives import_directive
-	;
+        ;
 
 import_directive
-	: IMPORT namespace_name term
+        : IMPORT namespace_name
           {
-              sourceFile.ImportNamespace((string) $2);
+              if (sourceFile.Children.First != null) {
+                  report.Error(lexer.Location,
+                               "namespace must precede class definitions");
+              }
+              else {
+                  sourceFile.ImportNamespace((string) $2);
+              }
           }
-	;
+        ;
 
 namespace_name
         : qualified_identifier
-        ;
-
-class_def_list
-	: class_def
-        | class_def_list term class_def
-        ;
-
-class_def
-        : /*empty */
-        | abstract_class_definition
-        | class_definition
         ;
 
 abstract_class_definition
@@ -229,14 +229,14 @@ abstract_class_definition
                                                  (TypedNodeList) $4,
                                                  (TypedNodeList) $5,
                                                  lexer.Location);
-	  }
+          }
           IS
           abstract_signature_list
           END
           {
               AddClass(currentClass);
               $$ = currentClass;
-	  }
+          }
         ;
 
 subtyping_clause
@@ -311,7 +311,7 @@ qualified_identifier
 
 abstract_signature_list
         : abstract_signature
-        | abstract_signature_list term abstract_signature
+        | abstract_signature_list sep abstract_signature
         ;
 
 abstract_signature
@@ -524,19 +524,19 @@ class_definition
                                                  ClassKind.Reference,
                                                  (TypedNodeList) $3,
                                                  lexer.Location);
-	  }
+          }
           IS
           class_element_list
           END
           {
               AddClass(currentClass);
               $$ = currentClass;
-	  }
+          }
         ;
 
 class_element_list
         : class_element
-        | class_element_list term class_element
+        | class_element_list sep class_element
         ;
 
 class_element
@@ -823,7 +823,7 @@ statement_list
               list.AddChild((Node) $1);
               $$ = list;
           }
-        | statement_list term statement
+        | statement_list sep statement
           {
               ((StatementList) $1).AddChild((Statement) $3);
               $$ = $1;
@@ -947,7 +947,7 @@ assign_statement
         ;
 
 if_statement
-        : IF expression THEN statement_list
+        : IF expression then statement_list
           opt_elsif_or_else END
           {
               $$ = new IfStatement((Expression) $2, (Node) $4, (Node) $5,
@@ -957,7 +957,7 @@ if_statement
 
 opt_elsif_or_else
         : opt_else
-        | ELSIF expression THEN statement_list
+        | ELSIF expression then statement_list
           opt_elsif_or_else
           {
               $$ = new IfStatement((Expression) $2, (Node) $4, (Node) $5,
@@ -1008,7 +1008,7 @@ case_when_list
         ;
 
 case_when
-        : WHEN expression_list THEN statement_list
+        : WHEN expression_list then statement_list
           {
               $$ = new CaseWhen((TypedNodeList) $2, (StatementList) $4,
                                 lexer.Location);
@@ -1038,7 +1038,7 @@ typecase_when_list
         ;
 
 typecase_when
-        : WHEN type_specifier THEN statement_list
+        : WHEN type_specifier then statement_list
           {
               $$ = new TypecaseWhen((TypeSpecifier) $2, (StatementList) $4,
                                     lexer.Location);
@@ -1116,11 +1116,16 @@ protect_when_list
         ;
 
 protect_when
-        : WHEN type_specifier THEN statement_list
+        : WHEN type_specifier then statement_list
           {
               $$ = new ProtectWhen((TypeSpecifier) $2, (StatementList) $4,
                                    lexer.Location);
           }
+        ;
+
+then
+        : THEN
+        | sep
         ;
 
 expression_statement
@@ -1554,10 +1559,15 @@ parenthesized_expression
           }
         ;
 
-term
-	: SEMI
-	| NL
-	;
+sep
+        : SEMI
+        | NL
+        ;
+
+opt_EOF
+        : /* empty */
+        | EOF
+        ;
 
 %%
 

@@ -38,6 +38,21 @@ AC_ARG_WITH(jay,
     AC_PATH_PROG(JAY, jay, no)
 ])
 
+AC_MSG_CHECKING(skeleton.cs)
+AC_ARG_WITH(skeleton,
+[  --with-skeleton=PATH    path to skeleton.cs],
+[
+    SKELETON="$withval"
+], [
+    if test -f /usr/share/doc/mono-jay/examples/skeleton.cs; then
+	SKELETON=/usr/share/doc/mono-jay/examples/skeleton.cs
+    else
+	SKELETON=`$JAY -p`/skeleton.cs
+    fi
+])
+AC_MSG_RESULT($SKELETON)
+AC_SUBST(SKELETON)
+
 AC_ARG_WITH(mono,
 [  --with-mono=PATH        path to mono],
 [
