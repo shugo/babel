@@ -67,10 +67,13 @@ namespace Babel.Sather.Compiler
                 }
                 Type[] ancestors = typeManager.ExtractAncestors(parents);
                 TypeAttributes attrs = TypeAttributes.Public;
-                if (cls.Kind == ClassKind.Abstract)
+                if (cls.Kind == ClassKind.Abstract) {
+                    attrs |= TypeAttributes.Abstract;
                     attrs |= TypeAttributes.Interface;
-                else
+                }
+                else {
                     attrs |= TypeAttributes.Class;
+                }
                 cls.TypeBuilder =
                     program.Module.DefineType(cls.Name, attrs,
                                               typeof(object), ancestors);
