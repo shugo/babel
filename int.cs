@@ -298,17 +298,18 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("times!")]
-        [IterReturnTypeAttribute(typeof(void))]
+        [IterReturnTypeAttribute(null)]
+        // use null instead of typeof(void) to avoid mcs bug
         public static __itertype_times __iter_times(int self)
         {
             return new __itertype_times(self);
         }
 
         [SatherNameAttribute("times!")]
-        [IterReturnTypeAttribute(typeof(__itertype_times))]
-        public static int __iter_times_int(int self)
+        [IterReturnTypeAttribute(typeof(int))]
+        public static __itertype_times __iter_times_int(int self)
         {
-            return 0;
+            return new __itertype_times(self);
         }
 
         public class __itertype_times : __itertype_upto
@@ -318,12 +319,12 @@ namespace Babel.Sather.Base
         }
 
         [SatherNameAttribute("for!")]
-        [IterReturnTypeAttribute(typeof(__itertype_for))]
-        public static int __iter_for(int self,
-                                     [ArgumentModeAttribute(ArgumentMode.Once)]
-                                     int i)
+        [IterReturnTypeAttribute(typeof(int))]
+        public static __itertype_for
+        __iter_for(int self,
+                   [ArgumentModeAttribute(ArgumentMode.Once)] int i)
         {
-            return 0;
+            return new __itertype_for(self, i);
         }
 
         public class __itertype_for : __itertype_upto
