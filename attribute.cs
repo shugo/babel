@@ -22,14 +22,14 @@ namespace Babel.Sather.Base
 
     public class ArgumentModeAttribute : Attribute
     {
-        ArgumentMode mode;
+        protected ArgumentMode mode;
 
         public ArgumentModeAttribute(ArgumentMode mode)
         {
             this.mode = mode;
         }
 
-        public ArgumentMode Mode
+        public virtual ArgumentMode Mode
         {
             get { return mode; }
         }
@@ -37,14 +37,14 @@ namespace Babel.Sather.Base
 
     public class IterTypeAttribute : Attribute
     {
-        Type iterType;
+        protected Type iterType;
 
         public IterTypeAttribute(Type iterType)
         {
             this.iterType = iterType;
         }
 
-        public Type IterType
+        public virtual Type IterType
         {
             get { return iterType; }
         }

@@ -14,10 +14,10 @@ namespace Babel.Sather.Compiler
 {
     public class TypeCreatingVisitor : AbstractNodeVisitor
     {
-        Program program;
-        TypeManager typeManager;
-        Report report;
-        Hashtable visitingClasses;
+        protected Program program;
+        protected TypeManager typeManager;
+        protected Report report;
+        protected Hashtable visitingClasses;
 
         public TypeCreatingVisitor(Report report)
         {

@@ -16,18 +16,18 @@ namespace Babel.Sather.Compiler
 {
     public class TypeCheckingVisitor : AbstractNodeVisitor
     {
-        Program program;
-        TypeManager typeManager;
-        Report report;
-        Hashtable builtinRoutineContainers;
-        ClassDefinition currentClass;
-        RoutineDefinition currentRoutine;
-        IterDefinition currentIter;
-        LocalVariableStack localVariableStack;
-        LoopStatement currentLoop;
-        int temporallyCount;
-        Type currentExceptionType;
-        bool inSharedContext;
+        protected Program program;
+        protected TypeManager typeManager;
+        protected Report report;
+        protected Hashtable builtinRoutineContainers;
+        protected ClassDefinition currentClass;
+        protected RoutineDefinition currentRoutine;
+        protected IterDefinition currentIter;
+        protected LocalVariableStack localVariableStack;
+        protected LoopStatement currentLoop;
+        protected int temporallyCount;
+        protected Type currentExceptionType;
+        protected bool inSharedContext;
 
         const string temporallyPrefix = "__temp_";
 
@@ -38,7 +38,7 @@ namespace Babel.Sather.Compiler
             InitBuiltinRoutines();
         }
 
-        protected void InitBuiltinRoutines()
+        protected virtual void InitBuiltinRoutines()
         {
             builtinRoutineContainers = new Hashtable();
             builtinRoutineContainers.Add(typeof(bool),
@@ -140,7 +140,7 @@ namespace Babel.Sather.Compiler
                 return;
             }
             Type type;
-            if (!decl.TypeSpecifier.IsNull()) {
+            if (!decl.TypeSpecifier.IsNull) {
                 decl.TypeSpecifier.Accept(this);
                 type = decl.TypeSpecifier.NodeType;
             }
@@ -242,14 +242,14 @@ namespace Babel.Sather.Compiler
         protected virtual void CheckReturnValue(ReturnStatement ret)
         {
             if (ret.Value == null) {
-                if (!currentRoutine.ReturnType.IsNull()) {
+                if (!currentRoutine.ReturnType.IsNull) {
                     report.Error(ret.Location,
                                  "return value should be provided");
                     return;
                 }
             }
             else {
-                if (currentRoutine.ReturnType.IsNull()) {
+                if (currentRoutine.ReturnType.IsNull) {
                     report.Error(ret.Location,
                                  "no return value should be provided");
                     return;
@@ -713,14 +713,14 @@ namespace Babel.Sather.Compiler
             exception.NodeType = currentExceptionType;
         }
 
-        protected string getTemporallyName()
+        protected virtual string getTemporallyName()
         {
             string name = temporallyPrefix + temporallyCount.ToString();
             temporallyCount++;
             return name;
         }
 
-        protected void VisitCond(ConditionalExpression cond)
+        protected virtual void VisitCond(ConditionalExpression cond)
         {
             cond.Left.Accept(this);
             cond.Right.Accept(this);
@@ -733,10 +733,10 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        protected MethodInfo LookupMethod(Type type,
-                                          string name,
-                                          TypedNodeList arguments,
-                                          bool hasReturnValue)
+        protected virtual MethodInfo LookupMethod(Type type,
+                                                  string name,
+                                                  TypedNodeList arguments,
+                                                  bool hasReturnValue)
         {
             MethodInfo[] methods = typeManager.GetMethods(type);
             ArrayList candidates = new ArrayList();
@@ -752,10 +752,10 @@ namespace Babel.Sather.Compiler
             return (MethodInfo) SelectBestOverload(candidates, arguments);
         }
 
-        protected bool ConfirmMethod(MethodInfo method,
-                                     string name,
-                                     TypedNodeList arguments,
-                                     bool hasReturnValue)
+        protected virtual bool ConfirmMethod(MethodInfo method,
+                                             string name,
+                                             TypedNodeList arguments,
+                                             bool hasReturnValue)
         {
             if (method.Name != name)
                 return false;
@@ -806,8 +806,9 @@ namespace Babel.Sather.Compiler
             return true;
         }
 
-        protected ConstructorInfo LookupConstructor(Type type,
-                                                    TypedNodeList arguments)
+        protected virtual ConstructorInfo
+        LookupConstructor(Type type,
+                          TypedNodeList arguments)
         {
             ConstructorInfo[] constructors = typeManager.GetConstructors(type);
             ArrayList candidates = new ArrayList();
@@ -822,8 +823,8 @@ namespace Babel.Sather.Compiler
             return (ConstructorInfo) SelectBestOverload(candidates, arguments);
         }
 
-        protected bool ConfirmConstructor(ConstructorInfo constructor,
-                                          TypedNodeList arguments)
+        protected virtual bool ConfirmConstructor(ConstructorInfo constructor,
+                                                  TypedNodeList arguments)
         {
             ParameterInfo[] parameters = typeManager.GetParameters(constructor);
             if (parameters.Length != arguments.Length) {
@@ -863,8 +864,8 @@ namespace Babel.Sather.Compiler
             return true;
         }
 
-        protected MethodBase SelectBestOverload(ArrayList candidates,
-                                                TypedNodeList arguments)
+        protected virtual MethodBase SelectBestOverload(ArrayList candidates,
+                                                        TypedNodeList arguments)
         {
             ArrayList winners = null;
             MethodBase firstMethod = (MethodBase) candidates[0];
@@ -935,13 +936,14 @@ namespace Babel.Sather.Compiler
             return (MethodBase) winners[0];
         }
 
-        protected bool IsSubtype(Type type, Type supertype)
+        protected virtual bool IsSubtype(Type type, Type supertype)
         {
             return typeManager.IsSubtype(type, supertype);
         }
 
-        protected void SetupMethod(CallExpression call, MethodInfo method,
-                                   Type receiverType)
+        protected virtual void SetupMethod(CallExpression call,
+                                           MethodInfo method,
+                                           Type receiverType)
         {
             if (!method.IsPublic &&
                 currentClass.TypeBuilder != receiverType) {
@@ -967,9 +969,9 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        protected void SetupConstructor(NewExpression newExpr,
-                                        ConstructorInfo constructor,
-                                        Type type)
+        protected virtual void SetupConstructor(NewExpression newExpr,
+                                                ConstructorInfo constructor,
+                                                Type type)
         {
             if (!constructor.IsPublic &&
                 currentClass.TypeBuilder != type) {

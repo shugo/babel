@@ -12,11 +12,16 @@ namespace Babel.Sather.Compiler
         string fileName;
         int line;
         int column;
-        public static Location Null;
+        static Location nullValue;
 
         static Location()
         {
-            Null = new Location(null, 0, 0);
+            nullValue = new Location(null, 0, 0);
+        }
+
+        public static Location Null
+        {
+            get { return nullValue; }
         }
 
         public Location(string fileName, int line, int column)

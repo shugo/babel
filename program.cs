@@ -15,9 +15,9 @@ namespace Babel.Sather.Compiler
 {
     public class Program : CompositeNode
     {
-        AssemblyBuilder assembly;
-        ModuleBuilder module;
-        TypeManager typeManager;
+        protected AssemblyBuilder assembly;
+        protected ModuleBuilder module;
+        protected TypeManager typeManager;
 
         public Program(string name)
         {
@@ -32,17 +32,17 @@ namespace Babel.Sather.Compiler
             typeManager.AddModule(module);
         }
 
-        public AssemblyBuilder Assembly
+        public virtual AssemblyBuilder Assembly
         {
             get { return assembly; }
         }
 
-        public ModuleBuilder Module
+        public virtual ModuleBuilder Module
         {
             get { return module; }
         }
 
-        public TypeManager TypeManager
+        public virtual TypeManager TypeManager
         {
             get { return typeManager; }
         }

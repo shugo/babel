@@ -16,16 +16,16 @@ namespace Babel.Sather.Compiler
 {
     public class TypeManager
     {
-        Hashtable builtinTypes;
-        Hashtable builtinTypeNames;
-        ArrayList modules;
-        Hashtable classes;
-        Hashtable parentsTable;
-        Hashtable ancestorsTable;
-        Hashtable methodsTable;
-        Hashtable constructorsTable;
-        Hashtable parametersTable;
-        Hashtable customAttributesTable;
+        protected Hashtable builtinTypes;
+        protected Hashtable builtinTypeNames;
+        protected ArrayList modules;
+        protected Hashtable classes;
+        protected Hashtable parentsTable;
+        protected Hashtable ancestorsTable;
+        protected Hashtable methodsTable;
+        protected Hashtable constructorsTable;
+        protected Hashtable parametersTable;
+        protected Hashtable customAttributesTable;
 
         public TypeManager()
         {
@@ -42,7 +42,7 @@ namespace Babel.Sather.Compiler
             InitBuiltinTypes();
         }
 
-        protected void InitBuiltinTypes()
+        protected virtual void InitBuiltinTypes()
         {
             AddBuiltinType("$OB", typeof(object));
             AddBuiltinType("BOOL", typeof(bool));
@@ -52,13 +52,13 @@ namespace Babel.Sather.Compiler
             AddBuiltinType("STR", typeof(string));
         }
 
-        protected void AddBuiltinType(string name, Type type)
+        protected virtual void AddBuiltinType(string name, Type type)
         {
             builtinTypes.Add(name, type);
             builtinTypeNames.Add(type, name);
         }
 
-        public Type GetPredefinedType(string name)
+        public virtual Type GetPredefinedType(string name)
         {
             Type type = (Type) builtinTypes[name];
             if (type != null)
@@ -66,7 +66,7 @@ namespace Babel.Sather.Compiler
             return Type.GetType(name);
         }
 
-        public Type GetTypeFromModules(string name)
+        public virtual Type GetTypeFromModules(string name)
         {
             foreach (Module module in modules) {
                 Type type = (Type) module.GetType(name);
@@ -76,7 +76,7 @@ namespace Babel.Sather.Compiler
             return null;
         }
 
-        public Type GetType(string name)
+        public virtual Type GetType(string name)
         {
             ClassDefinition cls = GetClass(name);
             if (cls != null && cls.TypeBuilder != null)
@@ -90,23 +90,23 @@ namespace Babel.Sather.Compiler
             return null;
         }
 
-        public Type GetReferenceType(Type type)
+        public virtual Type GetReferenceType(Type type)
         {
             string refTypeName = type.FullName + "&";
             return GetType(refTypeName);
         }
 
-        public void AddModule(Module module)
+        public virtual void AddModule(Module module)
         {
             modules.Add(module);
         }
 
-        public void AddClass(ClassDefinition cls)
+        public virtual void AddClass(ClassDefinition cls)
         {
             classes.Add(cls.Name, cls);
         }
 
-        public ClassDefinition GetClass(string name)
+        public virtual ClassDefinition GetClass(string name)
         {
             return (ClassDefinition) classes[name];
         }
@@ -117,7 +117,7 @@ namespace Babel.Sather.Compiler
             ancestorsTable.Add(type, ancestors);
         }
 
-        public Type[] GetParents(Type type)
+        public virtual Type[] GetParents(Type type)
         {
             Type[] parents = (Type[]) parentsTable[type];
             if (parents != null)
@@ -125,7 +125,7 @@ namespace Babel.Sather.Compiler
             return type.GetInterfaces();
         }
 
-        public Type[] GetAncestors(Type type)
+        public virtual Type[] GetAncestors(Type type)
         {
             Type[] ancestors = (Type[]) ancestorsTable[type];
             if (ancestors != null)
@@ -133,7 +133,7 @@ namespace Babel.Sather.Compiler
             return ExtractAncestors(GetParents(type));
         }
 
-        public Type[] ExtractAncestors(Type[] parents)
+        public virtual Type[] ExtractAncestors(Type[] parents)
         {
             Hashtable tbl = new Hashtable();
             foreach (Type parent in parents) {
@@ -147,7 +147,7 @@ namespace Babel.Sather.Compiler
             return ancestors;
         }
 
-        public bool IsSubtype(Type type, Type supertype)
+        public virtual bool IsSubtype(Type type, Type supertype)
         {
             if (type == null)
                 return false;
@@ -159,7 +159,7 @@ namespace Babel.Sather.Compiler
             return ((IList) ancestors).Contains(supertype);
         }
 
-        public string GetTypeName(Type type)
+        public virtual string GetTypeName(Type type)
         {
             if (type == null)
                 return "_";
@@ -169,7 +169,7 @@ namespace Babel.Sather.Compiler
             return type.Name;
         }
 
-        public void AddMethod(Type type, MethodInfo method)
+        public virtual void AddMethod(Type type, MethodInfo method)
         {
             ArrayList methods = (ArrayList) methodsTable[type];
             if (methods == null)
@@ -177,7 +177,7 @@ namespace Babel.Sather.Compiler
             methods.Add(method);
         }
 
-        public MethodInfo[] GetMethods(Type type)
+        public virtual MethodInfo[] GetMethods(Type type)
         {
             if (type is TypeBuilder) {
                 ArrayList methods = (ArrayList) methodsTable[type];
@@ -195,7 +195,8 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public void AddConstructor(Type type, ConstructorInfo constructor)
+        public virtual void AddConstructor(Type type,
+                                           ConstructorInfo constructor)
         {
             ArrayList constructors = (ArrayList) constructorsTable[type];
             if (constructors == null)
@@ -203,8 +204,7 @@ namespace Babel.Sather.Compiler
             constructors.Add(constructor);
         }
 
-
-        public ConstructorInfo[] GetConstructors(Type type)
+        public virtual ConstructorInfo[] GetConstructors(Type type)
         {
             if (type is TypeBuilder) {
                 ArrayList constructors = (ArrayList) constructorsTable[type];
@@ -221,12 +221,14 @@ namespace Babel.Sather.Compiler
                                             BindingFlags.NonPublic);
             }
         }
-        public void AddParameters(MethodBase method, ParameterInfo[] parameters)
+
+        public virtual void AddParameters(MethodBase method,
+                                          ParameterInfo[] parameters)
         {
             parametersTable[method] = parameters;
         }
 
-        public ParameterInfo[] GetParameters(MethodBase method)
+        public virtual ParameterInfo[] GetParameters(MethodBase method)
         {
             ParameterInfo[] parameters =
                 (ParameterInfo[]) parametersTable[method];
@@ -238,8 +240,9 @@ namespace Babel.Sather.Compiler
             return parameters;
         }
 
-        public void AddCustomAttribute(ICustomAttributeProvider provider,
-                                       Attribute attribute)
+        public virtual void
+        AddCustomAttribute(ICustomAttributeProvider provider,
+                           Attribute attribute)
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
@@ -253,8 +256,9 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public object[] GetCustomAttributes(ICustomAttributeProvider provider,
-                                            Type type)
+        public virtual object[]
+        GetCustomAttributes(ICustomAttributeProvider provider,
+                            Type type)
         {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
@@ -272,7 +276,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public Type GetIterType(ICustomAttributeProvider provider)
+        public virtual Type GetIterType(ICustomAttributeProvider provider)
         {
             object[] attrs =
                 GetCustomAttributes(provider,
@@ -282,7 +286,8 @@ namespace Babel.Sather.Compiler
             return ((IterTypeAttribute) attrs[0]).IterType;
         }
 
-        public ArgumentMode GetArgumentMode(ICustomAttributeProvider provider)
+        public virtual ArgumentMode
+        GetArgumentMode(ICustomAttributeProvider provider)
         {
             object[] attrs =
                 GetCustomAttributes(provider,

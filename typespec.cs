@@ -20,8 +20,8 @@ namespace Babel.Sather.Compiler
 
     public class TypeSpecifier : TypedNode
     {
-        string name;
-        TypeKind kind;
+        protected string name;
+        protected TypeKind kind;
 
         public static TypeSpecifier Null;
 
@@ -42,19 +42,19 @@ namespace Babel.Sather.Compiler
             return name;
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public TypeKind Kind
+        public virtual TypeKind Kind
         {
             get { return kind; }
         }
 
-        public virtual bool IsNull()
+        public virtual bool IsNull
         {
-            return false;
+            get { return false; }
         }
 
         public override void Accept(NodeVisitor visitor)
@@ -71,9 +71,9 @@ namespace Babel.Sather.Compiler
             NodeType = typeof(void);
         }
 
-        public override bool IsNull()
+        public override bool IsNull
         {
-            return true;
+            get { return true; }
         }
 
         public override void Accept(NodeVisitor visitor) {}

@@ -17,22 +17,22 @@ namespace Babel.Sather.Compiler
         const int EOF = -1;
         const int EMPTY = -2;
 
-        TextReader reader;
-        string fileName;
-        Report report;
+        protected TextReader reader;
+        protected string fileName;
+        protected Report report;
 
-        int line;
-        int column;
-        int prevColumn;
+        protected int line;
+        protected int column;
+        protected int prevColumn;
 
-        int nextChar;
-        int pushedbackChar;
-        Object val;
+        protected int nextChar;
+        protected int pushedbackChar;
+        protected Object val;
 
-        int nextToken;
+        protected int nextToken;
 
-        Hashtable keywords;
-        Hashtable bangKeywords;
+        protected Hashtable keywords;
+        protected Hashtable bangKeywords;
 
         public LexicalAnalyzer(TextReader reader, string fileName,
                                Report report)
@@ -51,7 +51,7 @@ namespace Babel.Sather.Compiler
             bangKeywords = GetBangKeywords();
         }
 
-        Hashtable GetKeywords()
+        protected virtual Hashtable GetKeywords()
         {
             Hashtable keywords = new Hashtable();
             keywords.Add("abstract", Token.ABSTRACT);
@@ -117,7 +117,7 @@ namespace Babel.Sather.Compiler
             return keywords;
         }
 
-        Hashtable GetBangKeywords()
+        protected virtual Hashtable GetBangKeywords()
         {
             Hashtable keywords = new Hashtable();
             keywords.Add("break", Token.BREAK_BANG);
@@ -127,11 +127,11 @@ namespace Babel.Sather.Compiler
             return keywords;
         }
 
-        public Location Location {
+        public virtual Location Location {
             get { return new Location(fileName, line, column); }
         }
 
-        int NextChar()
+        protected virtual int NextChar()
         {
             if (nextChar == EMPTY) {
                 if (pushedbackChar == EMPTY) {
@@ -145,7 +145,7 @@ namespace Babel.Sather.Compiler
             return nextChar;
         }
 
-        int GetChar()
+        protected virtual int GetChar()
         {
             int c;
 
@@ -179,7 +179,7 @@ namespace Babel.Sather.Compiler
             return c;
         }
 
-        void Pushback(int c)
+        protected virtual void Pushback(int c)
         {
             pushedbackChar = nextChar;
             nextChar = c;
@@ -197,7 +197,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        void SkipComment()
+        protected virtual void SkipComment()
         {
             int n = 1;
             for (int c = GetChar(); c != EOF; c = GetChar()) {
@@ -214,14 +214,14 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        bool IsIdentifierStartChar(int c)
+        protected virtual bool IsIdentifierStartChar(int c)
         {
             return (c >= 'a' && c <= 'z') ||
                 (c >= 'A' && c <= 'Z') ||
                 Char.IsLetter((char) c);
         }
 
-        int Identifier(int startChar)
+        protected virtual int Identifier(int startChar)
         {
             StringBuilder buf = new StringBuilder();
             buf.Append((char) startChar);
@@ -251,7 +251,7 @@ namespace Babel.Sather.Compiler
             return Token.IDENTIFIER;
         }
 
-        int UnescapeChar()
+        protected virtual int UnescapeChar()
         {
             int result, c = GetChar();
 
@@ -310,7 +310,7 @@ namespace Babel.Sather.Compiler
             return result;
         }
 
-        int CharLiteral()
+        protected virtual int CharLiteral()
         {
             int c = GetChar();
             if (c == '\\')
@@ -328,7 +328,7 @@ namespace Babel.Sather.Compiler
             return Token.CHAR_LITERAL;
         }
         
-        int StrLiteral()
+        protected virtual int StrLiteral()
         {
             StringBuilder buf = new StringBuilder();
             int c = GetChar();
@@ -350,7 +350,7 @@ namespace Babel.Sather.Compiler
             return Token.STR_LITERAL;
         }
 
-        int GetInt(int startChar, int baseNumber)
+        protected virtual int GetInt(int startChar, int baseNumber)
         {
             int result = 0;
             int x;
@@ -380,7 +380,7 @@ namespace Babel.Sather.Compiler
             return result;
         }
 
-        int Number(int startChar)
+        protected virtual int Number(int startChar)
         {
             int baseNumber = 10;
             int c;
@@ -412,12 +412,12 @@ namespace Babel.Sather.Compiler
             return Token.INT_LITERAL;
         }
 
-        public bool advance()
+        public virtual bool advance()
         {
             return NextChar() != EOF;
         }
 
-        public int token()
+        public virtual int token()
         {
             bool whitespace = false;
 
@@ -579,12 +579,12 @@ namespace Babel.Sather.Compiler
             return Token.EOF;
         }
 
-        public Object value()
+        public virtual Object value()
         {
             return val;
         }
 
-        public int lookahead()
+        public virtual int lookahead()
         {
             if (nextToken != Token.NONE)
                 return nextToken;

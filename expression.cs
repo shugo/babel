@@ -16,14 +16,14 @@ namespace Babel.Sather.Compiler
 {
     public abstract class Expression : TypedNode
     {
-        bool hasValue;
+        protected bool hasValue;
 
         public Expression(Location location) : base(location)
         {
             hasValue = true;
         }
 
-        public bool HasValue
+        public virtual bool HasValue
         {
             get { return hasValue; }
             set { hasValue = value; }
@@ -42,7 +42,7 @@ namespace Babel.Sather.Compiler
 
     public class BoolLiteralExpression : LiteralExpression
     {
-        bool value;
+        protected bool value;
 
         public BoolLiteralExpression(bool value, Location location)
             : base(location)
@@ -50,7 +50,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public bool Value
+        public virtual bool Value
         {
             get { return value; }
         }
@@ -68,7 +68,7 @@ namespace Babel.Sather.Compiler
 
     public class IntLiteralExpression : LiteralExpression
     {
-        int value;
+        protected int value;
 
         public IntLiteralExpression(int value, Location location)
             : base(location)
@@ -76,7 +76,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public int Value
+        public virtual int Value
         {
             get { return value; }
         }
@@ -94,7 +94,7 @@ namespace Babel.Sather.Compiler
 
     public class CharLiteralExpression : LiteralExpression
     {
-        char value;
+        protected char value;
 
         public CharLiteralExpression(char value, Location location)
             : base(location)
@@ -102,7 +102,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public char Value
+        public virtual char Value
         {
             get { return value; }
         }
@@ -120,7 +120,7 @@ namespace Babel.Sather.Compiler
 
     public class StrLiteralExpression : LiteralExpression
     {
-        string value;
+        protected string value;
 
         public StrLiteralExpression(string value, Location location)
             : base(location)
@@ -128,7 +128,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public string Value
+        public virtual string Value
         {
             get { return value; }
             set { this.value = value; }
@@ -158,8 +158,8 @@ namespace Babel.Sather.Compiler
 
     public class LocalExpression : Expression
     {
-        string name;
-        CallExpression call;
+        protected string name;
+        protected CallExpression call;
 
         public LocalExpression(string name, Location location)
             : base(location)
@@ -168,12 +168,12 @@ namespace Babel.Sather.Compiler
             call = null;
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public CallExpression Call
+        public virtual CallExpression Call
         {
             get { return call; }
             set { call = value; }
@@ -251,39 +251,39 @@ namespace Babel.Sather.Compiler
                               TypedNodeList arguments)
             : this(typeSpecifier, name, arguments, Location.Null) {}
 
-        public Expression Receiver
+        public virtual Expression Receiver
         {
             get { return receiver; }
             set { receiver = value; }
         }
 
-        public TypeSpecifier TypeSpecifier
+        public virtual TypeSpecifier TypeSpecifier
         {
             get { return typeSpecifier; }
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public TypedNodeList Arguments
+        public virtual TypedNodeList Arguments
         {
             get { return arguments; }
         }
 
-        public bool Flip
+        public virtual bool Flip
         {
             get { return flip; }
         }
 
-        public MethodInfo Method
+        public virtual MethodInfo Method
         {
             get { return method; }
             set { method = value; }
         }
 
-        public bool IsBuiltin
+        public virtual bool IsBuiltin
         {
             get { return isBuiltin; }
             set { isBuiltin = value; }
@@ -309,10 +309,10 @@ namespace Babel.Sather.Compiler
 
     public class IterCallExpression : CallExpression
     {
-        LocalVariable local;
-        NewExpression newExpression;
-        CallExpression moveNext;
-        CallExpression getCurrent;
+        protected LocalVariable local;
+        protected NewExpression newExpression;
+        protected CallExpression moveNext;
+        protected CallExpression getCurrent;
 
         public IterCallExpression(Expression receiver,
                                   string name,
@@ -320,25 +320,25 @@ namespace Babel.Sather.Compiler
                                   Location location)
             : base(receiver, name, arguments, location) {}
 
-        public LocalVariable Local
+        public virtual LocalVariable Local
         {
             get { return local; }
             set { local = value; }
         }
 
-        public NewExpression New
+        public virtual NewExpression New
         {
             get { return newExpression; }
             set { newExpression = value; }
         }
 
-        public CallExpression MoveNext
+        public virtual CallExpression MoveNext
         {
             get { return moveNext; }
             set { moveNext = value; }
         }
 
-        public CallExpression GetCurrent
+        public virtual CallExpression GetCurrent
         {
             get { return getCurrent; }
             set { getCurrent = value; }
@@ -352,8 +352,8 @@ namespace Babel.Sather.Compiler
 
     public class ModalExpression : Expression
     {
-        ArgumentMode mode;
-        Expression expression;
+        protected ArgumentMode mode;
+        protected Expression expression;
 
         public ModalExpression(ArgumentMode mode, Expression expression,
                                Location location)
@@ -363,13 +363,13 @@ namespace Babel.Sather.Compiler
             this.expression = expression;
         }
 
-        public ArgumentMode Mode
+        public virtual ArgumentMode Mode
         {
             get { return mode; }
             set { mode = value; }
         }
 
-        public Expression Expression
+        public virtual Expression Expression
         {
             get { return expression; }
         }
@@ -401,7 +401,7 @@ namespace Babel.Sather.Compiler
 
     public class VoidTestExpression : Expression
     {
-        Expression expression;
+        protected Expression expression;
 
         public VoidTestExpression(Expression expression, Location location)
             : base(location)
@@ -409,7 +409,7 @@ namespace Babel.Sather.Compiler
             this.expression = expression;
         }
 
-        public Expression Expression
+        public virtual Expression Expression
         {
             get { return expression; }
         }
@@ -430,9 +430,9 @@ namespace Babel.Sather.Compiler
 
     public class NewExpression : Expression
     {
-        Type type;
-        TypedNodeList arguments;
-        ConstructorInfo constructor;
+        protected Type type;
+        protected TypedNodeList arguments;
+        protected ConstructorInfo constructor;
 
         public NewExpression(Type type, TypedNodeList arguments,
                              Location location)
@@ -446,17 +446,17 @@ namespace Babel.Sather.Compiler
         public NewExpression(Location location)
             : this(null, new TypedNodeList(), location) {}
 
-        public Type Type
+        public virtual Type Type
         {
             get { return type; }
         }
 
-        public TypedNodeList Arguments
+        public virtual TypedNodeList Arguments
         {
             get { return arguments; }
         }
 
-        public ConstructorInfo Constructor
+        public virtual ConstructorInfo Constructor
         {
             get { return constructor; }
             set { constructor = value; }
@@ -470,8 +470,8 @@ namespace Babel.Sather.Compiler
 
     public abstract class ConditionalExpression : Expression
     {
-        Expression left;
-        Expression right;
+        protected Expression left;
+        protected Expression right;
 
         public ConditionalExpression(Expression left, Expression right,
                                      Location location)
@@ -482,12 +482,12 @@ namespace Babel.Sather.Compiler
             NodeType = typeof(bool);
         }
 
-        public Expression Left
+        public virtual Expression Left
         {
             get { return left; }
         }
 
-        public Expression Right
+        public virtual Expression Right
         {
             get { return right; }
         }
@@ -565,7 +565,7 @@ namespace Babel.Sather.Compiler
 
     public class IfExpression : Expression
     {
-        IfStatement ifStatement;
+        protected IfStatement ifStatement;
 
         public IfExpression(Expression test,
                             Node thenPart,

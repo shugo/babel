@@ -25,7 +25,7 @@ namespace Babel.Sather.Compiler
             this.location = location;
         }
 
-        public Location Location
+        public virtual Location Location
         {
             get { return location; }
             set { location = value; }
@@ -33,13 +33,13 @@ namespace Babel.Sather.Compiler
 
         public abstract void Accept(NodeVisitor visitor);
 
-        public Node Next
+        public virtual Node Next
         {
             get { return next; }
             set { next = value; }
         }
 
-        public Node Last
+        public virtual Node Last
         {
             get
             {
@@ -51,7 +51,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public int Length
+        public virtual int Length
         {
             get
             {
@@ -65,13 +65,13 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public void Insert(Node node)
+        public virtual void Insert(Node node)
         {
             node.Next = Next;
             Next = node;
         }
 
-        public void Append(Node node)
+        public virtual void Append(Node node)
         {
             Last.Next = node;
         }
@@ -83,7 +83,7 @@ namespace Babel.Sather.Compiler
             return node;
         }
 
-        public IEnumerator GetEnumerator()
+        public virtual IEnumerator GetEnumerator()
         {
             return new NodeEnumerator(this);
         }
@@ -91,8 +91,8 @@ namespace Babel.Sather.Compiler
 
     public class NodeEnumerator : IEnumerator
     {
-        Node first;
-        Node current;
+        protected Node first;
+        protected Node current;
 
         public NodeEnumerator(Node node)
         {
@@ -100,7 +100,7 @@ namespace Babel.Sather.Compiler
             current = null;
         }
 
-        public bool MoveNext()
+        public virtual bool MoveNext()
         {
             if (current == null) {
                 if (first == null)
@@ -114,12 +114,12 @@ namespace Babel.Sather.Compiler
             return true;
         }
 
-        public void Reset()
+        public virtual void Reset()
         {
             current = null;
         }
 
-        public Object Current
+        public virtual Object Current
         {
             get { return current; }
         }
@@ -127,7 +127,7 @@ namespace Babel.Sather.Compiler
 
     public class NodeList : ICloneable, IEnumerable
     {
-        Node first;
+        protected Node first;
 
         public NodeList()
         {
@@ -139,12 +139,12 @@ namespace Babel.Sather.Compiler
             this.first = first;
         }
 
-        public Node First
+        public virtual Node First
         {
             get { return first; }
         }
 
-        public Node Last
+        public virtual Node Last
         {
             get
             {
@@ -154,7 +154,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public int Length
+        public virtual int Length
         {
             get
             {
@@ -164,7 +164,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public void Append(Node node)
+        public virtual void Append(Node node)
         {
             if (first == null) {
                 first = node;
@@ -174,7 +174,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        public void Accept(NodeVisitor visitor)
+        public virtual void Accept(NodeVisitor visitor)
         {
             foreach (Node node in this) {
                 node.Accept(visitor);
@@ -191,7 +191,7 @@ namespace Babel.Sather.Compiler
             return list;
         }
 
-        public IEnumerator GetEnumerator()
+        public virtual IEnumerator GetEnumerator()
         {
             return new NodeEnumerator(first);
         }
@@ -212,17 +212,17 @@ namespace Babel.Sather.Compiler
             children = new NodeList();
         }
 
-        public NodeList Children
+        public virtual NodeList Children
         {
             get { return children; }
         }
 
-        public void AddChild(Node node)
+        public virtual void AddChild(Node node)
         {
             children.Append(node);
         }
 
-        public void AcceptToChildren(NodeVisitor visitor)
+        public virtual void AcceptToChildren(NodeVisitor visitor)
         {
             foreach (Node child in children) {
                 child.Accept(visitor);
@@ -269,7 +269,7 @@ namespace Babel.Sather.Compiler
         public TypedNodeList() {}
         public TypedNodeList(Node first) : base(first) {}
 
-        public Type[] NodeTypes
+        public virtual Type[] NodeTypes
         {
             get
             {

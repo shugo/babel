@@ -18,11 +18,11 @@ namespace Babel.Sather.Compiler
 {
     public class Parser
     {
-        Program program;
-        LexicalAnalyzer lexer;
-        Report report;
-        SourceFile sourceFile;
-        ClassDefinition currentClass;
+        protected Program program;
+        protected LexicalAnalyzer lexer;
+        protected Report report;
+        protected SourceFile sourceFile;
+        protected ClassDefinition currentClass;
 
         public Parser(Program program,
                       TextReader reader, string fileName, Report report)
@@ -1448,12 +1448,12 @@ parenthesized_expression
 
 %%
 
-    public LexicalAnalyzer Lexer
+    public virtual LexicalAnalyzer Lexer
     {
         get { return lexer; }
     }
 
-    public void Parse()
+    public virtual void Parse()
     {
         try {
             yyparse(lexer);
@@ -1464,7 +1464,7 @@ parenthesized_expression
         }
     }
 
-    void AddClass(ClassDefinition cls)
+    protected virtual void AddClass(ClassDefinition cls)
     {
         sourceFile.AddChild(cls);
         ClassDefinition c = program.TypeManager.GetClass(cls.Name);
@@ -1481,7 +1481,7 @@ parenthesized_expression
         program.TypeManager.AddClass(cls);
     }
 
-    ArrayList NewList(Object obj)
+    protected virtual ArrayList NewList(Object obj)
     {
         if (obj is ArrayList)
             return (ArrayList) obj;
@@ -1492,7 +1492,7 @@ parenthesized_expression
         return result;
     }
 
-    ArrayList ListAppend(Object list, Object obj)
+    protected virtual ArrayList ListAppend(Object list, Object obj)
     {
         ArrayList result = (ArrayList) list;
         if (result == null)
@@ -1508,13 +1508,13 @@ parenthesized_expression
         return result;
     }
 
-    ModalExpression InArg(Expression expr)
+    protected virtual ModalExpression InArg(Expression expr)
     {
         return new ModalExpression(ArgumentMode.In, expr,
                                    expr.Location);
     }
 
-    TypedNodeList OneInArg(Expression expr)
+    protected virtual TypedNodeList OneInArg(Expression expr)
     {
         return new TypedNodeList(InArg(expr));
     }

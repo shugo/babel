@@ -11,8 +11,8 @@ namespace Babel.Sather.Compiler
 {
     public class Report
     {
-        int errors;
-        int warnings;
+        protected int errors;
+        protected int warnings;
 
         public Report()
         {
@@ -20,45 +20,47 @@ namespace Babel.Sather.Compiler
             warnings = 0;
         }
 
-        public int Errors
+        public virtual int Errors
         {
             get { return errors; }
         }
 
-        public int Warnings
+        public virtual int Warnings
         {
             get { return warnings; }
         }
 
-        public void Error(Location location, string msg, params object[] args)
+        public virtual void Error(Location location,
+                                  string msg, params object[] args)
         {
             errors++;
             WriteLocation(location);
             Console.Error.WriteLine(msg, args);
         }
 
-        public void Error(Location location, string msg)
+        public virtual void Error(Location location, string msg)
         {
             errors++;
             WriteLocation(location);
             Console.Error.WriteLine(msg);
         }
 
-        public void Warning(Location location, string msg, params object[] args)
+        public virtual void Warning(Location location,
+                                    string msg, params object[] args)
         {
             warnings++;
             WriteLocation(location);
             Console.Error.WriteLine(msg, args);
         }
 
-        public void Warning(Location location, string msg)
+        public virtual void Warning(Location location, string msg)
         {
             warnings++;
             WriteLocation(location);
             Console.Error.WriteLine(msg);
         }
 
-        void WriteLocation(Location location)
+        protected virtual void WriteLocation(Location location)
         {
             Console.Error.Write("{0}:{1}:{2}: ",
                                 location.FileName,

@@ -26,17 +26,17 @@ namespace Babel.Sather.Compiler
             this.isTypecaseVariable = isTypecaseVariable;
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public Type LocalType
+        public virtual Type LocalType
         {
             get { return localType; }
         }
 
-        public bool IsTypecaseVariable
+        public virtual bool IsTypecaseVariable
         {
             get { return isTypecaseVariable; }
             set { isTypecaseVariable = value; }
@@ -51,7 +51,7 @@ namespace Babel.Sather.Compiler
 
     public abstract class LocalVariableStack : Stack
     {
-        public LocalVariable GetLocal(string name)
+        public virtual LocalVariable GetLocal(string name)
         {
             foreach (Hashtable tbl in this) {
                 LocalVariable local = (LocalVariable) tbl[name];
@@ -177,8 +177,8 @@ namespace Babel.Sather.Compiler
 
     public class IterLocalVariableStack : LocalVariableStack
     {
-        TypeBuilder enumerator;
-        int count;
+        protected TypeBuilder enumerator;
+        protected int count;
 
         public IterLocalVariableStack(TypeBuilder enumerator)
         {

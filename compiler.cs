@@ -14,8 +14,8 @@ namespace Babel.Sather.Compiler
 {
     public class Compiler
     {
-        string[] inputFiles;
-        string baseName;
+        protected string[] inputFiles;
+        protected string baseName;
 
         public void ParseArguments(string[] args)
         {
@@ -28,7 +28,7 @@ namespace Babel.Sather.Compiler
             baseName = Path.GetFileNameWithoutExtension(fileName);
         }
 
-        public void Run()
+        public virtual void Run()
         {
             Program program = new Program(baseName);
             Report report = new Report();
@@ -55,7 +55,7 @@ namespace Babel.Sather.Compiler
             program.Assembly.Save(baseName + ".exe");
         }
 
-        protected void Usage()
+        protected virtual void Usage()
         {
             Console.Error.WriteLine("usage: bsc.exe filename...");
         }

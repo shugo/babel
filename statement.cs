@@ -20,7 +20,7 @@ namespace Babel.Sather.Compiler
 
     public class StatementList : CompositeNode
     {
-        Hashtable localVariables;
+        protected Hashtable localVariables;
 
         public StatementList(Location location)
             : base(location)
@@ -28,7 +28,7 @@ namespace Babel.Sather.Compiler
             localVariables = new Hashtable();
         }
 
-        public Hashtable LocalVariables
+        public virtual Hashtable LocalVariables
         {
             get { return localVariables; }
         }
@@ -58,8 +58,8 @@ namespace Babel.Sather.Compiler
 
     public class DeclarationStatement : Statement
     {
-        string name;
-        TypeSpecifier typeSpecifier;
+        protected string name;
+        protected TypeSpecifier typeSpecifier;
 
         public DeclarationStatement(string name, TypeSpecifier typeSpecifier,
                                     Location location)
@@ -69,12 +69,12 @@ namespace Babel.Sather.Compiler
             this.typeSpecifier = typeSpecifier;
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public TypeSpecifier TypeSpecifier
+        public virtual TypeSpecifier TypeSpecifier
         {
             get { return typeSpecifier; }
         }
@@ -95,9 +95,9 @@ namespace Babel.Sather.Compiler
 
     public class AssignStatement : Statement
     {
-        string name;
-        Expression value;
-        CallExpression call;
+        protected string name;
+        protected Expression value;
+        protected CallExpression call;
 
         public AssignStatement(string name, Expression value, Location location)
             : base(location)
@@ -107,17 +107,17 @@ namespace Babel.Sather.Compiler
             call = null;
         }
 
-        public string Name
+        public virtual string Name
         {
             get { return name; }
         }
 
-        public Expression Value
+        public virtual Expression Value
         {
             get { return value; }
         }
 
-        public CallExpression Call
+        public virtual CallExpression Call
         {
             get { return call; }
             set { call = value; }
@@ -146,9 +146,9 @@ namespace Babel.Sather.Compiler
 
     public class IfStatement : Statement
     {
-        Expression test;
-        Node thenPart;
-        Node elsePart;
+        protected Expression test;
+        protected Node thenPart;
+        protected Node elsePart;
 
         public IfStatement(Expression test,
                            Node thenPart,
@@ -161,17 +161,17 @@ namespace Babel.Sather.Compiler
             this.elsePart = elsePart;
         }
 
-        public Expression Test
+        public virtual Expression Test
         {
             get { return test; }
         }
 
-        public Node ThenPart
+        public virtual Node ThenPart
         {
             get { return thenPart; }
         }
 
-        public Node ElsePart
+        public virtual Node ElsePart
         {
             get { return elsePart; }
         }
@@ -195,7 +195,7 @@ namespace Babel.Sather.Compiler
 
     public class ReturnStatement : Statement
     {
-        Expression value;
+        protected Expression value;
 
         public ReturnStatement(Expression value, Location location)
             : base(location)
@@ -203,7 +203,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public Expression Value
+        public virtual Expression Value
         {
             get { return value; }
         }
@@ -224,10 +224,10 @@ namespace Babel.Sather.Compiler
 
     public class CaseStatement : Statement
     {
-        Expression test;
-        NodeList whenPartList;
-        StatementList elsePart;
-        string testName;
+        protected Expression test;
+        protected NodeList whenPartList;
+        protected StatementList elsePart;
+        protected string testName;
 
         public CaseStatement(Expression test,
                              NodeList whenPartList,
@@ -240,22 +240,22 @@ namespace Babel.Sather.Compiler
             this.elsePart = elsePart;
         }
 
-        public Expression Test
+        public virtual Expression Test
         {
             get { return test; }
         }
 
-        public NodeList WhenPartList
+        public virtual NodeList WhenPartList
         {
             get { return whenPartList; }
         }
 
-        public StatementList ElsePart
+        public virtual StatementList ElsePart
         {
             get { return elsePart; }
         }
 
-        public string TestName
+        public virtual string TestName
         {
             get { return testName; }
             set { testName = value; }
@@ -280,9 +280,9 @@ namespace Babel.Sather.Compiler
 
     public class CaseWhen : Node
     {
-        TypedNodeList valueList;
-        StatementList thenPart;
-        TypedNodeList testCallList;
+        protected TypedNodeList valueList;
+        protected StatementList thenPart;
+        protected TypedNodeList testCallList;
 
         public CaseWhen(TypedNodeList valueList,
                         StatementList thenPart,
@@ -294,17 +294,17 @@ namespace Babel.Sather.Compiler
             this.testCallList = new TypedNodeList();
         }
 
-        public TypedNodeList ValueList
+        public virtual TypedNodeList ValueList
         {
             get { return valueList; }
         }
 
-        public StatementList ThenPart
+        public virtual StatementList ThenPart
         {
             get { return thenPart; }
         }
 
-        public TypedNodeList TestCallList
+        public virtual TypedNodeList TestCallList
         {
             get { return testCallList; }
         }
@@ -328,9 +328,9 @@ namespace Babel.Sather.Compiler
 
     public class TypecaseStatement : Statement
     {
-        LocalExpression variable;
-        NodeList whenPartList;
-        StatementList elsePart;
+        protected LocalExpression variable;
+        protected NodeList whenPartList;
+        protected StatementList elsePart;
 
         public TypecaseStatement(LocalExpression variable,
                                  NodeList whenPartList,
@@ -343,17 +343,17 @@ namespace Babel.Sather.Compiler
             this.elsePart = elsePart;
         }
 
-        public LocalExpression Variable
+        public virtual LocalExpression Variable
         {
             get { return variable; }
         }
 
-        public NodeList WhenPartList
+        public virtual NodeList WhenPartList
         {
             get { return whenPartList; }
         }
 
-        public StatementList ElsePart
+        public virtual StatementList ElsePart
         {
             get { return elsePart; }
         }
@@ -377,9 +377,9 @@ namespace Babel.Sather.Compiler
 
     public class TypecaseWhen : Node
     {
-        TypeSpecifier typeSpecifier;
-        StatementList thenPart;
-        LocalVariable localVariable;
+        protected TypeSpecifier typeSpecifier;
+        protected StatementList thenPart;
+        protected LocalVariable localVariable;
 
         public TypecaseWhen(TypeSpecifier typeSpecifier,
                             StatementList thenPart,
@@ -391,17 +391,17 @@ namespace Babel.Sather.Compiler
             localVariable = null;
         }
 
-        public TypeSpecifier TypeSpecifier
+        public virtual TypeSpecifier TypeSpecifier
         {
             get { return typeSpecifier; }
         }
 
-        public StatementList ThenPart
+        public virtual StatementList ThenPart
         {
             get { return thenPart; }
         }
 
-        public LocalVariable LocalVariable
+        public virtual LocalVariable LocalVariable
         {
             get { return localVariable; }
             set { localVariable = value; }
@@ -425,8 +425,8 @@ namespace Babel.Sather.Compiler
 
     public class LoopStatement : Statement
     {
-        StatementList statementList;
-        Label endLabel;
+        protected StatementList statementList;
+        protected Label endLabel;
 
         public LoopStatement(StatementList statementList,
                              Location location)
@@ -435,12 +435,12 @@ namespace Babel.Sather.Compiler
             this.statementList = statementList;
         }
 
-        public StatementList StatementList
+        public virtual StatementList StatementList
         {
             get { return statementList; }
         }
 
-        public Label EndLabel
+        public virtual Label EndLabel
         {
             get { return endLabel; }
             set { endLabel = value; }
@@ -462,14 +462,14 @@ namespace Babel.Sather.Compiler
 
     public class YieldStatement : ReturnStatement
     {
-        ResumePoint resumePoint;
+        protected ResumePoint resumePoint;
 
         public YieldStatement(Expression value, Location location)
             : base(value, location) {
             resumePoint = new ResumePoint();
         }
 
-        public ResumePoint ResumePoint
+        public virtual ResumePoint ResumePoint
         {
             get { return resumePoint; }
         }
@@ -493,9 +493,9 @@ namespace Babel.Sather.Compiler
 
     public class ProtectStatement : Statement
     {
-        StatementList statementList;
-        NodeList whenPartList;
-        StatementList elsePart;
+        protected StatementList statementList;
+        protected NodeList whenPartList;
+        protected StatementList elsePart;
 
         public ProtectStatement(StatementList statementList,
                                 NodeList whenPartList,
@@ -542,8 +542,8 @@ namespace Babel.Sather.Compiler
 
     public class ProtectWhen : Node
     {
-        TypeSpecifier typeSpecifier;
-        StatementList thenPart;
+        protected TypeSpecifier typeSpecifier;
+        protected StatementList thenPart;
 
         public ProtectWhen(TypeSpecifier typeSpecifier,
                            StatementList thenPart,
@@ -554,12 +554,12 @@ namespace Babel.Sather.Compiler
             this.thenPart = thenPart;
         }
 
-        public TypeSpecifier TypeSpecifier
+        public virtual TypeSpecifier TypeSpecifier
         {
             get { return typeSpecifier; }
         }
 
-        public StatementList ThenPart
+        public virtual StatementList ThenPart
         {
             get { return thenPart; }
         }
@@ -582,7 +582,7 @@ namespace Babel.Sather.Compiler
 
     public class RaiseStatement : Statement
     {
-        Expression value;
+        protected Expression value;
 
         public RaiseStatement(Expression value,
                               Location location)
@@ -591,7 +591,7 @@ namespace Babel.Sather.Compiler
             this.value = value;
         }
 
-        public Expression Value
+        public virtual Expression Value
         {
             get { return value; }
         }
@@ -612,7 +612,7 @@ namespace Babel.Sather.Compiler
 
     public class ExpressionStatement : Statement
     {
-        Expression expression;
+        protected Expression expression;
 
         public ExpressionStatement(Expression expression, Location location)
             : base(location)
@@ -621,7 +621,7 @@ namespace Babel.Sather.Compiler
             this.expression = expression;
         }
 
-        public Expression Expression
+        public virtual Expression Expression
         {
             get { return expression; }
         }

@@ -16,10 +16,10 @@ namespace Babel.Sather.Compiler
 {
     public class TypeElementCreatingVisitor : AbstractNodeVisitor
     {
-        Program program;
-        TypeManager typeManager;
-        Report report;
-        ClassDefinition currentClass;
+        protected Program program;
+        protected TypeManager typeManager;
+        protected Report report;
+        protected ClassDefinition currentClass;
 
         public TypeElementCreatingVisitor(Report report)
         {
@@ -219,7 +219,7 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.Public,
                              typeof(bool),
                              iter.MoveNextArguments);
-            if (!iter.ReturnType.IsNull()) {
+            if (!iter.ReturnType.IsNull) {
                 iter.Current =
                     iter.TypeBuilder.DefineField("_current",
                                                 iter.ReturnType.NodeType,
@@ -311,17 +311,19 @@ namespace Babel.Sather.Compiler
             Type type = typeManager.GetType(typeSpecifier.Name);
             if (type == null) {
                 report.Error(typeSpecifier.Location,
-                             "there is no class named {0}", typeSpecifier.Name);
+                             "there is no class named {0}",
+                             typeSpecifier.Name);
                 return;
             }
             typeSpecifier.NodeType = type;
         }
 
-        protected MethodBuilder DefineMethod(TypeBuilder type,
-                                             string name,
-                                             MethodAttributes attributes,
-                                             Type returnType,
-                                             TypedNodeList arguments)
+        protected virtual MethodBuilder
+        DefineMethod(TypeBuilder type,
+                     string name,
+                     MethodAttributes attributes,
+                     Type returnType,
+                     TypedNodeList arguments)
         {
             MethodBuilder method =
                 type.DefineMethod(name,
@@ -361,17 +363,21 @@ namespace Babel.Sather.Compiler
             return method;
         }
 
-        protected MethodBuilder DefineReader(TypeBuilder type, string name,
-                                             MethodAttributes attributes,
-                                             TypeSpecifier attrType)
+        protected virtual MethodBuilder
+        DefineReader(TypeBuilder type,
+                     string name,
+                     MethodAttributes attributes,
+                     TypeSpecifier attrType)
         {
             return DefineMethod(type, name, attributes,
                                 attrType.NodeType, new TypedNodeList());
         }
 
-        protected MethodBuilder DefineWriter(TypeBuilder type, string name,
-                                             MethodAttributes attributes,
-                                             TypeSpecifier attrType)
+        protected virtual MethodBuilder
+        DefineWriter(TypeBuilder type,
+                     string name,
+                     MethodAttributes attributes,
+                     TypeSpecifier attrType)
         {
             Argument arg = new Argument(ArgumentMode.In, "value",
                                         attrType, Location.Null);
@@ -382,7 +388,7 @@ namespace Babel.Sather.Compiler
                                 typeof(void), args);
         }
 
-        protected ConstructorBuilder
+        protected virtual ConstructorBuilder
         DefineConstructor(TypeBuilder type,
                           MethodAttributes attributes,
                           CallingConventions callingConventions,

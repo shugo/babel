@@ -16,20 +16,20 @@ namespace Babel.Sather.Compiler
 {
     public class CodeGeneratingVisitor : AbstractNodeVisitor
     {
-        Program program;
-        TypeManager typeManager;
-        Report report;
-        ClassDefinition currentClass;
-        TypeBuilder currentType;
-        RoutineDefinition currentRoutine;
-        IterDefinition currentIter;
-        ILGenerator ilGenerator;
-        Label returnLabel;
-        LocalVariableStack localVariableStack;
-        LoopStatement currentLoop;
-        LocalBuilder currentException;
-        int exceptionLevel;
-        bool inSharedContext;
+        protected Program program;
+        protected TypeManager typeManager;
+        protected Report report;
+        protected ClassDefinition currentClass;
+        protected TypeBuilder currentType;
+        protected RoutineDefinition currentRoutine;
+        protected IterDefinition currentIter;
+        protected ILGenerator ilGenerator;
+        protected Label returnLabel;
+        protected LocalVariableStack localVariableStack;
+        protected LoopStatement currentLoop;
+        protected LocalBuilder currentException;
+        protected int exceptionLevel;
+        protected bool inSharedContext;
 
         public CodeGeneratingVisitor(Report report)
         {
@@ -608,14 +608,16 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ldloc, currentException);
         }
 
-        protected void BoxIfNecessary(Type sourceType, Type destinationType)
+        protected virtual void BoxIfNecessary(Type sourceType,
+                                              Type destinationType)
         {
             if (sourceType.IsValueType &&
                 !destinationType.IsValueType)
                 ilGenerator.Emit(OpCodes.Box, sourceType);
         }
 
-        protected void UnboxIfNecessary(Type sourceType, Type destinationType)
+        protected virtual void UnboxIfNecessary(Type sourceType,
+                                                Type destinationType)
         {
             if (!sourceType.IsValueType &&
                 destinationType.IsValueType) {
@@ -624,7 +626,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        protected void EmitVoid(Type type)
+        protected virtual void EmitVoid(Type type)
         {
             if (type == typeof(void)) {
             }
@@ -638,7 +640,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        protected void EmitLdind(Type type)
+        protected virtual void EmitLdind(Type type)
         {
             if (type == typeof(bool) ||
                 type == typeof(int)) {
@@ -651,7 +653,7 @@ namespace Babel.Sather.Compiler
             }
         }
 
-        protected void EmitStind(Type type)
+        protected virtual void EmitStind(Type type)
         {
             if (type == typeof(bool) ||
                 type == typeof(int)) {
