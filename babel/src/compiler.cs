@@ -13,6 +13,8 @@ using System.Reflection;
 
 namespace Babel.Compiler {
     public class Compiler {
+        public const string VERSION = "0.0.0";
+
         protected Program program;
         protected Report report;
         protected ArrayList inputFiles;
@@ -85,9 +87,14 @@ namespace Babel.Compiler {
                     case "-nostdlib":
                         loadStdLib = false;
                         break;
+                    case "-version":
+                    case "-v":
+                        PrintVersion();
+                        Environment.Exit(0);
+                        break;
                     case "-help":
                     case "-h":
-                        Usage();
+                        PrintUsage();
                         Environment.Exit(0);
                         break;
                     default:
@@ -102,7 +109,7 @@ namespace Babel.Compiler {
             }
             if (inputFiles.Count == 0) {
                 Console.Error.WriteLine("no input files");
-                Usage();
+                PrintUsage();
                 Environment.Exit(1);
             }
             if (outputFileName == null) {
@@ -164,17 +171,23 @@ namespace Babel.Compiler {
             program.Assembly.Save(outputFileName);
         }
 
-        protected virtual void Usage()
+        protected virtual void PrintVersion()
+        {
+            Console.Write("Babel Sather Compiler version " + VERSION + "\n");
+        }
+
+        protected virtual void PrintUsage()
         {
             Console.Write(
-"usage: bsc [options] source-files\n" +
+"usage: bsc.exe [options] source-files\n" +
 "   -lib:PATH1,PATH2   Adds the paths to the assembly link path\n" +
 "   -nostdlib          Does not load core libraries\n" +
 "   -out:FNAME         Specifies output file\n" +
 "   -reference:ASS     References the specified assembly (-r:ASS)\n" +
 "   -target:KIND       Specifies the target (KIND is one of: exe, winexe,\n" +
 "                      library, module), (short: -t:)\n" +
-"   -help              Print this message\n");
+"   -version           Prints the version\n" +
+"   -help              Prints this message\n");
         }
 
         protected virtual void LoadAssembly(string assembly, bool soft)
