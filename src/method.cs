@@ -13,24 +13,25 @@ using System.Collections;
 using Babel.Base;
 
 namespace Babel.Compiler {
-    public interface MethodSignature {
-        string Name { get; }
-        TypeData ReturnType { get; }
-        TypedNodeList Arguments { get; }
-    }
-
-    public class MethodSignatureData : MethodSignature {
+    public class MethodSignature {
+        protected TypeData declaringType;
         protected string name;
         protected TypeData returnType;
         protected TypedNodeList arguments;
 
-        public MethodSignatureData(string name,
-                                   TypeData returnType,
-                                   TypedNodeList arguments)
+        public MethodSignature(TypeData declaringType,
+                               string name,
+                               TypeData returnType,
+                               TypedNodeList arguments)
         {
+            this.declaringType = declaringType;
             this.name = name;
             this.returnType = returnType;
             this.arguments = arguments;
+        }
+
+        public TypeData DeclaringType {
+            get { return declaringType; }
         }
 
         public string Name {
@@ -43,6 +44,24 @@ namespace Babel.Compiler {
 
         public TypedNodeList Arguments {
             get { return arguments; }
+        }
+
+        public override string ToString()
+        {
+            string s = DeclaringType.FullName + "::" + Name;
+            if (Arguments.Length > 0) {
+                s += "(";
+                foreach (Argument arg in Arguments) {
+                    if (arg != Arguments.First) {
+                        s += ",";
+                    }
+                    s += arg.NodeType.FullName;
+                }
+                s += ")";
+            }
+            if (!ReturnType.IsVoid)
+                s += ":" + ReturnType.FullName;
+            return s;
         }
     }
 
