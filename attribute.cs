@@ -61,7 +61,12 @@ namespace Babel.Sather.Base
 
         public virtual Type ReturnType
         {
-            get { return returnType; }
+            get
+            {
+                if (returnType == null)
+                    return typeof(void);
+                return returnType;
+            }
         }
     }
 }
