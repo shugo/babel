@@ -63,6 +63,26 @@ namespace Babel.Compiler {
                 s += ":" + ReturnType.FullName;
             return s;
         }
+
+        public virtual bool ConformTo(MethodData method)
+        {
+            if (method.Name != Name)
+                return false;
+            if (method.Parameters.Count != Arguments.Length)
+                return false;
+            if (method.ReturnType != ReturnType)
+                return false;
+
+            int i = 0;
+            foreach (Argument arg in Arguments) {
+                ParameterData param = (ParameterData) method.Parameters[i++];
+                if (arg.Mode != param.Mode)
+                    return false;
+                if (arg.NodeType != param.ParameterType)
+                    return false;
+            }
+            return true;
+        }
     }
 
     public abstract class MethodBaseData {
@@ -231,6 +251,26 @@ namespace Babel.Compiler {
                 }
             }
             return (abs && conflict) || !abs || sameArgs;
+        }
+
+        public virtual bool ConformTo(MethodData method)
+        {
+            if (Name != method.Name)
+                return false;
+            if (Parameters.Count != method.Parameters.Count)
+                return false;
+            if (ReturnType != method.ReturnType)
+                return false;
+
+            for (int i = 0; i < Parameters.Count; i++) {
+                ParameterData p1 = (ParameterData) Parameters[i];
+                ParameterData p2 = (ParameterData) method.Parameters[i];
+                if (p1.Mode != p2.Mode)
+                    return false;
+                if (p1.ParameterType != p2.ParameterType)
+                    return false;
+            }
+            return true;
         }
     }
 
