@@ -66,16 +66,19 @@ namespace Babel.Compiler {
                     cls.TypeData.Parents.Add(anc);
                 }
                 TypeAttributes attrs = TypeAttributes.Public;
+                Type parent;
                 if (cls.Kind == ClassKind.Abstract) {
                     attrs |= TypeAttributes.Abstract;
                     attrs |= TypeAttributes.Interface;
+                    parent = null;
                 }
                 else {
                     attrs |= TypeAttributes.Class;
+                    parent = typeof(object);
                 }
                 cls.TypeBuilder =
                     program.Module.DefineType(cls.Name, attrs,
-                                              typeof(object),
+                                              parent,
                                               cls.TypeData.AncestorRawTypes);
                 cls.TypeData.RawType = cls.TypeBuilder;
                 typeManager.AddType(cls.TypeData);

@@ -28,6 +28,7 @@ namespace Babel.Compiler {
         protected LocalBuilder currentException;
         protected int exceptionLevel;
         protected bool inSharedContext;
+        protected ArrayList nestedTypes;
 
         public CodeGeneratingVisitor(Report report)
         {
@@ -52,6 +53,7 @@ namespace Babel.Compiler {
         {
             currentClass = cls;
             currentType = cls.TypeBuilder;
+            nestedTypes = new ArrayList();
             cls.Children.Accept(this);
             if (cls.StaticConstructor != null) {
                 cls.StaticConstructorIL.Emit(OpCodes.Ret);
@@ -59,6 +61,9 @@ namespace Babel.Compiler {
             currentType.CreateType();
             foreach (SupertypingAdapter adapter in cls.Adapters) {
                 GenerateAdapter(adapter);
+            }
+            foreach (TypeBuilder nestedType in nestedTypes) {
+                nestedType.CreateType();
             }
         }
 
@@ -88,6 +93,11 @@ namespace Babel.Compiler {
                 ilGenerator.Emit(OpCodes.Ret);
             }
             adapter.TypeBuilder.CreateType();
+        }
+
+        public override void VisitAbstractIter(AbstractIterSignature iter)
+        {
+            nestedTypes.Add(iter.TypeBuilder);
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -245,7 +255,7 @@ namespace Babel.Compiler {
 
             iter.TypeBuilder.CreateType();
             currentRoutine = currentIter = null;
-       }
+        }
 
         public override void VisitStatementList(StatementList statementList)
         {

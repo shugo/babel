@@ -137,6 +137,7 @@ namespace Babel.Compiler {
                 new SupertypingAdapterMethod(mb, adapteeMethod,
                                          parameters.Length);
             adapter.Methods.Add(adapterMethod);
+            adapter.TypeBuilder.DefineMethodOverride(mb, method);
         }
 
         public override void VisitAbstractRoutine(AbstractRoutineSignature rout)
@@ -185,8 +186,7 @@ namespace Babel.Compiler {
                                              "_" + baseName,
                                              TypeAttributes.Interface |
                                              TypeAttributes.Abstract |
-                                             TypeAttributes.NestedPublic,
-                                             typeof(object));
+                                             TypeAttributes.NestedPublic);
 
             iter.MoveNext =
                 DefineMethod(iter.TypeBuilder, "MoveNext",
