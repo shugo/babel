@@ -37,23 +37,31 @@ namespace Babel.Sather.Compiler
                 if (arg[0] == '-') {
                     string[] vals = arg.Split(':');
                     string name, value;
-                    name = vals[0].Substring(1);
+                    name = vals[0];
                     if (vals.Length == 2)
                         value = vals[1];
                     else
                         value = "";
-                    if (name == "r" || name == "reference") {
+                    switch (name) {
+                    case "-reference":
+                    case "-r":
                         references.Add(value);
-                    }
-                    else if (name == "lib") {
+                        break;
+                    case "-lib":
                         string[] dirs = value.Split(',');
                         foreach (string dir in dirs) {
                             linkPaths.Add(value);
                         }
-                    }
-                    else {
+                        break;
+                    case "-help":
+                    case "-h":
+                        Usage();
+                        Environment.Exit(0);
+                        break;
+                    default:
                         Console.Error.WriteLine("unkown option: `{0}'", name);
                         Environment.Exit(1);
+                        break;
                     }
                 }
                 else {
@@ -98,7 +106,11 @@ namespace Babel.Sather.Compiler
 
         protected virtual void Usage()
         {
-            Console.Error.WriteLine("usage: bsc.exe filename...");
+            Console.Write(
+"usage: bsc [options] source-files\n" +
+"   -lib:PATH1,PATH2   Adds the paths to the assembly link path\n" +
+"   -reference:ASS     References the specified assembly (-r:ASS)\n" +
+"   -help              Print this message\n");
         }
 
         protected virtual void LoadAssembly(string assembly, bool soft)
