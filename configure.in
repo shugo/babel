@@ -1,0 +1,67 @@
+dnl Process this file with autoconf to produce a configure script.
+
+AC_INIT()
+AM_INIT_AUTOMAKE(babel, 0.0.0)
+AM_MAINTAINER_MODE
+
+AC_PROG_MAKE_SET
+
+assemblydir='$(libdir)'
+AC_SUBST(assemblydir)
+
+AC_ARG_WITH(cs,
+[  --with-cs=PATH          path to cs],
+[
+    AC_MSG_RESULT(using $withval for cs)
+    CS="$withval"
+], [
+    AC_PATH_PROG(CS, mcs, no)
+])
+if test "$CS" = "no"; then
+    AC_MSG_ERROR(cs is required)
+fi
+
+AC_MSG_CHECKING(flags for cs)
+AC_ARG_WITH(csflags,
+[  --with-csflags=FLAGS    flags for cs],
+[
+    CSFLAGS="$withval"
+], [
+    CSFLAGS="-g"
+])
+AC_MSG_RESULT(CSFLAGS)
+AC_SUBST(CSFLAGS)
+
+AC_ARG_WITH(jay,
+[  --with-jay=PATH         path to jay],
+[
+    AC_MSG_RESULT(using $withval for jay)
+    JAY="$withval"
+], [
+    AC_PATH_PROG(JAY, jay, "")
+])
+
+AC_ARG_WITH(mono,
+[  --with-mono=PATH        path to mono],
+[
+    AC_MSG_RESULT(using $withval for mono)
+    MONO="$withval"
+], [
+    AC_PATH_PROG(MONO, mono, "")
+])
+
+AC_ARG_WITH(ruby,
+[  --with-ruby=PATH        path to ruby],
+[
+    AC_MSG_RESULT(using $withval for ruby)
+    RUBY="$withval"
+], [
+    AC_PATH_PROG(RUBY, ruby, "")
+])
+
+AC_OUTPUT([Makefile
+	   src/Makefile
+	   lib/Makefile
+	   lib/base/Makefile
+	   lib/io/Makefile
+	   tests/Makefile])

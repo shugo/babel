@@ -1,0 +1,2 @@
+SUBDIRS = base \
+	  io
