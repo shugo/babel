@@ -161,7 +161,7 @@ namespace Babel.Compiler {
 
         public override void Accept(NodeVisitor visitor)
         {
-            ConstrainingType.Accept(visitor);
+            visitor.VisitParameterDeclaration(this);
         }
     }
 

@@ -146,6 +146,12 @@ namespace Babel.Compiler {
             }
         }
 
+        public override void
+            VisitParameterDeclaration(ParameterDeclaration paramDecl)
+        {
+            paramDecl.ConstrainingType.Accept(this);
+        }
+
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)
         {
             if (typeSpecifier.Kind == TypeKind.Same) {
