@@ -13,6 +13,9 @@
 
 -- out.sa: Output on stdout.
 -------------------------------------------------------------------
+
+import System;
+
 class OUT < $OSTREAM is
    -- Direct access to stdout.
    
@@ -21,23 +24,23 @@ class OUT < $OSTREAM is
    plus(s:$STR):SAME is 
       -- Print `s' on stdout and return self.
       
-      System::Console::Write(s.str);
+      Console::Write(s.str);
       return self;
    end;
    
    plus(s:STR):SAME is 
       -- Print `s' on stdout and return self.
       
-      System::Console::Write(s);
+      Console::Write(s);
       return self;
    end;   
    
    plus(s:$STR) is
-      System::Console::Write(s.str);
+      Console::Write(s.str);
    end;
    
    plus(s:STR) is
-      System::Console::Write(s);
+      Console::Write(s);
    end;
    
    flush is

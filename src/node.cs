@@ -184,7 +184,7 @@ namespace Babel.Compiler {
     public abstract class CompositeNode : Node {
         protected NodeList children;
 
-        public CompositeNode()
+        public CompositeNode() : base()
         {
             children = new NodeList();
         }
@@ -222,7 +222,7 @@ namespace Babel.Compiler {
     public abstract class TypedNode : Node {
         TypeData nodeType;
 
-        public TypedNode()
+        public TypedNode() : base()
         {
             nodeType = null;
         }

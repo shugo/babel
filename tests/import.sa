@@ -1,0 +1,7 @@
+import System;
+
+class MAIN is
+   main is
+      Console::WriteLine("hello world");
+   end;
+end;

@@ -182,6 +182,19 @@ namespace Babel.Compiler {
             return null;
         }
 
+        public virtual TypeData GetType(string name, ArrayList namespaces)
+        {
+            TypeData typeData = GetType(name);
+            if (typeData != null)
+                return typeData;
+            foreach (string ns in namespaces) {
+                typeData = GetType(ns + Type.Delimiter + name);
+                if (typeData != null)
+                    return typeData;
+            }
+            return null;
+        }
+
         public virtual void AddAssembly(Assembly assembly)
         {
             assemblies.Add(assembly);

@@ -18,6 +18,8 @@ EXTRA_DIST		= test.rb.in \
 			  fact.sa \
 			  hello.out \
 			  hello.sa \
+			  import.out \
+			  import.sa \
 			  iter.out \
 			  iter.sa \
 			  iterconflict.err \
