@@ -19,7 +19,6 @@ namespace Babel.Sather.Compiler
         Hashtable classes;
         Hashtable parentsTable;
         Hashtable ancestorsTable;
-        Hashtable visitingClasses;
 
         public TypeManager()
         {
@@ -28,7 +27,6 @@ namespace Babel.Sather.Compiler
             classes = new Hashtable();
             parentsTable = new Hashtable();
             ancestorsTable = new Hashtable();
-            visitingClasses = new Hashtable();
             InitBuiltinTypes();
         }
 
@@ -66,7 +64,7 @@ namespace Babel.Sather.Compiler
             return (ClassDefinition) classes[name];
         }
 
-        public void AddTypeGraph(Type type, Type[] parents, Type[] ancestors)
+        public void AddType(Type type, Type[] parents, Type[] ancestors)
         {
             parentsTable.Add(type, parents);
             ancestorsTable.Add(type, ancestors);

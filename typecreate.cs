@@ -75,7 +75,7 @@ namespace Babel.Sather.Compiler
                 cls.TypeBuilder =
                     program.Module.DefineType(cls.Name, attrs,
                                               typeof(object), ancestors);
-                typeManager.AddTypeGraph(cls.TypeBuilder, parents, ancestors);
+                typeManager.AddType(cls.TypeBuilder, parents, ancestors);
                 if (cls.Kind == ClassKind.Reference) {
                     cls.Constructor = 
                         cls.TypeBuilder.
