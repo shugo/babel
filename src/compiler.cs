@@ -29,13 +29,13 @@ namespace Babel.Compiler {
             references = new ArrayList();
             linkPaths = new ArrayList();
             softReferences = new ArrayList();
-            softReferences.Add("bsbase");
-            softReferences.Add("bsio");
             target = Target.Exe;
         }
 
         public void ParseArguments(string[] args)
         {
+            bool loadStdLib = true;
+
             for (int i = 0; i < args.Length; i++) {
                 string arg = (string) args[i];
                 if (arg[0] == '-') {
@@ -82,6 +82,9 @@ namespace Babel.Compiler {
                     case "-out":
                         outputFileName = value;
                         break;
+                    case "-nostdlib":
+                        loadStdLib = false;
+                        break;
                     case "-help":
                     case "-h":
                         Usage();
@@ -123,6 +126,14 @@ namespace Babel.Compiler {
                     outputFileName = firstInputFile + ext;
                 }
             }
+            if (loadStdLib) {
+                softReferences.Add("bsbase");
+                softReferences.Add("bsio");
+            }
+        }
+
+        public virtual void Run()
+        {
             program = new Program(Path.GetFileName(outputFileName), target);
             foreach (string reference in references) {
                 LoadAssembly(reference, false);
@@ -130,10 +141,7 @@ namespace Babel.Compiler {
             foreach (string reference in softReferences) {
                 LoadAssembly(reference, true);
             }
-        }
 
-        public virtual void Run()
-        {
             foreach (string fileName in inputFiles) {
                 StreamReader reader = new StreamReader(fileName);
                 Parser parser = new Parser(program, reader, fileName, report);
@@ -161,6 +169,7 @@ namespace Babel.Compiler {
             Console.Write(
 "usage: bsc [options] source-files\n" +
 "   -lib:PATH1,PATH2   Adds the paths to the assembly link path\n" +
+"   -nostdlib          Does not load core libraries\n" +
 "   -out:FNAME         Specifies output file\n" +
 "   -reference:ASS     References the specified assembly (-r:ASS)\n" +
 "   -target:KIND       Specifies the target (KIND is one of: exe, winexe,\n" +
