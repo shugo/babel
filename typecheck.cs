@@ -231,10 +231,14 @@ namespace Babel.Sather.Compiler
                 else {
                     Type expectedType = currentRoutine.ReturnType.NodeType;
                     if (!IsSubtype(ret.Value.NodeType, expectedType)) {
+                        string destType =
+                            typeManager.GetTypeName(expectedType);
+                        string srcType =
+                            typeManager.GetTypeName(ret.Value.NodeType);
                         report.Error(ret.Location,
                                      "the type of the destination: {0} is " +
                                      "not a supertype of {1}",
-                                     expectedType.Name, ret.Value.NodeType);
+                                     destType, srcType);
                         return;
                     }
                 }
