@@ -53,13 +53,18 @@ namespace Babel.Sather.Compiler
             rout.Arguments.Accept(this);
             rout.ReturnType.Accept(this);
             TypeBuilder typeBuilder = currentClass.TypeBuilder;
-            rout.MethodBuilder = DefineMethod(typeBuilder, rout.Name,
-                                              MethodAttributes.Public |
-                                              MethodAttributes.Virtual |
-                                              MethodAttributes.Abstract |
-                                              MethodAttributes.HideBySig,
-                                              rout.ReturnType.NodeType,
-                                              rout.Arguments);
+            try {
+                rout.MethodBuilder = DefineMethod(typeBuilder, rout.Name,
+                                                  MethodAttributes.Public |
+                                                  MethodAttributes.Virtual |
+                                                  MethodAttributes.Abstract |
+                                                  MethodAttributes.HideBySig,
+                                                  rout.ReturnType.NodeType,
+                                                  rout.Arguments);
+            }
+            catch (MethodConflictionException e) {
+                report.Error(rout.Location, e.Message);
+            }
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -84,11 +89,16 @@ namespace Babel.Sather.Compiler
                                         FieldAttributes.Static |
                                         FieldAttributes.Literal);
             constDef.FieldBuilder.SetConstant(constDef.Value);
-            constDef.Reader = DefineReader(typeBuilder, constDef.Name,
-                                           readerAttributes,
-                                           constDef.TypeSpecifier);
+            try {
+                constDef.Reader = DefineReader(typeBuilder, constDef.Name,
+                                               readerAttributes,
+                                               constDef.TypeSpecifier);
+            }
+            catch (MethodConflictionException e) {
+                report.Error(constDef.Location, e.Message);
+            }
         }
-
+        
         public override void VisitSharedAttr(SharedAttrDefinition attr)
         {
             attr.TypeSpecifier.Accept(this);
@@ -117,12 +127,17 @@ namespace Babel.Sather.Compiler
                                         attrType,
                                         FieldAttributes.Private |
                                         FieldAttributes.Static);
-            attr.Reader = DefineReader(typeBuilder, attr.Name,
-                                       readerAttributes,
-                                       attr.TypeSpecifier);
-            attr.Writer = DefineWriter(typeBuilder, attr.Name,
-                                       readerAttributes,
-                                       attr.TypeSpecifier);
+            try {
+                attr.Reader = DefineReader(typeBuilder, attr.Name,
+                                           readerAttributes,
+                                           attr.TypeSpecifier);
+                attr.Writer = DefineWriter(typeBuilder, attr.Name,
+                                           readerAttributes,
+                                           attr.TypeSpecifier);
+            }
+            catch (MethodConflictionException e) {
+                report.Error(attr.Location, e.Message);
+            }
         }
 
         public override void VisitAttr(AttrDefinition attr)
@@ -152,12 +167,17 @@ namespace Babel.Sather.Compiler
                 typeBuilder.DefineField("_" + attr.Name,
                                         attrType,
                                         FieldAttributes.Private);
-            attr.Reader = DefineReader(typeBuilder, attr.Name,
-                                       readerAttributes,
-                                       attr.TypeSpecifier);
-            attr.Writer = DefineWriter(typeBuilder, attr.Name,
-                                       readerAttributes,
-                                       attr.TypeSpecifier);
+            try {
+                attr.Reader = DefineReader(typeBuilder, attr.Name,
+                                           readerAttributes,
+                                           attr.TypeSpecifier);
+                attr.Writer = DefineWriter(typeBuilder, attr.Name,
+                                           readerAttributes,
+                                           attr.TypeSpecifier);
+            }
+            catch (MethodConflictionException e) {
+                report.Error(attr.Location, e.Message);
+            }
         }
 
         public override void VisitRoutine(RoutineDefinition rout)
@@ -175,9 +195,15 @@ namespace Babel.Sather.Compiler
                 attributes |= MethodAttributes.Private;
                 break;
             }
-            rout.MethodBuilder =
-                DefineMethod(typeBuilder, rout.Name, attributes,
-                             rout.ReturnType.NodeType, rout.Arguments);
+
+            try {
+                rout.MethodBuilder =
+                    DefineMethod(typeBuilder, rout.Name, attributes,
+                                 rout.ReturnType.NodeType, rout.Arguments);
+            }
+            catch (MethodConflictionException e) {
+                report.Error(rout.Location, e.Message);
+            }
         }
 
         public override void VisitIter(IterDefinition iter)
@@ -217,60 +243,68 @@ namespace Babel.Sather.Compiler
                                              typeof(int),
                                              FieldAttributes.Private);
 
-            iter.MoveNext =
-                DefineMethod(iter.TypeBuilder, "MoveNext",
-                             MethodAttributes.Virtual |
-                             MethodAttributes.HideBySig |
-                             MethodAttributes.Public,
-                             typeof(bool),
-                             iter.MoveNextArguments);
-            if (!iter.ReturnType.IsNull) {
-                iter.Current =
-                    iter.TypeBuilder.DefineField("__current",
-                                                 iter.ReturnType.NodeType,
-                                                 FieldAttributes.Private);
-                iter.GetCurrent =
-                    DefineMethod(iter.TypeBuilder, "GetCurrent",
+            try {
+                iter.MoveNext =
+                    DefineMethod(iter.TypeBuilder, "MoveNext",
                                  MethodAttributes.Virtual |
                                  MethodAttributes.HideBySig |
                                  MethodAttributes.Public,
-                                 iter.ReturnType.NodeType,
-                                 new TypedNodeList());
+                                 typeof(bool),
+                                 iter.MoveNextArguments);
+                if (!iter.ReturnType.IsNull) {
+                    iter.Current =
+                        iter.TypeBuilder.DefineField("__current",
+                                                     iter.ReturnType.NodeType,
+                                                     FieldAttributes.Private);
+                    iter.GetCurrent =
+                        DefineMethod(iter.TypeBuilder, "GetCurrent",
+                                     MethodAttributes.Virtual |
+                                     MethodAttributes.HideBySig |
+                                     MethodAttributes.Public,
+                                     iter.ReturnType.NodeType,
+                                     new TypedNodeList());
+                }
+
+                MethodAttributes attributes =
+                    MethodAttributes.Virtual | MethodAttributes.HideBySig;
+                switch (iter.Modifier) {
+                case RoutineModifier.None:
+                    attributes |= MethodAttributes.Public;
+                    break;
+                case RoutineModifier.Private:
+                    attributes |= MethodAttributes.Private;
+                    break;
+                }
+                iter.MethodBuilder =
+                    DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
+                                 iter.ReturnType.NodeType, iter.Arguments);
+
+                Type[] satherNameParams = new Type[] { typeof(string) };
+                ConstructorInfo satherNameConstructor =
+                    typeof(SatherNameAttribute).GetConstructor(satherNameParams);
+                CustomAttributeBuilder satherNameAttrBuilder =
+                    new CustomAttributeBuilder(satherNameConstructor,
+                                               new object[] { iter.Name });
+                iter.MethodBuilder.SetCustomAttribute(satherNameAttrBuilder);
+                Attribute satherNameAttr = new SatherNameAttribute(iter.Name);
+                typeManager.AddCustomAttribute(iter.MethodBuilder,
+                                               satherNameAttr);
+
+                Type[] iterTypeParams = new Type[] { typeof(Type) };
+                ConstructorInfo iterTypeConstructor =
+                    typeof(IterTypeAttribute).GetConstructor(iterTypeParams);
+                CustomAttributeBuilder iterTypeAttrBuilder =
+                    new CustomAttributeBuilder(iterTypeConstructor,
+                                               new object[] {iter.TypeBuilder});
+                iter.MethodBuilder.SetCustomAttribute(iterTypeAttrBuilder);
+                Attribute iterTypeAttr =
+                    new IterTypeAttribute(iter.TypeBuilder);
+                typeManager.AddCustomAttribute(iter.MethodBuilder,
+                                               iterTypeAttr);
             }
-
-            MethodAttributes attributes =
-                MethodAttributes.Virtual | MethodAttributes.HideBySig;
-            switch (iter.Modifier) {
-            case RoutineModifier.None:
-                attributes |= MethodAttributes.Public;
-                break;
-            case RoutineModifier.Private:
-                attributes |= MethodAttributes.Private;
-                break;
+            catch (MethodConflictionException e) {
+                report.Error(iter.Location, e.Message);
             }
-            iter.MethodBuilder =
-                DefineMethod(typeBuilder, "__iter_" + baseName, attributes,
-                             iter.ReturnType.NodeType, iter.Arguments);
-
-            Type[] satherNameParams = new Type[] { typeof(string) };
-            ConstructorInfo satherNameConstructor =
-                typeof(SatherNameAttribute).GetConstructor(satherNameParams);
-            CustomAttributeBuilder satherNameAttributeBuilder =
-                new CustomAttributeBuilder(satherNameConstructor,
-                                           new object[] { iter.Name });
-            iter.MethodBuilder.SetCustomAttribute(satherNameAttributeBuilder);
-            Attribute satherNameAttr = new SatherNameAttribute(iter.Name);
-            typeManager.AddCustomAttribute(iter.MethodBuilder, satherNameAttr);
-
-            Type[] iterTypeParams = new Type[] { typeof(Type) };
-            ConstructorInfo iterTypeConstructor =
-                typeof(IterTypeAttribute).GetConstructor(iterTypeParams);
-            CustomAttributeBuilder iterTypeAttributeBuilder =
-                new CustomAttributeBuilder(iterTypeConstructor,
-                                           new object[] { iter.TypeBuilder });
-            iter.MethodBuilder.SetCustomAttribute(iterTypeAttributeBuilder);
-            Attribute iterTypeAttr = new IterTypeAttribute(iter.TypeBuilder);
-            typeManager.AddCustomAttribute(iter.MethodBuilder, iterTypeAttr);
 
             iterCount++;
         }
@@ -334,6 +368,52 @@ namespace Babel.Sather.Compiler
             typeSpecifier.NodeType = type;
         }
 
+        protected virtual bool
+        CheckMethodConfliction(string name,
+                               TypedNodeList arguments,
+                               Type returnType,
+                               MethodInfo method)
+        {
+            if (name != method.Name)
+                return false;
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            if (arguments.Length != parameters.Length)
+                return false;
+            if ((returnType == typeof(void)) !=
+                (method.ReturnType == typeof(void)))
+                return false;
+
+            bool conflict = false;
+            bool abs = false;
+            bool sameArgs = true;
+            int i = 0;
+            foreach (Argument arg in arguments) {
+                ParameterInfo param = parameters[i++];
+                Type type1 = arg.NodeType;
+                Type type2 = param.ParameterType;
+                
+                if (type1 != type2)
+                    sameArgs = false;
+                if (type1 != type2 &&
+                    !type1.IsInterface && !type2.IsInterface) {
+                    return false;
+                }
+                else {
+                    if (type1.IsInterface && type2.IsInterface) {
+                        abs = true; 
+                        if (!(typeManager.IsSubtype(type1, type2) ||
+                              typeManager.IsSubtype(type2, type1)))
+                            conflict = true;
+                    }
+                    else {
+                        if (type1 != type2)
+                            return false;
+                    }
+                }
+            }
+            return (abs && conflict) || !abs || sameArgs;
+        }
+
         protected virtual MethodBuilder
         DefineMethod(TypeBuilder type,
                      string name,
@@ -341,6 +421,20 @@ namespace Babel.Sather.Compiler
                      Type returnType,
                      TypedNodeList arguments)
         {
+            MethodInfo[] methods = typeManager.GetMethods(type);
+            foreach (MethodInfo m in methods) {
+                if (CheckMethodConfliction(name, arguments, returnType, m)) {
+                    string minfo1 = typeManager.GetMethodInfo(type,
+                                                              name,
+                                                              arguments,
+                                                              returnType);
+                    string minfo2 = typeManager.GetMethodInfo(m);
+                    throw new MethodConflictionException(minfo1 +
+                                                         " conflicts with " +
+                                                         minfo2);
+                }
+            }
+
             MethodBuilder method =
                 type.DefineMethod(name,
                                   attributes,
@@ -425,5 +519,10 @@ namespace Babel.Sather.Compiler
             typeManager.AddParameters(constructor, parameters);
             return constructor;
         }
+    }
+
+    public class MethodConflictionException : Exception
+    {
+        public MethodConflictionException(string message) : base(message) {}
     }
 }

@@ -108,7 +108,14 @@ namespace Babel.Sather.Compiler
         }
     }
 
-    public class AbstractRoutineSignature : Node
+    public interface MethodSignature
+    {
+        string Name { get; }
+        TypedNodeList Arguments { get; }
+        TypeSpecifier ReturnType { get; }
+    }
+
+    public class AbstractRoutineSignature : Node, MethodSignature
     {
         protected string name;
         protected TypedNodeList arguments;

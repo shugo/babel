@@ -710,8 +710,8 @@ namespace Babel.Sather.Compiler
             MethodInfo[] methods = typeManager.GetMethods(type);
             ArrayList candidates = new ArrayList();
             foreach (MethodInfo method in methods) {
-                if (ConfirmMethod(method, name, arguments,
-                                  hasReturnValue))
+                if (CheckMethod(method, name, arguments,
+                                hasReturnValue))
                     candidates.Add(method);
             }
             if (candidates.Count == 0)
@@ -721,28 +721,21 @@ namespace Babel.Sather.Compiler
             return (MethodInfo) SelectBestOverload(candidates, arguments);
         }
 
-        protected virtual bool ConfirmMethod(MethodInfo method,
-                                             string name,
-                                             TypedNodeList arguments,
-                                             bool hasReturnValue)
+        protected virtual bool CheckMethod(MethodInfo method,
+                                           string name,
+                                           TypedNodeList arguments,
+                                           bool hasReturnValue)
         {
             string methodName = typeManager.GetSatherName(method);
             if (methodName == null)
                 methodName = method.Name;
             if (methodName != name)
                 return false;
-            if (hasReturnValue) {
-                if (method.ReturnType == typeof(void))
-                    return false;
-            }
-            else {
-                if (method.ReturnType != typeof(void))
-                    return false;
-            }
-            ParameterInfo[] parameters = typeManager.GetParameters(method);
-            if (parameters.Length != arguments.Length) {
+            if (hasReturnValue != (method.ReturnType != typeof(void)))
                 return false;
-            }
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            if (parameters.Length != arguments.Length)
+                return false;
             int pos = 0;
             foreach (ModalExpression arg in arguments) {
                 ParameterInfo param = parameters[pos++];
@@ -785,7 +778,7 @@ namespace Babel.Sather.Compiler
             ConstructorInfo[] constructors = typeManager.GetConstructors(type);
             ArrayList candidates = new ArrayList();
             foreach (ConstructorInfo constructor in constructors) {
-                if (ConfirmConstructor(constructor, arguments))
+                if (CheckConstructor(constructor, arguments))
                     candidates.Add(constructor);
             }
             if (candidates.Count == 0)
@@ -795,13 +788,12 @@ namespace Babel.Sather.Compiler
             return (ConstructorInfo) SelectBestOverload(candidates, arguments);
         }
 
-        protected virtual bool ConfirmConstructor(ConstructorInfo constructor,
-                                                  TypedNodeList arguments)
+        protected virtual bool CheckConstructor(ConstructorInfo constructor,
+                                                TypedNodeList arguments)
         {
             ParameterInfo[] parameters = typeManager.GetParameters(constructor);
-            if (parameters.Length != arguments.Length) {
+            if (parameters.Length != arguments.Length)
                 return false;
-            }
             int pos = 0;
             foreach (ModalExpression arg in arguments) {
                 ParameterInfo param = parameters[pos++];

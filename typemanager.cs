@@ -310,5 +310,51 @@ namespace Babel.Sather.Compiler
                 return ArgumentMode.In;
             return ((ArgumentModeAttribute) attrs[0]).Mode;
         }
+
+        public virtual string GetMethodInfo(Type receiverType,
+                                            string name,
+                                            TypedNodeList arguments,
+                                            Type returnType)
+        {
+            string methodInfo = GetTypeName(receiverType) +
+                "::" + name;
+            if (arguments.Length > 0) {
+                methodInfo += "(";
+                foreach (TypedNode arg in arguments) {
+                    if (arg != arguments.First)
+                        methodInfo += ",";
+                    methodInfo += GetTypeName(arg.NodeType);
+                }
+                methodInfo += ")";
+            }
+            if (returnType != null && returnType != typeof(void))
+                methodInfo += ":" + GetTypeName(returnType);
+            return methodInfo;
+        }
+
+        public virtual string GetMethodInfo(MethodInfo method)
+        {
+            string methodInfo = GetTypeName(method.DeclaringType);
+            string name = GetSatherName(method);
+            if (name == null)
+                name = method.Name;
+            methodInfo += "::" + name;
+            ParameterInfo[] parameters = GetParameters(method);
+            if (parameters.Length > 0) {
+                methodInfo += "(";
+                bool first = true;
+                foreach (ParameterInfo param in parameters) {
+                    if (first)
+                        first = false;
+                    else
+                        methodInfo += ",";
+                    methodInfo += GetTypeName(param.ParameterType);
+                }
+                methodInfo += ")";
+            }
+            if (method.ReturnType != typeof(void))
+                methodInfo += ":" + GetTypeName(method.ReturnType);
+            return methodInfo;
+        }
     }
 }
