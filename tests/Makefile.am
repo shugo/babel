@@ -29,7 +29,19 @@ EXTRA_DIST		= test.rb.in \
 			  valuetype.out \
 			  valuetype.sa
 
-CLEANFILES		= test.rb
+CLEANFILES		= test.rb \
+			  bsc.exe \
+			  bscore.dll \
+			  bsbase.dll \
+			  bsio.dll \
+			  absiter.exe \
+			  fact.exe \
+			  hello.exe \
+			  iter.exe \
+			  new.exe \
+			  outarg.exe \
+			  subtype.exe \
+			  valuetype.exe
 
 test.rb: test.rb.in
 	rm -f test.rb
