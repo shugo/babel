@@ -4,7 +4,8 @@ assembly_DATA		= bsbase.dll
 
 bsbase_dll_SRCS		= abstract.sa
 
-EXTRA_DIST		= $(bsbase_dll_SRCS)
+EXTRA_DIST		= $(bsbase_dll_SRCS) \
+			  bsbase.dll
 
 CLEANFILES		= bsbase.dll
 
