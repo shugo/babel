@@ -57,6 +57,7 @@ namespace Babel.Sather.Compiler
                                          MethodAttributes.HideBySig,
                                          rout.ReturnType.NodeType,
                                          rout.Arguments.NodeTypes);
+            typeManager.AddMethod(typeBuilder, rout.MethodBuilder);
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -86,6 +87,7 @@ namespace Babel.Sather.Compiler
                                          readerAttributes,
                                          constType,
                                          Type.EmptyTypes);
+            typeManager.AddMethod(typeBuilder, constDef.Reader);
         }
 
         public override void VisitSharedAttr(SharedAttrDefinition attr)
@@ -126,6 +128,8 @@ namespace Babel.Sather.Compiler
                                          writerAttributes,
                                          typeof(void),
                                          new Type[] { attrType });
+            typeManager.AddMethod(typeBuilder, attr.Reader);
+            typeManager.AddMethod(typeBuilder, attr.Writer);
         }
 
         public override void VisitAttr(AttrDefinition attr)
@@ -165,6 +169,8 @@ namespace Babel.Sather.Compiler
                                          writerAttributes,
                                          typeof(void),
                                          new Type[] { attrType });
+            typeManager.AddMethod(typeBuilder, attr.Reader);
+            typeManager.AddMethod(typeBuilder, attr.Writer);
         }
 
         public override void VisitRoutine(RoutineDefinition rout)
@@ -187,6 +193,7 @@ namespace Babel.Sather.Compiler
                                          attributes,
                                          rout.ReturnType.NodeType,
                                          rout.Arguments.NodeTypes);
+            typeManager.AddMethod(typeBuilder, rout.MethodBuilder);
         }
 
         public override void VisitArgument(Argument arg)
