@@ -1,0 +1,39 @@
+class MAIN is
+   upto!(once from, once to: INT): INT is
+      i ::= from;
+      loop
+         while!(i <= to);
+         yield i;
+         i := i + 1;
+      end;
+   end;
+
+   sum!(i: INT): INT is
+      r ::= 0;
+      loop
+         r := r + i;
+         yield r;
+      end;
+   end;
+
+   product!(i: INT): INT is
+      r ::= 1;
+      loop
+         r := r * i;
+         yield r;
+      end;
+   end;
+
+   main is
+      sum: INT;
+      product: INT;
+      loop
+         i ::= upto!(1, 10);
+         #OUT + "i=" + i + "\n";
+         sum := sum!(i);
+         product := product!(i);
+      end;
+      #OUT + "sum=" + sum + "\n";
+      #OUT + "product=" + product + "\n";
+   end;
+end;

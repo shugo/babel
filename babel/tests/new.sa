@@ -1,0 +1,8 @@
+class MAIN is
+   main is
+      obj ::= new System::Object;
+      #OUT + obj.ToString + "\n";
+      ary ::= new System::Collections::ArrayList(10);
+      #OUT + ary.ToString + "\n";
+   end;
+end;

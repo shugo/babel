@@ -1,0 +1,95 @@
+require "stringio"
+
+$error = StringIO.new
+$stdout.sync = true
+
+$topdir = File.expand_path("..", File.dirname(__FILE__))
+ENV["MONO_PATH"] = $topdir
+$compiler = File.expand_path("bsc.exe", $topdir)
+
+def test(source)
+  error_file = source.sub(/\.sa$/, ".err")
+  if File.exist?(error_file)
+    expected_error = open(error_file) { |f| f.read }
+  end
+  output_file = source.sub(/\.sa$/, ".out")
+  if File.exist?(output_file)
+    expected_output = open(output_file) { |f| f.read }
+  end
+
+  if expected_error.nil? && expected_output.nil?
+    $error.printf("%s: neither .err nor .out exist\n", File.basename(source))
+    return "E"
+  end
+
+  actual_error = `#{$compiler} -lib:#{$topdir} #{source} 2>&1`
+  if expected_error
+    if $?.exitstatus == 0
+      $error.printf("%s: compilation succeeded unexpectedly\n",
+                    File.basename(source))
+      $error.puts("--->> Expected Error <<----")
+      $error.print(expected_error)
+      $error.puts("---------------------------")
+      return "E"
+    else
+      if actual_error == expected_error
+        return "."
+      else
+        $error.printf("%s: wrong compilation error\n", File.basename(source))
+        $error.puts("--->> Expected Error <<----")
+        $error.print(expected_error)
+        $error.puts("--->>  Actual Error  <<----")
+        $error.print(actual_error)
+        $error.puts("---------------------------")
+        return "F"
+      end
+    end
+  else
+    if $?.exitstatus != 0
+      $error.printf("%s: compilation error\n", File.basename(source))
+      $error.puts("--->> Error Message <<-----")
+      $error.print(actual_error)
+      $error.puts("---------------------------")
+      return "E"
+    end
+  end
+
+  program = source.sub(/\.sa$/, ".exe")
+  actual_output = `./#{program}`
+  if actual_output == expected_output
+    return "."
+  else
+    $error.printf("%s: wrong output\n", File.basename(source))
+    $error.puts("--->> Expected Output <<---")
+    $error.print(expected_output)
+    $error.puts("--->>  Actual Output  <<---")
+    $error.print(actual_output)
+    $error.puts("---------------------------")
+    return "F"
+  end
+end
+
+if ARGV.empty?
+  sources = Dir["*.sa"]
+else
+  sources = ARGV
+end
+
+$count = 0
+$results = Hash.new(0)
+start_time = Time.now
+for source in sources
+  result = test(source)
+  $results[result] += 1
+  $count += 1
+  print(result)
+end
+puts
+printf("Finished in %f seconds.\n\n", Time.now - start_time)
+if $error.tell > 0
+  puts("---------------------------")
+  print($error.string)
+  puts
+end
+printf("%d tests, %d failures, %d errors\n",
+       $count, $results["F"], $results["E"])

@@ -1,0 +1,32 @@
+abstract class $TIMES1 is
+   times!(once n: INT): INT;
+end;
+
+abstract class $TIMES2 is
+   times!(once n: INT): INT;
+end;
+
+class TIMES < $TIMES1, $TIMES2 is
+   create: SAME is
+      return new;
+   end;
+
+   times!(once n: INT): INT is
+      i ::= 0;
+      loop
+         while!(i < n);
+         yield(i);
+         i := i + 1;
+      end;
+   end;
+end;
+
+class MAIN is
+   main is
+      t1: $TIMES1 := #TIMES;
+      t2: $TIMES2 := #TIMES;
+      loop
+         #OUT + t1.times!(3) + "," + t2.times!(3) + "\n";
+      end;
+   end;
+end;

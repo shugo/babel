@@ -1,0 +1,7 @@
+class MAIN is
+   main is
+      #OUT + 1.ToString + "\n";
+      x ::= 2;
+      #OUT + x.ToString + "\n";
+   end;
+end;

@@ -1,0 +1,11 @@
+class MAIN is
+   set_foo(out s: STR) is
+      s := "foo";
+   end;
+
+   main is
+      x: STR;
+      set_foo(out x);
+      #OUT + x + "\n";
+   end;
+end;

@@ -1,0 +1,41 @@
+------------------------->  GNU Sather - sourcefile  <-------------------------
+-- Copyright (C) 1995 by International Computer Science Institute            --
+-- This file is part of the GNU Sather library. It is free software; you may --
+-- redistribute  and/or modify it under the terms of the GNU Library General --
+-- Public  License (LGPL)  as published  by the  Free  Software  Foundation; --
+-- either version 2 of the license, or (at your option) any later version.   --
+-- This  library  is distributed  in the  hope that it will  be  useful, but --
+-- WITHOUT ANY WARRANTY without even the implied warranty of MERCHANTABILITY --
+-- or FITNESS FOR A PARTICULAR PURPOSE. See Doc/LGPL for more details.       --
+-- The license text is also available from:  Free Software Foundation, Inc., --
+-- 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA                     --
+-------------->  Please email comments to <bug-sather@gnu.org>  <--------------
+
+-- Author: Benedict A. Gomes <gomes@samosa.ICSI.Berkeley.EDU>
+
+abstract class $OSTREAM is
+   -- A general output stream. A first stab at streams.  This
+   -- abstraction is already useful for routines that might use a file
+   -- or a string ( a common choice is whether a routine will write to
+   -- stdout or to a string which may then be printed to a file).
+   -- 
+   -- Usage:
+   --    write_to_stream(o: $OUTSTREAM) is
+   --        o + "this is a test";
+   --    end;
+   --    Which can be invoked using:
+   --     write_to_stream(FILE::stdout);
+   --       or 
+   --     s: STR_STREAM := #;
+   --     write_to_stream(s);
+   --     write_to_stream(s);
+   --     s.str then would have two copies of "this is a test" in it.
+
+   
+   plus(s: $STR);
+   -- Append the string "s" to the stream
+   
+   -- plus(s: $STR): SAME;
+   -- Append the string "s" to the stream and return self
+
+end; -- class $OSTREAM

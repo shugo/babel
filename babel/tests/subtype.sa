@@ -1,0 +1,22 @@
+abstract class $FOO is
+   foo;
+end;
+
+class FOO < $FOO is
+   create: SAME is
+      return new;
+   end;
+
+   foo is
+      #OUT + "foo\n";
+   end;
+end;
+
+class MAIN is
+   main is
+      f1 ::= #FOO;
+      f1.foo;
+      f2: $FOO := #FOO;
+      f2.foo;
+   end;
+end;
