@@ -68,7 +68,7 @@ $(CORE_LIB): $(CORE_LIB_SRCS)
 		-out:$(CORE_LIB) $(CORE_LIB_SRCS)
 
 $(BASE_LIB): $(BASE_LIB_SRCS) $(COMPILER)
-	rm -f $(BASE_LIB)
+	rm -f $(BASE_LIB) $(IO_LIB)
 	./$(COMPILER) -target:library \
 		-out:$(BASE_LIB) $(BASE_LIB_SRCS)
 
