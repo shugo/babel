@@ -113,14 +113,24 @@ namespace Babel.Compiler {
             string[] typeParamNames =
                 new string[cls.TypeParameters.Length];
             int i = 0;
-            foreach (ParameterDeclaration pd in cls.TypeParameters) {
-                typeParamNames[i++] = pd.Name;
+            foreach (TypeParameter tp in cls.TypeParameters) {
+                typeParamNames[i++] = tp.Name;
             }
             GenericTypeParameterBuilder[] typeParameters =
                 cls.TypeBuilder.DefineGenericParameters(typeParamNames);
             i = 0;
-            foreach (ParameterDeclaration pd in cls.TypeParameters) {
-                pd.Builder = typeParameters[i++];
+            foreach (TypeParameter tp in cls.TypeParameters) {
+                tp.Builder = typeParameters[i++];
+                if (tp.ConstrainingType.NodeType.IsAbstract) {
+                    Type[] ifaces = new Type[] {
+                        tp.ConstrainingType.RawType
+                    };
+                    tp.Builder.SetInterfaceConstraints(ifaces);
+                }
+                else {
+                    Type baseType = tp.ConstrainingType.RawType;
+                    tp.Builder.SetBaseTypeConstraint(baseType);
+                }
             }
         }
 
@@ -171,10 +181,9 @@ namespace Babel.Compiler {
             }
         }
 
-        public override void
-            VisitParameterDeclaration(ParameterDeclaration paramDecl)
+        public override void VisitTypeParameter(TypeParameter typeParam)
         {
-            paramDecl.ConstrainingType.Accept(this);
+            typeParam.ConstrainingType.Accept(this);
         }
 
         public override void VisitTypeSpecifier(TypeSpecifier typeSpecifier)

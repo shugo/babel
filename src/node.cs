@@ -270,7 +270,7 @@ namespace Babel.Compiler {
         void VisitProgram(Program program);
         void VisitSourceFile(SourceFile sourceFile);
         void VisitClass(ClassDefinition cls);
-        void VisitParameterDeclaration(ParameterDeclaration paramDecl);
+        void VisitTypeParameter(TypeParameter typeParam);
         void VisitAbstractRoutine(AbstractRoutineSignature routine);
         void VisitAbstractIter(AbstractIterSignature iter);
         void VisitConst(ConstDefinition constDef);
@@ -316,7 +316,7 @@ namespace Babel.Compiler {
         public virtual void VisitProgram(Program program) {}
         public virtual void VisitSourceFile(SourceFile sourceFile) {}
         public virtual void VisitClass(ClassDefinition cls) {}
-        public virtual void VisitParameterDeclaration(ParameterDeclaration paramDecl) {}
+        public virtual void VisitTypeParameter(TypeParameter typeParam) {}
         public virtual void VisitAbstractRoutine(AbstractRoutineSignature routine) {}
         public virtual void VisitAbstractIter(AbstractIterSignature iter) {}
         public virtual void VisitConst(ConstDefinition constDef) {}

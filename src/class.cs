@@ -131,14 +131,14 @@ namespace Babel.Compiler {
         }
     }
 
-    public class ParameterDeclaration : Node {
+    public class TypeParameter : Node {
         protected string name;
         protected TypeSpecifier constrainingType;
         protected GenericTypeParameterBuilder builder;
 
-        public ParameterDeclaration(string name,
-                                    TypeSpecifier constrainingType,
-                                    Location location)
+        public TypeParameter(string name,
+                             TypeSpecifier constrainingType,
+                             Location location)
             : base(location)
         {
             this.name = name;
@@ -161,7 +161,7 @@ namespace Babel.Compiler {
 
         public override void Accept(NodeVisitor visitor)
         {
-            visitor.VisitParameterDeclaration(this);
+            visitor.VisitTypeParameter(this);
         }
     }
 
