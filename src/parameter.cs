@@ -152,4 +152,35 @@ namespace Babel.Compiler {
             }
         }
     }
+
+    public class BuiltinMethodParameterList : ParameterList {
+        protected TypeManager typeManager;
+        protected MethodBase methodBase;
+        protected ArrayList parameters;
+
+        public BuiltinMethodParameterList(TypeManager typeManager,
+                                          MethodBase methodBase)
+        {
+            this.typeManager = typeManager;
+            this.methodBase = methodBase;
+            parameters = null;
+        }
+
+        public ArrayList Parameters
+        {
+            get {
+                if (parameters == null) {
+                    ParameterInfo[] methodParams = methodBase.GetParameters();
+                    parameters = new ArrayList();
+                    for (int i = 1; i < methodParams.Length; i++) {
+                        ParameterData paramData =
+                            new PredefinedParameterData(typeManager,
+                                                        methodParams[i]);
+                        parameters.Add(paramData);
+                    }
+                }
+                return parameters;
+            }
+        }
+    }
 }

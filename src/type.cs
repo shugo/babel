@@ -210,12 +210,14 @@ namespace Babel.Compiler {
 
     public class BuiltinTypeData : PredefinedTypeData {
         protected string name;
+        protected Type builtinMethodContainer;
 
         public BuiltinTypeData(TypeManager typeManager,
                                Type rawType, string name)
             : base(typeManager, rawType)
         {
             this.name = name;
+            this.builtinMethodContainer = null;
         }
         
         public override string Name
@@ -229,6 +231,36 @@ namespace Babel.Compiler {
         {
             get {
                 return name;
+            }
+        }
+        
+        public virtual Type BuiltinMethodContainer {
+            get {
+                return builtinMethodContainer;
+            }
+
+            set {
+                builtinMethodContainer = value;
+            }
+        }
+
+        public override ArrayList Methods {
+            get {
+                if (methods == null) {
+                    methods = base.Methods;
+                    if (builtinMethodContainer != null) {
+                        MethodInfo[] methodInfos =
+                            builtinMethodContainer.
+                            GetMethods(BindingFlags.Instance |
+                                       BindingFlags.Static |
+                                       BindingFlags.Public |
+                                       BindingFlags.NonPublic);
+                        foreach (MethodInfo m in methodInfos) {
+                            methods.Add(new BuiltinMethodData(typeManager, m));
+                        }
+                    }
+                }
+                return methods;
             }
         }
     }
