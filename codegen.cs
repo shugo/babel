@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public class CodeGeneratingVisitor : AbstractNodeVisitor
@@ -142,12 +144,14 @@ namespace Babel.Sather.Compiler
             ilGenerator.Emit(OpCodes.Ldarg_1);
             ilGenerator.Emit(OpCodes.Stfld, iter.Self);
             foreach (Argument arg in iter.CreatorArguments) {
-                LocalVariable local =
-                    (LocalVariable) iter.LocalVariables[arg.Name];
-                local.Declare(ilGenerator);
-                local.EmitStorePrefix(ilGenerator);
-                ilGenerator.Emit(OpCodes.Ldarg, arg.Index + 1);
-                local.EmitStore(ilGenerator);
+                if (arg.Mode == ArgumentMode.Once) {
+                    LocalVariable local =
+                        (LocalVariable) iter.LocalVariables[arg.Name];
+                    local.Declare(ilGenerator);
+                    local.EmitStorePrefix(ilGenerator);
+                    ilGenerator.Emit(OpCodes.Ldarg, arg.Index + 1);
+                    local.EmitStore(ilGenerator);
+                }
             }
             ilGenerator.Emit(OpCodes.Ldarg_0);
             ilGenerator.Emit(OpCodes.Ldc_I4_0);

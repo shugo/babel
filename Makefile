@@ -24,7 +24,8 @@ COMPILER_SRCS	= compiler.cs \
 		  typecheck.cs \
 		  codegen.cs
 
-BASE_LIB_SRCS	= bool.cs \
+BASE_LIB_SRCS	= attribute.cs \
+		  bool.cs \
 		  int.cs \
 		  str.cs
 

@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public class TypeCheckingVisitor : AbstractNodeVisitor
@@ -88,7 +90,8 @@ namespace Babel.Sather.Compiler
             localVariableStack = new IterLocalVariableStack(iter.Enumerator);
             localVariableStack.Push(iter.LocalVariables);
             foreach (Argument arg in iter.CreatorArguments) {
-                localVariableStack.AddLocal(arg.Name, arg.NodeType);
+                if (arg.Mode == ArgumentMode.Once)
+                    localVariableStack.AddLocal(arg.Name, arg.NodeType);
             }
             temporallyCount = 0;
             iter.StatementList.Accept(this);
@@ -483,7 +486,8 @@ namespace Babel.Sather.Compiler
                     args.Append(call.Arguments.First);
                     method = LookupMethod(builtinRoutineContainer,
                                           call.Name, args,
-                                          call.HasValue);
+                                          call.HasValue,
+                                          false);
                     call.IsBuiltin = true;
                     SetupMethod(call, method, receiverType);
                     return;
@@ -494,7 +498,8 @@ namespace Babel.Sather.Compiler
             try {
                 method = LookupMethod(receiverType,
                                       call.Name, call.Arguments,
-                                      call.HasValue);
+                                      call.HasValue,
+                                      false);
                 SetupMethod(call, method, receiverType);
             }
             catch (LookupMethodException e) {
@@ -512,6 +517,50 @@ namespace Babel.Sather.Compiler
                 if (call.HasValue)
                     routInfo += ":_";
                 report.Error(call.Location,
+                             "{0} for {1}", e.Message, routInfo);
+            }
+        }
+
+        public override void VisitIterCall(IterCallExpression iter)
+        {
+            Type receiverType;
+            if (iter.Receiver != null) {
+                iter.Receiver.Accept(this);
+                receiverType = iter.Receiver.NodeType;
+            }
+            else {
+                iter.TypeSpecifier.Accept(this);
+                receiverType = iter.TypeSpecifier.NodeType;
+            }
+            if (receiverType == null) {
+                report.Error(iter.Location, "no match for {0}", iter.Name);
+                return;
+            }
+            iter.Arguments.Accept(this);
+            MethodInfo method;
+            Type builtinRoutineContainer =
+                (Type) builtinRoutineContainers[receiverType];
+            try {
+                method = LookupMethod(receiverType,
+                                      iter.Name, iter.Arguments,
+                                      iter.HasValue,
+                                      true);
+            }
+            catch (LookupMethodException e) {
+                string routInfo = typeManager.GetTypeName(receiverType) +
+                    "::" + iter.Name;
+                if (iter.Arguments.Length > 0) {
+                    routInfo += "(";
+                    foreach (ModalExpression arg in iter.Arguments) {
+                        if (arg != iter.Arguments.First)
+                            routInfo += ",";
+                        routInfo += typeManager.GetTypeName(arg.NodeType);
+                    }
+                    routInfo += ")";
+                }
+                if (iter.HasValue)
+                    routInfo += ":_";
+                report.Error(iter.Location,
                              "{0} for {1}", e.Message, routInfo);
             }
         }
@@ -598,12 +647,14 @@ namespace Babel.Sather.Compiler
         protected MethodInfo LookupMethod(Type type,
                                           string name,
                                           TypedNodeList arguments,
-                                          bool hasReturnValue)
+                                          bool hasReturnValue,
+                                          bool isIter)
         {
             MethodInfo[] methods = typeManager.GetMethods(type);
             ArrayList candidates = new ArrayList();
             foreach (MethodInfo method in methods) {
-                if (ConfirmMethod(method, name, arguments, hasReturnValue))
+                if (ConfirmMethod(method, name, arguments,
+                                  hasReturnValue, isIter))
                     candidates.Add(method);
             }
             if (candidates.Count == 0)
@@ -616,13 +667,14 @@ namespace Babel.Sather.Compiler
         protected bool ConfirmMethod(MethodInfo method,
                                      string name,
                                      TypedNodeList arguments,
-                                     bool hasReturnValue)
+                                     bool hasReturnValue,
+                                     bool isIter)
         {
             if (method.Name != name)
                 return false;
-            ParameterInfo[] parameters = typeManager.GetParameters(method);
-            if (parameters.Length != arguments.Length) {
-                return false;
+            if (isIter) {
+                // FIXME.
+                return true;
             }
             if (hasReturnValue) {
                 if (method.ReturnType == typeof(void))
@@ -631,6 +683,10 @@ namespace Babel.Sather.Compiler
             else {
                 if (method.ReturnType != typeof(void))
                     return false;
+            }
+            ParameterInfo[] parameters = typeManager.GetParameters(method);
+            if (parameters.Length != arguments.Length) {
+                return false;
             }
             int pos = 0;
             foreach (ModalExpression arg in arguments) {

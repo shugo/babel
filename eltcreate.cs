@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public class TypeElementCreatingVisitor : AbstractNodeVisitor
@@ -55,7 +57,8 @@ namespace Babel.Sather.Compiler
                                               MethodAttributes.Abstract |
                                               MethodAttributes.HideBySig,
                                               rout.ReturnType.NodeType,
-                                              rout.Arguments);
+                                              rout.Arguments,
+                                              false);
         }
 
         public override void VisitConst(ConstDefinition constDef)
@@ -173,7 +176,8 @@ namespace Babel.Sather.Compiler
             }
             rout.MethodBuilder =
                 DefineMethod(typeBuilder, rout.Name, attributes,
-                             rout.ReturnType.NodeType, rout.Arguments);
+                             rout.ReturnType.NodeType, rout.Arguments,
+                             false);
         }
 
         public override void VisitIter(IterDefinition iter)
@@ -215,7 +219,8 @@ namespace Babel.Sather.Compiler
                              MethodAttributes.HideBySig |
                              MethodAttributes.Public,
                              typeof(bool),
-                             iter.MoveNextArguments);
+                             iter.MoveNextArguments,
+                             false);
             if (!iter.ReturnType.IsNull()) {
                 iter.Current =
                     iter.Enumerator.DefineField("_current",
@@ -227,7 +232,8 @@ namespace Babel.Sather.Compiler
                                  MethodAttributes.HideBySig |
                                  MethodAttributes.Public,
                                  iter.ReturnType.NodeType,
-                                 new TypedNodeList());
+                                 new TypedNodeList(),
+                                 false);
             }
 
             MethodAttributes attributes =
@@ -242,7 +248,19 @@ namespace Babel.Sather.Compiler
             }
             iter.MethodBuilder =
                 DefineMethod(typeBuilder, iter.Name, attributes,
-                             iter.Enumerator, iter.CreatorArguments);
+                             iter.Enumerator, iter.CreatorArguments,
+                             true);
+
+            Type[] cparamTypes = new Type[] { typeof(Type) };
+            ConstructorInfo constructor =
+                typeof(IterReturnTypeAttribute).GetConstructor(cparamTypes);
+            Type returnType = iter.ReturnType.NodeType;
+            CustomAttributeBuilder cbuilder =
+                new CustomAttributeBuilder(constructor,
+                                           new object[] { returnType });
+            iter.MethodBuilder.SetCustomAttribute(cbuilder);
+            Attribute attr = new IterReturnTypeAttribute(returnType);
+            typeManager.AddCustomAttribute(iter.MethodBuilder, attr);
         }
 
         public override void VisitArgument(Argument arg)
@@ -307,7 +325,8 @@ namespace Babel.Sather.Compiler
                                              string name,
                                              MethodAttributes attributes,
                                              Type returnType,
-                                             TypedNodeList arguments)
+                                             TypedNodeList arguments,
+                                             bool isIter)
         {
             MethodBuilder method =
                 type.DefineMethod(name,
@@ -328,6 +347,13 @@ namespace Babel.Sather.Compiler
                 }
                 ParameterBuilder pb =
                     method.DefineParameter(arg.Index, attrs, arg.Name);
+                Type[] cparamTypes = new Type[] { typeof(ArgumentMode) };
+                ConstructorInfo constructor =
+                    typeof(ArgumentModeAttribute).GetConstructor(cparamTypes);
+                CustomAttributeBuilder cbuilder =
+                    new CustomAttributeBuilder(constructor,
+                                               new object[] { arg.Mode });
+                pb.SetCustomAttribute(cbuilder);
                 parameters[arg.Index - 1] =
                     new Parameter(pb, arg.NodeType, method);
             }
@@ -341,7 +367,8 @@ namespace Babel.Sather.Compiler
                                              TypeSpecifier attrType)
         {
             return DefineMethod(type, name, attributes,
-                                attrType.NodeType, new TypedNodeList());
+                                attrType.NodeType, new TypedNodeList(),
+                                false);
         }
 
         protected MethodBuilder DefineWriter(TypeBuilder type, string name,
@@ -354,7 +381,7 @@ namespace Babel.Sather.Compiler
             arg.NodeType = attrType.NodeType;
             TypedNodeList args = new TypedNodeList(arg);
             return DefineMethod(type, name, attributes,
-                                typeof(void), args);
+                                typeof(void), args, false);
         }
     }
 }

@@ -22,6 +22,7 @@ namespace Babel.Sather.Compiler
         Hashtable ancestorsTable;
         Hashtable methodsTable;
         Hashtable parametersTable;
+        Hashtable customAttributesTable;
 
         public TypeManager()
         {
@@ -33,6 +34,7 @@ namespace Babel.Sather.Compiler
             ancestorsTable = new Hashtable();
             methodsTable = new Hashtable();
             parametersTable = new Hashtable();
+            customAttributesTable = new Hashtable();
             InitBuiltinTypes();
         }
 
@@ -204,6 +206,39 @@ namespace Babel.Sather.Compiler
                 parametersTable[method] = parameters = method.GetParameters();
             }
             return parameters;
+        }
+
+        public void AddCustomAttribute(ICustomAttributeProvider provider,
+                                       Attribute attribute)
+        {
+            object[] attrs = (object[]) customAttributesTable[provider];
+            if (attrs == null) {
+                customAttributesTable[provider] = new object[] { attribute };
+            }
+            else {
+                object[] newAttrs = new object[attrs.Length + 1];
+                Array.Copy(attrs, newAttrs, attrs.Length);
+                customAttributesTable[provider] = newAttrs;
+            }
+        }
+
+        public object[] GetCustomAttributes(ICustomAttributeProvider provider,
+                                            Type type)
+        {
+            object[] attrs = (object[]) customAttributesTable[provider];
+            if (attrs == null) {
+                return provider.GetCustomAttributes(type, false);
+            }
+            else {
+                ArrayList list = new ArrayList();
+                foreach (object attr in attrs) {
+                    if (type.IsInstanceOfType(attr))
+                        list.Add(attr);
+                }
+                object[] attributes = new object[list.Count];
+                list.CopyTo(attributes);
+                return attributes;
+            }
         }
     }
 }

@@ -317,6 +317,7 @@ namespace Babel.Sather.Compiler
         void VisitSelf(SelfExpression self);
         void VisitLocal(LocalExpression local);
         void VisitCall(CallExpression call);
+        void VisitIterCall(IterCallExpression iter);
         void VisitModalExpression(ModalExpression modalExpr);
         void VisitVoid(VoidExpression voidExpr);
         void VisitVoidTest(VoidTestExpression voidTest);
@@ -361,6 +362,7 @@ namespace Babel.Sather.Compiler
         public virtual void VisitSelf(SelfExpression self) {}
         public virtual void VisitLocal(LocalExpression local) {}
         public virtual void VisitCall(CallExpression call) {}
+        public virtual void VisitIterCall(IterCallExpression iter) {}
         public virtual void VisitModalExpression(ModalExpression modalExpr) {}
         public virtual void VisitVoid(VoidExpression voidExpr) {}
         public virtual void VisitVoidTest(VoidTestExpression voidTest) {}

@@ -11,6 +11,8 @@ using System.Reflection.Emit;
 using System.Collections;
 using System.Text;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public enum ClassKind
@@ -525,12 +527,10 @@ namespace Babel.Sather.Compiler
             argumentTable = new Hashtable();
             foreach (Argument arg in Arguments) {
                 arg.Index = index++;
-                if (arg.Mode == ArgumentMode.Once) {
-                    Argument ca = (Argument) arg.Clone();
-                    ca.Index = creatorPos++;
-                    creatorArguments.Append(ca);
-                }
-                else {
+                Argument ca = (Argument) arg.Clone();
+                ca.Index = creatorPos++;
+                creatorArguments.Append(ca);
+                if (arg.Mode != ArgumentMode.Once) {
                     Argument ma = (Argument) arg.Clone();
                     ma.Index = moveNextPos++;
                     moveNextArguments.Append(ma);
@@ -628,14 +628,6 @@ namespace Babel.Sather.Compiler
             get { return label; }
             set { label = value; }
         }
-    }
-
-    public enum ArgumentMode
-    {
-        In,
-        Out,
-        InOut,
-        Once
     }
 
     public class Argument : TypedNode

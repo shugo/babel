@@ -12,6 +12,8 @@ using System.Collections;
 using System.IO;
 using System.Text;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public class Parser
@@ -1184,11 +1186,12 @@ primary_expression
         | self_expression
         | local_expression
         | call_expression
+        | type_call_expression
+        | iter_call_expression
         | void_expression
         | void_test_expression
         | new_expression
         | create_expression
-        | type_call_expression
         | break_expression
         | while_expression
         | until_expression
@@ -1295,6 +1298,21 @@ type_call_expression
               $$ = new CallExpression(typeSpecifier, routineName,
                                       (TypedNodeList) $2,
                                       lexer.Location);
+          }
+        ;
+
+iter_call_expression
+        : primary_expression DOT iter_name opt_mode_expr_list
+          {
+              $$ = new IterCallExpression((Expression) $1, (string) $3,
+                                          (TypedNodeList) $4,
+                                          lexer.Location);
+          }
+        | iter_name opt_mode_expr_list
+          {
+              Expression self = new SelfExpression(lexer.Location);
+              $$ = new IterCallExpression(self, (string) $1, (TypedNodeList) $2,
+                                          lexer.Location);
           }
         ;
 

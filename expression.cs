@@ -10,6 +10,8 @@ using System.Reflection;
 using System.Reflection.Emit;
 using System.Collections;
 
+using Babel.Sather.Base;
+
 namespace Babel.Sather.Compiler
 {
     public abstract class Expression : TypedNode
@@ -199,13 +201,13 @@ namespace Babel.Sather.Compiler
 
     public class CallExpression : Expression
     {
-        Expression receiver;
-        TypeSpecifier typeSpecifier;
-        string name;
-        TypedNodeList arguments;
-        bool flip;
-        MethodInfo method;
-        bool isBuiltin;
+        protected Expression receiver;
+        protected TypeSpecifier typeSpecifier;
+        protected string name;
+        protected TypedNodeList arguments;
+        protected bool flip;
+        protected MethodInfo method;
+        protected bool isBuiltin;
 
         public CallExpression(Expression receiver,
                               string name,
@@ -302,6 +304,42 @@ namespace Babel.Sather.Compiler
                 expr.typeSpecifier = (TypeSpecifier) typeSpecifier.Clone();
             expr.arguments = (TypedNodeList) arguments.Clone();
             return expr;
+        }
+    }
+
+    public class IterCallExpression : CallExpression
+    {
+        CallExpression createCall;
+        CallExpression moveNextCall;
+        CallExpression getCurrentCall;
+
+        public IterCallExpression(Expression receiver,
+                                  string name,
+                                  TypedNodeList arguments,
+                                  Location location)
+            : base(receiver, name, arguments, location) {}
+
+        public CallExpression CreateCall
+        {
+            get { return createCall; }
+            set { createCall = value; }
+        }
+
+        public CallExpression MoveNextCall
+        {
+            get { return moveNextCall; }
+            set { moveNextCall = value; }
+        }
+
+        public CallExpression GetCurrentCall
+        {
+            get { return getCurrentCall; }
+            set { getCurrentCall = value; }
+        }
+
+        public override void Accept(NodeVisitor visitor)
+        {
+            visitor.VisitIterCall(this);
         }
     }
 
