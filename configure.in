@@ -64,4 +64,5 @@ AC_OUTPUT([Makefile
 	   lib/Makefile
 	   lib/base/Makefile
 	   lib/io/Makefile
+	   scripts/Makefile
 	   tests/Makefile])
