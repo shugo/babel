@@ -21,6 +21,7 @@ namespace Babel.Compiler {
         protected Report report;
         protected SourceFile sourceFile;
         protected ClassDefinition currentClass;
+	protected int yacc_verbose_flag;
 
         public Parser(Program program,
                       TextReader reader, string fileName, Report report)
@@ -28,6 +29,7 @@ namespace Babel.Compiler {
             this.program = program;
             lexer = new LexicalAnalyzer(reader, fileName, report);
             this.report = report;
+	    yacc_verbose_flag = 0;
         }
 %}
 

@@ -140,7 +140,7 @@ namespace Babel.Compiler {
                                                        (TypeBuilder) type);
                 }
                 else {
-                    if (type.IsGenericInstance) {
+                    if (type.IsGenericType) {
                         typeData = new GenericInstanceTypeData(this, type);
                     }
                     else {
@@ -386,10 +386,10 @@ namespace Babel.Compiler {
             object[] attrs = (object[]) customAttributesTable[provider];
             if (attrs == null) {
                 if (provider is Type &&
-                    ((Type) provider).IsGenericInstance)
+                    ((Type) provider).IsGenericType)
                     return null;
                 if (provider is MethodBase &&
-                    ((MethodBase) provider).DeclaringType.IsGenericInstance)
+                    ((MethodBase) provider).DeclaringType.IsGenericType)
                     return null;
                 try {
                     return provider.GetCustomAttributes(type, false);
