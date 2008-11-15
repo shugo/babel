@@ -163,10 +163,15 @@ namespace Babel.Compiler {
             return typeManager.GetTypeData(rawType.GetGenericTypeDefinition());
         }
 
-        public virtual bool IsGenericType {
+        public virtual bool IsGenericInstance {
             get {
-                return rawType.IsGenericType;
+                return IsGenericTypeInstance(rawType);
             }
+        }
+
+        public static bool IsGenericTypeInstance(Type type) {
+            return type.IsGenericType &&
+                !type.IsGenericTypeDefinition;
         }
 
         public virtual bool IsTypeParameter {
@@ -403,7 +408,7 @@ namespace Babel.Compiler {
 
         protected override MethodData CreateMethodData(MethodInfo method)
         {
-            if (method.DeclaringType.IsGenericType) {
+            if (IsGenericTypeInstance(method.DeclaringType)) {
                 return new GenericInstanceMethodData(typeManager, method);
             }
             else {

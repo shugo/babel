@@ -387,7 +387,7 @@ namespace Babel.Compiler {
 
         public override string Name {
             get {
-                return GenericMethodDefinition.Name;
+                return MethodInfo.Name;
             }
         }
 
